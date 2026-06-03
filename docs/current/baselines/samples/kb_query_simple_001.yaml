@@ -1,0 +1,26 @@
+sample_id: kb_query_simple_001
+intent: 简单知识库问答
+input:
+  message: "根据知识库说明一下当前系统的数据库要求"
+  session_id: "baseline_kb_query_simple_001"
+  use_knowledge: true
+  attachments: []
+expected_lane_old: "unified_main_chain"
+expected_lane_new: "kb"
+expected_mode_new: "fast"
+expected_call_path:
+  - "application.chat.run_chat_turn:run_agno_chat_turn_impl"
+  - "agents.middle_agent.collect_flow:collect_bundle"
+  - "services.capabilities.knowledge.rag_orchestration_service:retrieve"
+expected_trace_keys:
+  - "request_id"
+  - "session_id"
+  - "retrieval_mode"
+must_not_regress:
+  - response_includes: "PostgreSQL"
+  - first_response_ms_le: 3000
+acceptance_after_migration:
+  lane: "kb"
+  mode_either_of: ["fast", "complex"]
+  must_call_capability: "capability.kb.retrieve"
+  must_not_call_capability: "capability.video.subtitle_probe"

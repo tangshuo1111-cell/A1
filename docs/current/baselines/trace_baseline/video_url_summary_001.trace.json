@@ -1,0 +1,12 @@
+{
+  "sample_id": "video_url_summary_001",
+  "baseline_version": 1,
+  "legacy_path": "unified_main_chain",
+  "trace_keys_present": ["request_id", "session_id", "v11_middle_video_url_asr_model"],
+  "call_path_snapshot": [
+    "application.chat.run_chat_turn:run_agno_chat_turn_impl",
+    "agents.middle_agent.video_flow:run_early_web_video_flow",
+    "tools.video.extract_web_video_subtitle:_extract_web_video_subtitle"
+  ],
+  "notes": "Placeholder trace contract for migration assertions before new ingress router lands."
+}

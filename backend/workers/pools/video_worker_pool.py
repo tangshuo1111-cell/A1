@@ -1,0 +1,36 @@
+"""统一视频 worker 池。
+
+同步短视频和后台长视频都可以复用这一层的本机并发执行能力，
+避免 services 层直接散落 ThreadPoolExecutor 细节。
+"""
+
+from __future__ import annotations
+
+from collections.abc import Callable, Iterable
+from concurrent.futures import ThreadPoolExecutor
+from typing import TypeVar
+
+from config.settings import settings
+
+T = TypeVar("T")
+R = TypeVar("R")
+
+
+def run_in_video_worker_pool(
+    items: Iterable[T],
+    worker_fn: Callable[[T], R],
+    *,
+    max_workers: int | None = None,
+    thread_name_prefix: str = "video-worker",
+) -> list[R]:
+    item_list = list(items)
+    if not item_list:
+        return []
+    worker_count = int(
+        max_workers
+        or getattr(settings, "v16_video_parallel_asr_workers", 4)
+        or 4
+    )
+    worker_count = max(1, min(worker_count, len(item_list)))
+    with ThreadPoolExecutor(max_workers=worker_count, thread_name_prefix=thread_name_prefix) as pool:
+        return list(pool.map(worker_fn, item_list))

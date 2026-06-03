@@ -1,0 +1,5 @@
+这是一个测试文本文件。
+
+V16 R1 测试样本，用于验证 txt 解析链路（parse_txt_document）。
+包含多段正文，长度足够通过质量检查（quality_level=good）。
+段落2：Lorem ipsum dolor sit amet, consectetur adipiscing elit.

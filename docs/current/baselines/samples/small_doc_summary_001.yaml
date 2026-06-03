@@ -1,0 +1,28 @@
+sample_id: small_doc_summary_001
+intent: 小文档快速总结
+input:
+  message: "总结这个文档的核心内容"
+  session_id: "baseline_small_doc_summary_001"
+  use_knowledge: false
+  attachments:
+    - type: local_file
+      name: "sample_small_doc.pdf"
+expected_lane_old: "unified_main_chain"
+expected_lane_new: "document"
+expected_mode_new: "fast"
+expected_call_path:
+  - "application.chat.run_chat_turn:run_agno_chat_turn_impl"
+  - "agents.middle_agent.video_flow:run_early_document_prepare_flow"
+  - "tools.document.parse_pdf:_parse_pdf"
+expected_trace_keys:
+  - "request_id"
+  - "session_id"
+  - "v16_mcp_mode"
+must_not_regress:
+  - response_includes: "文档"
+  - first_response_ms_le: 3500
+acceptance_after_migration:
+  lane: "document"
+  mode_either_of: ["fast", "complex"]
+  must_call_capability: "capability.document.parse_pdf_quick"
+  must_not_call_capability: "capability.video.subtitle_probe"

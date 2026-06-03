@@ -1,0 +1,26 @@
+{
+  "sample_id": "multi_source_complex_001",
+  "baseline_version": 3,
+  "legacy_path": "unified_main_chain",
+  "target_path": "complex_quality_gate_loop",
+  "trace_keys_present": [
+    "request_id",
+    "lane",
+    "mode",
+    "target_path",
+    "complex_candidate",
+    "quality_gate.pass",
+    "quality_gate.need_second_round",
+    "material_layer_used",
+    "material_scope",
+    "material_source_count"
+  ],
+  "call_path_snapshot": [
+    "application.ingress.runtime:route_chat_request",
+    "application.chat.run_chat_turn:run_agno_chat_turn_impl",
+    "application.chat.complex_path_entry:run_multisource_round0_answer",
+    "application.chat.delivery_gate_flow:run_delivery_gate",
+    "application.chat.complex_path_entry:run_feedback_round_execution"
+  ],
+  "notes": "Multisource uses same quality_gate second-round model as normal complex (doc §17)"
+}

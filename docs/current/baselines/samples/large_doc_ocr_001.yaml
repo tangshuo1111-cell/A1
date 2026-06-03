@@ -1,0 +1,28 @@
+sample_id: large_doc_ocr_001
+intent: 大文档 OCR 抽取
+input:
+  message: "请提取这个扫描版 PDF 的重点并按章节整理"
+  session_id: "baseline_large_doc_ocr_001"
+  use_knowledge: false
+  attachments:
+    - type: local_file
+      name: "sample_scanned_doc.pdf"
+expected_lane_old: "unified_main_chain"
+expected_lane_new: "document"
+expected_mode_new: "complex"
+expected_call_path:
+  - "application.chat.run_chat_turn:run_agno_chat_turn_impl"
+  - "agents.middle_agent.tool_dispatch:run_tool_by_name"
+  - "tools.ocr.ocr_document:_ocr_document"
+expected_trace_keys:
+  - "request_id"
+  - "session_id"
+  - "ocr.provider"
+must_not_regress:
+  - response_includes: "OCR"
+  - first_response_ms_le: 5000
+acceptance_after_migration:
+  lane: "document"
+  mode_either_of: ["complex", "async"]
+  must_call_capability: "capability.document.ocr_full"
+  must_not_call_capability: "capability.video.short_sync_asr"

@@ -1,0 +1,9 @@
+sample_id,first_response_ms,total_ms,llm_calls,tool_calls,token_in,token_out,success
+kb_query_simple_001,1,1,1,3,609,6,true
+large_doc_ocr_001,1,1,3,0,611,13,true
+local_video_summary_001,1,1,1,2,606,8,true
+multi_source_complex_001,1,1,3,0,616,11,true
+small_doc_summary_001,1,1,1,2,605,8,true
+video_url_summary_001,1,1,1,1,626,6,true
+video_url_summary_002,1,1,3,0,628,11,true
+web_read_001,1,1,1,1,627,6,true

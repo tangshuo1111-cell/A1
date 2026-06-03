@@ -1,0 +1,49 @@
+catalog_version: 1
+captured_at: "2026-05-22T04:13:45.309009+00:00"
+architecture_path: "ingress_v2_fast_complex_lanes"
+capture_tool: "scripts/recapture_perf_baseline.py"
+external_io: mocked
+notes:
+  - "Measures new-path orchestration latency with deterministic mocks."
+  - "Legacy pre-migration estimates archived in perf_baseline_legacy.csv when present."
+samples:
+  kb_query_simple_001:
+    lane: "kb"
+    mode: "fast"
+    first_response_ms: 1
+    total_ms: 1
+  large_doc_ocr_001:
+    lane: "document"
+    mode: "complex"
+    first_response_ms: 1
+    total_ms: 1
+  local_video_summary_001:
+    lane: "document"
+    mode: "fast"
+    first_response_ms: 1
+    total_ms: 1
+  multi_source_complex_001:
+    lane: "general"
+    mode: "complex"
+    first_response_ms: 1
+    total_ms: 1
+  small_doc_summary_001:
+    lane: "document"
+    mode: "fast"
+    first_response_ms: 1
+    total_ms: 1
+  video_url_summary_001:
+    lane: "video"
+    mode: "fast"
+    first_response_ms: 1
+    total_ms: 1
+  video_url_summary_002:
+    lane: "video"
+    mode: "complex"
+    first_response_ms: 1
+    total_ms: 1
+  web_read_001:
+    lane: "web"
+    mode: "fast"
+    first_response_ms: 1
+    total_ms: 1

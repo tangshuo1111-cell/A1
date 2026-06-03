@@ -1,0 +1,82 @@
+source_path,target_path,action,phase,status,owner,done_when,remove_by_phase,notes
+backend/application/chat/run_chat_turn.py,原位,retain+shrink,P6,done,application,resolve_lane_decision + ingress_router_active 守护 fast path；legacy flag 可回滚旧主链,,上帝文件瘦身 + P6 路由接线
+backend/application/chat/fast_path_entry.py,backend/application/chat/fast_path_entry.py,new,P7,done,application,五类 fast path + FAST_CAPABILITY_WHITELIST + cross_lane_violation 审计；test_lane_capability_whitelist 全绿,,fast lane 真实入口与白名单
+backend/application/chat/complex_path_entry.py,backend/application/chat/complex_path_entry.py,new,P5,done,application,tests/migration/test_route_target_table.py + tests/migration/test_autonomy_loop_contract.py 通过且 complex lane 已作为默认复杂入口运行,,complex 编排入口
+backend/application/chat/autonomy_loop.py,backend/application/chat/autonomy_loop.py,new,P8,done,application,three_agent_autonomy_active 守护 + test_autonomy_loop_contract + test_budget_circuit + test_three_agent_autonomy_flags 全绿,,自治闭环协议与熔断
+backend/config/budget_policy.py,backend/config/budget_policy.py,new,P8,done,config,MAX_AUTONOMY_ROUNDS 与预算默认值已接入 complex loop guard,,自治 budget 常量
+backend/application/chat/response_assembly.py,backend/application/chat/response_assembly.py,new,P5,done,application,收容响应组装子函数,,响应组装
+backend/application/chat/budget_clock.py,backend/application/chat/budget_clock.py,new,P5,done,application,收容 budget clock 子函数,,同步主链 budget 钟
+backend/application/chat/history_buffer.py,backend/application/chat/history_buffer.py,new,P5,done,application,收容历史缓存与 ChatTurnDeps,,会话历史缓存
+backend/application/ingress/,backend/application/ingress/,new,P6,done,application,runtime.py + resolve_lane_decision；test_lane_decision_contract + test_ingress_feature_flags + test_trace_contract 全绿,,Ingress Router 平面
+backend/agents/main_agent/*,原位,retain+shrink,P5,existing,agents,Main 仅保留 Planner/Router/Manager 职责,,不再接入 provider/能力细节
+backend/agents/middle_agent/*,原位,retain+shrink,P7,done,agents,§15.10.4：无 rag/retrieval/knowledge 直 import；只经 capabilities/knowledge/*,,MiddleAgent KB 横切归并
+backend/agents/answer_agent/*,原位,retain+shrink,P5,existing,agents,Answer 仅保留 Critic/Verifier/Sign-off 职责,,不再承担能力执行
+backend/agents/middle_agent/video_flow.py,原位,split,P5,done,agents,tests/backend/test_middle_agent.py + tests/backend/test_video_tools.py 通过,,视频编排入口瘦身
+backend/services/video_processing_service.py,backend/services/capabilities/video/processing_service.py,move,P4,retired,services,P5 shim 已删；默认 import 已切新路径,P5,视频能力平面
+backend/services/video_segment_service.py,backend/services/capabilities/video/segment_service.py,move,P4,retired,services,P5 shim 已删；默认 import 已切新路径,P5,视频能力平面
+backend/services/video_parallel_asr_service.py,backend/services/capabilities/video/parallel_asr_service.py,move,P4,retired,services,P5 shim 已删；默认 import 已切新路径,P5,视频能力平面
+backend/services/video_audio_service.py,backend/services/capabilities/video/audio_service.py,move,P4,retired,services,P5 shim 已删；默认 import 已切新路径,P5,视频能力平面
+backend/services/video_background_pipeline.py,(拆 5 块 见下),split,P5,done,services,facade 保留；生产 import 已切 capabilities,P6,后台视频总管拆分
+backend/services/agno_chat_service.py,原位,retain+shrink,P5,existing,services,仅暴露 chat() 入口,,不再吸收 lane 决策
+backend/services/agno_rag_service.py,backend/services/capabilities/knowledge/rag_orchestration_service.py,move,P4,retired,services,P5 shim 已删,P5,知识能力总入口
+backend/services/agno_web_service.py,backend/services/capabilities/web/web_orchestration_service.py,move,P4,retired,services,P5 shim 已删,P5,web 能力总入口
+backend/services/feedback_gate.py,backend/services/execution/feedback_gate.py,move,P4,retired,services,P5 shim 已删,P5,执行策略平面
+backend/services/ingest_service.py,backend/services/capabilities/knowledge/ingest_service.py,move,P4,retired,services,P5 shim 已删,P5,入库能力
+backend/services/pending_ingestion_service.py,backend/services/capabilities/knowledge/pending_ingestion_service.py,move,P4,retired,services,P5 shim 已删,P5,pending 入库
+backend/services/session_store.py,原位,retain,—,existing,services,跨能力共享 session 留在根目录,,不属任一 capability
+backend/services/task_query_service.py,backend/tasks/orchestration/task_query_service.py,move,P4,retired,services,P5 shim 已删,P5,
+backend/services/task_trace_cache.py,backend/tasks/orchestration/task_trace_cache.py,move,P4,retired,services,P5 shim 已删,P5,
+backend/tools/video/extract_web_video_subtitle.py,原位,retain+shrink,P5,done,tools,import 已切 capabilities/video/*,,切段并发 ASR 与队列调度迁出
+backend/tools/video/extract_local_video_subtitle.py,原位,retain+shrink,P5,done,tools,import 已切 capabilities/video/*,,duration probe 与重处理核心迁出
+backend/tools/video/{embedded_subtitle,errors,registry,subtitle_extractor,subtitle_parser,tool_result,web_video_providers}.py,原位,retain,—,existing,tools,不动,,已稳定
+backend/tasks/task_runner.py,backend/tasks/orchestration/task_runner.py,move,P4,retired,tasks,P5 shim 已删,P5,统一任务编排
+backend/tasks/task_store.py,backend/tasks/orchestration/task_store.py,move,P4,retired,tasks,P5 shim 已删,P5,平台状态机基座
+backend/tasks/video_task_queue.py,backend/tasks/queue/video_task_queue.py,move,P4,retired,tasks,P5 shim 已删,P5,异步控制平面
+backend/tasks/queue/async_task_queue.py,backend/tasks/queue/async_task_queue.py,new,P9,done,tasks,tests/migration/test_async_task_contract.py 通过且视频/网页重任务共享同一 queue 抽象,,统一 async task message / queue backend
+backend/workers/video_worker_pool.py,backend/workers/pools/video_worker_pool.py,move,P4,retired,workers,P5 shim 已删,P5,执行平面
+backend/workers/task_trace_cache.py,backend/tasks/orchestration/task_trace_cache.py,move,P4,retired,workers,P5 shim 已删,P5,
+backend/workers/entry/video_task_worker.py,原位,retain,—,existing,workers,import 已切 background_executor,,保持入口稳定
+backend/workers/entry/task_dispatcher.py,原位,retain,—,existing,workers,保持 worker entry 协议,,保持入口稳定
+backend/workers/tasks/task_runner.py,—,remove,P5,retired,workers,重复目录已删,P5,重复目录清债
+backend/workers/tasks/task_store.py,—,remove,P5,retired,workers,重复目录已删,P5,重复目录清债
+backend/workers/entry/task_plane_worker.py,backend/workers/entry/task_plane_worker.py,new,P9,done,workers,tests/migration/test_async_task_contract.py 通过且统一 worker 消费平台级队列,,平台级 worker runtime
+backend/services/execution/async_runtime.py,backend/services/execution/async_runtime.py,new,P9,done,services,async_control_plane_active + ensure_async_workers_started；test_async_task_contract + test_async_control_plane_flags 全绿,,统一 worker 启动与 flag 守护
+backend/services/execution/async_dispatcher.py,backend/services/execution/async_dispatcher.py,new,P9,done,services,视频与 web_heavy_fetch 共用 dispatch 入口,,统一 task dispatch
+backend/services/execution/task_plane_service.py,backend/services/execution/task_plane_service.py,new,P9,done,services,web_heavy_fetch 已通过统一 task plane 入队,,非视频任务接入 async plane
+backend/services/capabilities/web/async_web_pipeline.py,backend/services/capabilities/web/async_web_pipeline.py,new,P9,done,services,web heavy fetch 后台执行接入 task plane,,第二领域接入 async control plane
+docs/current/05_目标运行路径与架构验收表.md,docs/current/05_目标运行路径与架构验收表.md,new,P10,done,docs,tests/migration/test_route_target_table.py + Phase 10 运行路径表已固化 7 类主请求默认路径,,Phase 10 架构验收主文档
+docs/current/migration/route_target_table.csv,docs/current/migration/route_target_table.csv,new,P10,done,docs,tests/migration/test_route_target_table.py 直接读取并验收 lane/mode/loop/async 字段,,Phase 10 目标运行路径表
+docs/current/migration/legacy_paths_status.csv,docs/current/migration/legacy_paths_status.csv,new,P10,done,docs,P5 旧 shim 已 retired,,Phase 10 旧路径切换状态台账
+tests/migration/test_route_target_table.py,tests/migration/test_route_target_table.py,new,P10,done,tests,tests/migration/test_phase10_architecture_acceptance.py + 8 类主请求 ingress/runtime 断言全绿,,Phase 10 总验收测试
+tests/migration/test_phase10_architecture_acceptance.py,tests/migration/test_phase10_architecture_acceptance.py,new,P10,done,tests,默认 flag + legacy retired + web/kb/large-doc/long-video 运行路径验收,,Phase 10 架构验收专项
+backend/video/*,原位,retain+shrink,P5,existing,video,仅保留来源侧支持与 fetch 结果适配,,不再扩成业务编排层
+backend/services/capabilities/knowledge/retrieve_service.py,backend/services/capabilities/knowledge/retrieve_service.py,new,P7,done,services,MiddleAgent 经 retrieve_service 调用 rag.retrieve_knowledge；check_import_boundaries + test_middle_agent_knowledge_imports 全绿,,KB 检索编排入口
+backend/services/capabilities/knowledge/rerank_service.py,backend/services/capabilities/knowledge/rerank_service.py,new,P7,done,services,rerank_chunks 已落地,,KB rerank 编排入口
+backend/services/capabilities/knowledge/grounding_service.py,backend/services/capabilities/knowledge/grounding_service.py,new,P7,done,services,evidence_normalizer + chunk context 经 grounding_service,,证据 grounding 入口
+backend/services/capabilities/knowledge/pending_service.py,backend/services/capabilities/knowledge/pending_service.py,new,P7,done,services,pending_flow / video_flow 经 pending_service 引用 schema 常量,,pending schema facade
+backend/services/capabilities/knowledge/kb_pipeline.py,backend/services/capabilities/knowledge/kb_pipeline.py,new,P7,done,services,KB fast path 经 retrieve→rerank→grounding；test_capability_planes + test_lane_capability_whitelist 全绿,,KB 统一 pipeline
+backend/services/capabilities/document/parse_service.py,backend/services/capabilities/document/parse_service.py,new,P7,done,services,document fast path 经 parse_service,,文档解析编排
+backend/services/capabilities/document/ocr_service.py,backend/services/capabilities/document/ocr_service.py,new,P7/P9,done,services,sync OCR + document_ocr enqueue,,OCR 编排
+backend/services/capabilities/document/summarize_service.py,backend/services/capabilities/document/summarize_service.py,new,P7,done,services,document fast summarize,,文档摘要编排
+backend/services/capabilities/document/early_document_support.py,backend/services/capabilities/document/early_document_support.py,new,P7,done,services,run_early_document_prepare_flow 自 video_flow 迁出,,complex gather 文档 prepare
+backend/services/capabilities/document/async_document_pipeline.py,backend/services/capabilities/document/async_document_pipeline.py,new,P9,done,services,test_async_task_contract 含 document_ocr,,async document OCR
+tests/migration/test_capability_planes.py,tests/migration/test_capability_planes.py,new,P7,done,tests,document + knowledge 能力 plane 模块存在性验收,,能力平面结构测试
+scripts/recapture_perf_baseline.py,scripts/recapture_perf_baseline.py,new,P10,done,scripts,新路径 perf 重采；test_perf_baseline_regression 全绿,,P0/P10 性能基线
+tests/migration/test_perf_baseline_regression.py,tests/migration/test_perf_baseline_regression.py,new,P10,done,tests,8 sample SLA + CSV 一致性,,性能基线回归
+backend/services/capabilities/video/video_decision.py,backend/services/capabilities/video/video_decision.py,new,P5,done,services,video_flow 决策逻辑迁出；import boundary 全绿,,视频意图/决策
+backend/services/capabilities/video/web_video_gather.py,backend/services/capabilities/video/web_video_gather.py,new,P5,done,services,run_early_web_video_flow 迁出 video_flow,,complex gather 网页视频
+backend/services/capabilities/video/mcp_video_support.py,backend/services/capabilities/video/mcp_video_support.py,new,P5,done,services,run_mcp_video_tool_and_pending 迁出,,MCP 本地视频 pending
+backend/services/capabilities/video/path_signals.py,backend/services/capabilities/video/path_signals.py,new,P5,done,services,.mp4 路径信号无 agent 依赖,,path 信号
+backend/services/capabilities/video/web_video_extract_service.py,backend/services/capabilities/video/web_video_extract_service.py,new,P5,done,services,extract_web 重逻辑；tools 仅 adapter,,网页视频提取
+backend/services/capabilities/video/local_video_extract_service.py,backend/services/capabilities/video/local_video_extract_service.py,new,P5,done,services,extract_local 重逻辑；tools 仅 adapter,,本地视频提取
+backend/application/ingress/README.md,backend/application/ingress/README.md,new,P2,done,application,ingress 平面模块说明,,P2 README
+backend/services/capabilities/video/README.md,backend/services/capabilities/video/README.md,new,P2,done,services,video 能力平面说明,,P2 README
+backend/services/capabilities/web/README.md,backend/services/capabilities/web/README.md,new,P2,done,services,web 能力平面说明,,P2 README
+docs/current/contracts/critic_rubric.md,docs/current/contracts/critic_rubric.md,new,P8,done,docs,test_critic_rubric_contract 全绿,,Critic 评分 rubric
+tests/migration/test_critic_rubric_contract.py,tests/migration/test_critic_rubric_contract.py,new,P8,done,tests,critic_check 字段契约,,P8 契约测试
+docs/current/baselines/trace_baseline_new/,docs/current/baselines/trace_baseline_new/,new,P10,done,docs,test_trace_baseline_new 8 sample 新路径,,P10 新 trace 基线
+tests/migration/test_trace_baseline_new.py,tests/migration/test_trace_baseline_new.py,new,P10,done,tests,新路径 call_path 与 route_target_table 对齐,,P10 trace 验收
+tests/manual/baseline_real_external_probe.py,tests/manual/baseline_real_external_probe.py,new,P10,done,tests,optional real_external perf 手测探针,,外部 perf 探针
+docs/current/migration/flag_rollout_schedule.md,docs/current/migration/flag_rollout_schedule.md,new,ops,done,docs,§15.8.2 灰度切换表,,运维灰度表
+docs/current/migration/redis_async_smoke_record.md,docs/current/migration/redis_async_smoke_record.md,new,ops,done,docs,Redis/memory async 联调记录,,运维联调
+tests/migration/test_multi_source_research_optional.py,tests/migration/test_multi_source_research_optional.py,new,P9,done,tests,multi_source_research optional 契约,,P9 optional 任务

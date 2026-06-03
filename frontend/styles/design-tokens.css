@@ -1,0 +1,45 @@
+/**
+ * 设计 token：暖色、留白、圆角与阴影（样式层）。
+ * 供 globals.css 与 Tailwind @theme 引用，统一「安静、克制」的产品气质。
+ */
+
+:root {
+  /* 页面与表面 */
+  --surface-page: #f7f3ee;
+  --surface-elevated: #fdfaf6;
+  --surface-card: #fffcf8;
+  --surface-input: #fffefb;
+
+  /* 文字 */
+  --ink-primary: #2c2622;
+  --ink-secondary: #6b635c;
+  --ink-tertiary: #9a918a;
+  --ink-faint: #c4bbb2;
+
+  /* 强调：陶土 / 暖棕 */
+  --accent: #b8956a;
+  --accent-soft: #d4b896;
+  --accent-muted: rgba(184, 149, 106, 0.12);
+
+  /* 边框与分割 */
+  --line-subtle: rgba(44, 38, 34, 0.06);
+  --line-default: rgba(44, 38, 34, 0.09);
+
+  /* 阴影：几乎不可见 */
+  --shadow-soft: 0 1px 2px rgba(44, 38, 34, 0.04),
+    0 8px 24px rgba(44, 38, 34, 0.03);
+
+  /* 圆角体系 */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+
+  /* 状态色（柔和，非警报红块） */
+  --state-warn: #a67c52;
+  --state-warn-bg: rgba(166, 124, 82, 0.08);
+  --state-error: #9a6b5c;
+  --state-error-bg: rgba(154, 107, 92, 0.08);
+  --state-ok: #7d8f72;
+  --state-ok-bg: rgba(125, 143, 114, 0.1);
+}

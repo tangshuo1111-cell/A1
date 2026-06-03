@@ -1,0 +1,62 @@
+@import "tailwindcss";
+@import "../styles/design-tokens.css";
+
+/**
+ * 全局样式与 Tailwind v4 主题桥接（样式层）。
+ * 固定浅色暖色产品基调，避免系统深色模式把页面切成「科技暗色」。
+ */
+
+@theme inline {
+  --color-surface-page: var(--surface-page);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-card: var(--surface-card);
+  --color-surface-input: var(--surface-input);
+  --color-ink-primary: var(--ink-primary);
+  --color-ink-secondary: var(--ink-secondary);
+  --color-ink-tertiary: var(--ink-tertiary);
+  --color-ink-faint: var(--ink-faint);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-muted: var(--accent-muted);
+  --color-line-subtle: var(--line-subtle);
+  --color-line-default: var(--line-default);
+  --font-sans: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+html {
+  color-scheme: only light;
+}
+
+body {
+  background-color: var(--surface-page);
+  color: var(--ink-primary);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background-color: var(--accent-muted);
+  color: var(--ink-primary);
+}
+
+/* 聚焦环：干净、暖色 */
+:focus-visible {
+  outline: 2px solid var(--accent-soft);
+  outline-offset: 2px;
+}
+
+@keyframes maqa-breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.85;
+    transform: translateY(-2px);
+  }
+}
+
+.maqa-breathe-dot {
+  animation: maqa-breathe 1.2s ease-in-out infinite;
+}

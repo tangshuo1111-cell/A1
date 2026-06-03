@@ -1,0 +1,76 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: light_maqa
+      POSTGRES_PASSWORD: light_maqa_dev
+      POSTGRES_DB: light_maqa
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U light_maqa -d light_maqa"]
+      interval: 5s
+      timeout: 5s
+      retries: 8
+      start_period: 10s
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  api:
+    build: .
+    image: light-maqa:0.7.0
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      APP_ENV: prod
+      RAG_HYBRID: "1"
+      DATABASE_URL: postgresql://light_maqa:light_maqa_dev@postgres:5432/light_maqa
+      RATE_LIMIT_STORAGE_URI: redis://redis:6379/0
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 50s
+    volumes:
+      - ./_local/data:/app/_local/data
+      - ./data/samples/knowledge:/app/data/samples/knowledge:ro
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.5"
+          memory: "1.5G"
+
+volumes:
+  pg_data:

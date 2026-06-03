@@ -1,0 +1,26 @@
+sample_id: video_url_summary_001
+intent: 视频 URL 总结
+input:
+  message: "请总结这个视频 https://www.bilibili.com/video/BV1baseline001"
+  session_id: "baseline_video_url_summary_001"
+  use_knowledge: false
+  attachments: []
+expected_lane_old: "unified_main_chain"
+expected_lane_new: "video"
+expected_mode_new: "fast"
+expected_call_path:
+  - "application.chat.run_chat_turn:run_agno_chat_turn_impl"
+  - "agents.middle_agent.video_flow:run_early_web_video_flow"
+  - "tools.video.extract_web_video_subtitle:_extract_web_video_subtitle"
+expected_trace_keys:
+  - "request_id"
+  - "session_id"
+  - "v11_middle_video_url_asr_model"
+must_not_regress:
+  - response_includes: "视频"
+  - first_response_ms_le: 4000
+acceptance_after_migration:
+  lane: "video"
+  mode_either_of: ["fast", "complex"]
+  must_call_capability: "capability.video.subtitle_probe"
+  must_not_call_capability: "capability.kb.retrieve"

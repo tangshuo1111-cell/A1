@@ -1,0 +1,11 @@
+# Gitleaks — 仓库根目录（与 CI / pre-commit 使用的 git 根一致）
+# 口径：docs/evidence、fixtures、samples 路径整段白名单；
+# 生产代码 / 配置误报须人工确认后再加规则，禁止盲扩白名单。
+
+[allowlist]
+description = "Release-only evidence dir, test fixtures, samples"
+paths = [
+  '''项目代码/docs/evidence/.*''',
+  '''项目代码/tests/fixtures/.*''',
+  '''项目代码/data/samples/.*''',
+]

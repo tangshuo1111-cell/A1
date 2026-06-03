@@ -1,0 +1,55 @@
+{
+  "benchmark_id": "kb-agent-eval-v1",
+  "questions": [
+    {
+      "id": "KBX1",
+      "category": "kb_agent_compare",
+      "prompt": "请结合知识库中的协作施工计划、项目评估与上线建议，判断当前系统最影响真实用户体验的三个问题，并按优先级排序。"
+    },
+    {
+      "id": "KBX2",
+      "category": "kb_agent_compare",
+      "prompt": "请基于知识库说明：当前系统为什么会出现“复杂题没有稳定进入 Agent 主链”的现象？请从路由、材料流、结果闭环三方面分析。"
+    },
+    {
+      "id": "KBX3",
+      "category": "kb_agent_compare",
+      "prompt": "请结合知识库中的协作施工计划、Agent 评测基准和测试质量审计，判断当前系统的最大质量风险到底是“路由错误”“回答截断”还是“链路不闭环”，并说明为什么。"
+    },
+    {
+      "id": "KBX4",
+      "category": "kb_agent_compare",
+      "prompt": "请基于知识库，对比当前系统中的 Agent 主链、capability 主链、async task 主链，分别说明它们最适合解决什么问题、最不适合解决什么问题。"
+    },
+    {
+      "id": "KBX5",
+      "category": "kb_agent_compare",
+      "prompt": "请结合知识库判断：如果现在只能优先修一个方向，应该优先修视频链、KB 检索链，还是复杂题进入 Agent 主链的路由？请给出你的推荐和取舍理由。"
+    },
+    {
+      "id": "KBX6",
+      "category": "kb_agent_compare",
+      "prompt": "请基于知识库，解释为什么“多 Agent 主链不该依赖后台 task join 才成立”这个判断是合理的，同时给出它成立的前提和边界。"
+    },
+    {
+      "id": "KBX7",
+      "category": "kb_agent_compare",
+      "prompt": "请结合知识库中的协作施工计划和你对当前实现的评测，设计一个“更合理的两条重视频 compare 信息流”，要求说明每一层负责什么。"
+    },
+    {
+      "id": "KBX8",
+      "category": "kb_agent_compare",
+      "prompt": "请基于知识库里的材料，说明当前系统中哪些问题已经从“架构协作问题”降级成了“实现收口问题”，哪些还不是。"
+    },
+    {
+      "id": "KBX9",
+      "category": "kb_agent_compare",
+      "prompt": "请结合知识库中的 Agent 评测基准结果，分析当前系统为什么“复杂推理组织能力上限存在，但工程成熟度还不够”。"
+    },
+    {
+      "id": "KBX10",
+      "category": "kb_agent_compare",
+      "prompt": "如果你是这个项目的架构负责人，请基于知识库给出未来 4 周的整改优先级路线图，要求分成：统一口径、行为收口、数据能力、专项链优化。"
+    }
+  ]
+}

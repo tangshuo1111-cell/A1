@@ -1,0 +1,32 @@
+{
+  "benchmark_id": "agent-eval-2026-05-26-a",
+  "source": "2026-05-26 first benchmark run",
+  "scored_result_file": "_local/agent_eval_scored_2026-05-26.json",
+  "summary": {
+    "average_score_all": 5.7,
+    "average_score_without_major_failures": 6.7,
+    "major_failure_ids": [
+      "Q2",
+      "Q6"
+    ],
+    "best_agent_cases": [
+      "Q1",
+      "Q4"
+    ],
+    "conclusion": "Agent 主链质量上限不错，但复杂题稳定进入 Agent 主链并稳定完整输出的工程成熟度还不够。"
+  },
+  "item_scores": {
+    "Q1": 8.7,
+    "Q2": 0.5,
+    "Q3": 7.4,
+    "Q4": 8.0,
+    "Q5": 5.8,
+    "Q6": 0.0,
+    "Q7": 6.0,
+    "Q8": 6.4,
+    "Q9": 6.8,
+    "Q10": 5.5,
+    "Q11": 7.2,
+    "Q12": 6.2
+  }
+}

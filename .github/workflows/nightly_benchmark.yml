@@ -1,0 +1,73 @@
+name: Nightly KB Benchmark
+
+on:
+  schedule:
+    # 每天 UTC 02:00（北京时间 10:00）
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: nightly-kb-benchmark
+  cancel-in-progress: false
+
+jobs:
+  kb-benchmark:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: light_maqa
+          POSTGRES_PASSWORD: light_maqa_dev
+          POSTGRES_DB: light_maqa
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U light_maqa -d light_maqa"
+          --health-interval 4s
+          --health-timeout 5s
+          --health-retries 12
+          --health-start-period 10s
+    env:
+      LIGHT_MAQA_FAKE_LLM: "1"
+      PLAYWRIGHT_BROWSERS_PATH: "0"
+      DATABASE_URL: postgresql://light_maqa:light_maqa_dev@localhost:5432/light_maqa
+    defaults:
+      run:
+        working-directory: 项目代码
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: 项目代码/requirements.lock
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.lock
+
+      - name: Ingest KB benchmark strengthening pack
+        run: python scripts/benchmarks/ingest_kb_strengthening_pack.py
+
+      - name: Run KB agent eval (local runner)
+        run: |
+          mkdir -p _local
+          python scripts/benchmarks/run_kb_agent_eval.py \
+            --runner local \
+            --output _local/kb_nightly.json
+
+      - name: Check KB regression thresholds
+        run: python scripts/benchmarks/check_kb_regression.py --results _local/kb_nightly.json
+
+      - name: Upload nightly KB eval artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kb-nightly-eval
+          path: 项目代码/_local/kb_nightly.json
+          if-no-files-found: error

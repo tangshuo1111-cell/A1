@@ -1,0 +1,1212 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "LightMultiAgentQA",
+    "version": "0.7.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "public"
+        ],
+        "summary": "Health",
+        "description": "存活 + PostgreSQL / 可选 embedding 表探活。",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/agno": {
+      "post": {
+        "tags": [
+          "public-default"
+        ],
+        "summary": "Post Chat Agno",
+        "description": "V1 默认基础问答入口：只走 agno_chat_service，不经 LangGraph。\n\n生产版第二轮（B-007）：路由 async；主链同步函数在线程池执行，避免阻塞事件循环。",
+        "operationId": "post_chat_agno_chat_agno_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/chat/agno/upload": {
+      "post": {
+        "tags": [
+          "public-default"
+        ],
+        "summary": "Post Chat Agno Upload",
+        "description": "V13 R2 拖拽文件入口：multipart 上传文本/常见办公文件，触发文件 prepare 链路。\n\n请求格式：multipart/form-data\n  - message:       用户说的话（如\"先帮我解析这个文件\"）\n  - session_id:    会话 ID（可选，跨轮保存需一致）\n  - use_knowledge: 是否同时检索知识库（默认 false）\n  - file:          支持的文件（≤ 10 MB）\n\n响应：与 POST /chat/agno 完全相同的 ChatResponse 结构。\nextra 字段会额外包含：\n  - pending_kind: \"material_pending\" / \"processing_pending\" / ...\n  - pending_source_id: 当前待保存材料的 pending_id（如存在）\n  - pending_preview: 待保存材料的标题、来源类型与元信息摘要\n\n解析状态说明（extra.pending_preview.metadata.extract_status）：\n  - ok:                 解析成功，资料已进入 pending，可在后续轮次中说「保存到知识库」\n  - unsupported_format: 不支持的文件格式（当前只支持 .txt / .md）\n  - file_not_found:     文件内容为空\n  - parse_failed:       解析过程出错\n  - empty_content:      解析成功但内容为空",
+        "operationId": "post_chat_agno_upload_chat_agno_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_post_chat_agno_upload_chat_agno_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tasks/{task_id}": {
+      "get": {
+        "tags": [
+          "public-default"
+        ],
+        "summary": "Get Task",
+        "operationId": "get_task_tasks__task_id__get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Task Tasks  Task Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tasks/{task_id}/result": {
+      "get": {
+        "tags": [
+          "public-default"
+        ],
+        "summary": "Get Task Result",
+        "operationId": "get_task_result_tasks__task_id__result_get",
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Task Result Tasks  Task Id  Result Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/video/metadata": {
+      "post": {
+        "tags": [
+          "public-default"
+        ],
+        "summary": "Post Web Video Metadata",
+        "description": "yt-dlp 仅取元数据（不下媒体）。白名单外链与 ``fetch_video_text`` 一致。",
+        "operationId": "post_web_video_metadata_video_metadata_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebVideoMetadataRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Post Web Video Metadata Video Metadata Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ingest/samples": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Ingest Samples",
+        "operationId": "ingest_samples_ingest_samples_post",
+        "parameters": [
+          {
+            "name": "X-Admin-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Admin-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SamplesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ingest/paths": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Ingest Paths",
+        "operationId": "ingest_paths_ingest_paths_post",
+        "parameters": [
+          {
+            "name": "X-Admin-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Admin-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestPathsRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ingest/text": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Ingest Text",
+        "operationId": "ingest_text_ingest_text_post",
+        "parameters": [
+          {
+            "name": "X-Admin-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Admin-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestTextRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngestResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sessions/{session_id}": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Get Session Summary",
+        "operationId": "get_session_summary_sessions__session_id__get",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Session Id"
+            }
+          },
+          {
+            "name": "X-Admin-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Admin-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Session Summary Sessions  Session Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config/video_cookies/status": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Video Cookies Status",
+        "description": "返回 cookies 当前状态，给前端 ``VideoCookiesGuide`` 组件渲染。\n\n返回字段（**全部稳定**，前端类型可对齐）：\n- ``source``: ``\"browser:<name>\"`` / ``\"file\"`` / ``\"none\"``\n              —— 即 ``settings.video_cookies_choice()`` 的结论\n- ``effective_path``: ``str | None`` —— 当前实际生效的文件路径（仅 source=file 时有）\n- ``managed_path``:   ``str``        —— 前端\"上传\"接口会写入的固定路径\n- ``managed_file``:   ``dict``       —— 上面这个文件的状态（exists/size/modified/domains）\n- ``whitelist_domains``: ``list[str]`` —— 当前白名单（前端展示\"我可以为这些站上传\"）\n- ``upload_max_bytes``: ``int``      —— 大小上限（前端预校验）",
+        "operationId": "video_cookies_status_config_video_cookies_status_get",
+        "parameters": [
+          {
+            "name": "X-Admin-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Admin-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Video Cookies Status Config Video Cookies Status Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config/video_cookies/upload": {
+      "post": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Upload Video Cookies",
+        "description": "multipart 上传 cookies.txt。\n\n成功返回：\n    ``{\"ok\": True, \"managed_path\": \"<abs>\", \"size_bytes\": N,\n       \"matched_whitelist_domains\": [...], \"all_domains\": [...], \"hot_reloaded\": True}``\n\n失败返回 4xx + ``{\"detail\": {\"code\": \"<CODE>\", \"message\": \"<中文>\"}}``，\ncode 集合：``EMPTY_FILE / TOO_LARGE / DECODE_FAILED / NOT_COOKIES_TXT / NO_WHITELIST_DOMAIN``。",
+        "operationId": "upload_video_cookies_config_video_cookies_upload_post",
+        "parameters": [
+          {
+            "name": "X-Admin-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Admin-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_video_cookies_config_video_cookies_upload_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Upload Video Cookies Config Video Cookies Upload Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config/video_cookies": {
+      "delete": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Delete Video Cookies",
+        "description": "删除托管的 cookies 文件 + 把 runtime ``video_cookies_file`` 清空。\n\n幂等：文件不存在时也返回 ok=True，方便前端多次点\"清除\"不报错。\n注意：**不**碰 ``video_cookies_from_browser``（那是 .env 显式配的，\n用户清 cookies 文件不代表想关浏览器路径）。",
+        "operationId": "delete_video_cookies_config_video_cookies_delete",
+        "parameters": [
+          {
+            "name": "X-Admin-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Admin-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Delete Video Cookies Config Video Cookies Delete"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/metrics": {
+      "get": {
+        "tags": [
+          "internal"
+        ],
+        "summary": "Get Metrics",
+        "operationId": "get_metrics_internal_metrics_get",
+        "parameters": [
+          {
+            "name": "X-Admin-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Admin-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Metrics Internal Metrics Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/tasks/recent": {
+      "get": {
+        "tags": [
+          "internal"
+        ],
+        "summary": "List Recent Tasks",
+        "operationId": "list_recent_tasks_internal_tasks_recent_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 30,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "X-Admin-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Admin-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response List Recent Tasks Internal Tasks Recent Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Body_post_chat_agno_upload_chat_agno_upload_post": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 32000,
+            "minLength": 1,
+            "title": "Message",
+            "description": "用户问题（与 /agno 的 message 字段含义一致）"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id",
+            "description": "会话 ID，追问需一致"
+          },
+          "use_knowledge": {
+            "type": "boolean",
+            "title": "Use Knowledge",
+            "description": "是否启用本地样例知识检索",
+            "default": false
+          },
+          "confirm_long_web_video_asr": {
+            "type": "boolean",
+            "title": "Confirm Long Web Video Asr",
+            "description": "用户已确认对超长网页视频走 ASR（与 JSON /chat/agno 同名字段）",
+            "default": false
+          },
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "待 prepare 的文件（如 .txt/.md/.docx/.pdf/.xlsx，≤ 10 MB）"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message",
+          "file"
+        ],
+        "title": "Body_post_chat_agno_upload_chat_agno_upload_post"
+      },
+      "Body_upload_video_cookies_config_video_cookies_upload_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_video_cookies_config_video_cookies_upload_post"
+      },
+      "ChatRequest": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 32000,
+            "minLength": 1,
+            "title": "Message",
+            "description": "用户问题"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id",
+            "description": "会话 ID，追问需一致"
+          },
+          "use_knowledge": {
+            "type": "boolean",
+            "title": "Use Knowledge",
+            "description": "是否启用本地样例知识检索（V2 最小闭环；仍走 /chat/agno，无新对外主入口）",
+            "default": false
+          },
+          "confirm_long_web_video_asr": {
+            "type": "boolean",
+            "title": "Confirm Long Web Video Asr",
+            "description": "用户已确认对超长网页视频（超过 V16_WEB_VIDEO_ASR_FALLBACK_MAX_SEC）走 ASR",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "ChatRequest"
+      },
+      "ChatResponse": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "default": true
+          },
+          "task_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Id"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "answer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer"
+          },
+          "answer_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer Type"
+          },
+          "task_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Status"
+          },
+          "has_insufficient_info_notice": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Has Insufficient Info Notice"
+          },
+          "router_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Router Source"
+          },
+          "primary_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Path"
+          },
+          "evidence_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence State"
+          },
+          "extra": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra"
+          },
+          "pipeline_ok": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pipeline Ok"
+          },
+          "debug_stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Debug Stage"
+          },
+          "error_layer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Layer"
+          },
+          "pipeline_error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pipeline Error Code"
+          },
+          "pipeline_hint_zh": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pipeline Hint Zh"
+          },
+          "workflow_elapsed_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workflow Elapsed Ms",
+            "description": "本轮 LangGraph 端到端耗时（毫秒），用于区分慢与错"
+          },
+          "interaction_mode_zh": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interaction Mode Zh",
+            "description": "用户可读的本轮交互模式（如知识库检索、读示例文件等）"
+          }
+        },
+        "type": "object",
+        "title": "ChatResponse"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "IngestPathsRequest": {
+        "properties": {
+          "paths": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Paths",
+            "description": "相对项目根或绝对路径的文件"
+          }
+        },
+        "type": "object",
+        "title": "IngestPathsRequest"
+      },
+      "IngestResponse": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "default": true
+          },
+          "chunks_written": {
+            "type": "integer",
+            "title": "Chunks Written",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "IngestResponse"
+      },
+      "IngestTextRequest": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Text"
+          },
+          "source_id": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Source Id",
+            "description": "逻辑来源 ID"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "source_id"
+        ],
+        "title": "IngestTextRequest"
+      },
+      "SamplesResponse": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "default": true
+          },
+          "chunks_written": {
+            "type": "integer",
+            "title": "Chunks Written",
+            "default": 0
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": "ingested knowledge_samples/"
+          }
+        },
+        "type": "object",
+        "title": "SamplesResponse"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WebVideoMetadataRequest": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 12,
+            "title": "Url",
+            "description": "白名单内的视频页 URL（ASCII）"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "WebVideoMetadataRequest"
+      }
+    }
+  }
+}

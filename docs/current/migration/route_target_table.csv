@@ -1,0 +1,9 @@
+sample_id,request_type,lane,mode,enters_autonomy_loop,enters_async_control_plane,target_path,required_trace_field
+video_url_summary_001,视频 URL 总结,video,fast,no,no,video_fast_path,fast_lane_name
+video_url_summary_002,长视频 URL 总结并允许后台化,video,async,no,yes,video_async_background_hint,task_id
+local_video_summary_001,本地视频总结,video,fast,no,no,video_fast_path,fast_lane_name
+small_doc_summary_001,小文档快速总结,document,fast,no,no,document_fast_path,fast_lane_name
+large_doc_ocr_001,大文档 OCR 抽取,document,complex,no,no,document_complex_ocr,router_lane
+web_read_001,单网页抓取总结,web,fast,no,no,web_fast_path,fast_lane_name
+kb_query_simple_001,简单知识库问答,kb,fast,no,no,kb_fast_path,fast_lane_name
+multi_source_complex_001,复杂多来源请求,general,complex,yes,no,complex_autonomy_loop,loop_id

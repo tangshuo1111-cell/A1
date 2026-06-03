@@ -1,0 +1,35 @@
+catalog_version: 1
+generated_from: "docs/current/平台图+三强自治核心架构迁移执行计划.md §15.1"
+notes:
+  - "Phase 0 baseline catalog for pre-migration behavior snapshots."
+  - "expected_lane_new / expected_mode_new are migration targets, not current runtime assertions."
+request_types:
+  - request_type: video_url_summary
+    description: "明确视频 URL，总结型请求。"
+    samples:
+      - video_url_summary_001
+      - video_url_summary_002
+  - request_type: local_video_summary
+    description: "本地视频文件总结。"
+    samples:
+      - local_video_summary_001
+  - request_type: small_document_summary
+    description: "小文档轻解析与总结。"
+    samples:
+      - small_doc_summary_001
+  - request_type: large_document_ocr
+    description: "大文档或扫描文档，需要 OCR 或后台化。"
+    samples:
+      - large_doc_ocr_001
+  - request_type: web_read
+    description: "明确网页抓取与总结。"
+    samples:
+      - web_read_001
+  - request_type: kb_query_simple
+    description: "知识库单轮检索问答。"
+    samples:
+      - kb_query_simple_001
+  - request_type: multi_source_complex
+    description: "多来源复杂任务，预期后续进入 complex lane。"
+    samples:
+      - multi_source_complex_001

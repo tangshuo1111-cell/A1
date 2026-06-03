@@ -1,0 +1,66 @@
+{
+  "benchmark_id": "agent-eval-v1",
+  "title": "Agent 复杂推理与组织能力评测题集 v1",
+  "questions": [
+    {
+      "id": "Q1",
+      "category": "complex_reasoning",
+      "prompt": "如果一个创业团队只有 6 个月现金流，产品还没 PMF，现在应该优先融资、裁员、还是继续打磨产品？请分情况分析，并给出你最终建议。"
+    },
+    {
+      "id": "Q2",
+      "category": "decision_support",
+      "prompt": "我在大厂做了 5 年，现在拿到一个降薪 30% 的创业公司 offer。请从职业成长、风险、现金流、安全边际三个角度帮我做决策。"
+    },
+    {
+      "id": "Q3",
+      "category": "diagnostic_reasoning",
+      "prompt": "如果一个 AI 产品留存很高但付费很差，说明了什么？请列出 5 种可能解释，并说明每种解释对应的验证方法。"
+    },
+    {
+      "id": "Q4",
+      "category": "multi_source_compare",
+      "prompt": "请比较 Cursor、Windsurf、Codex 这三类 AI coding assistant，从定位、工作流、适合人群、潜在风险四个维度分析。"
+    },
+    {
+      "id": "Q5",
+      "category": "vendor_compare",
+      "prompt": "请比较 OpenAI、Anthropic、Google 在 AI Agent 产品方向上的差异，重点看：模型能力、工具调用、工作流集成、企业落地。"
+    },
+    {
+      "id": "Q6",
+      "category": "tool_compare",
+      "prompt": "对比 Notion、Obsidian、Anytype 三种知识管理路线，分别适合什么样的人，长期成本和迁移风险是什么？"
+    },
+    {
+      "id": "Q7",
+      "category": "mechanism_analysis",
+      "prompt": "为什么很多 AI 创业公司看起来很火，但 1 年后就没声音了？请尽量给出机制层面的解释，如果证据不足请明确说哪里不足。"
+    },
+    {
+      "id": "Q8",
+      "category": "debate",
+      "prompt": "请判断：“所有 AI Agent 产品最后都会收敛成 Copilot 形态” 这句话对不对？要求先给支持论据，再给反对论据，最后做判断。"
+    },
+    {
+      "id": "Q9",
+      "category": "debate",
+      "prompt": "我觉得“多 Agent 架构大多是伪需求”，你认同吗？请站在支持者和反对者两边都认真论证，再给你的结论。"
+    },
+    {
+      "id": "Q10",
+      "category": "audience_rewrite",
+      "prompt": "请把“为什么企业部署 AI Agent 很难”讲给三类人听：老板、产品经理、工程师。每类人各用一段话。"
+    },
+    {
+      "id": "Q11",
+      "category": "audience_rewrite",
+      "prompt": "请把“RAG 不等于 AI 搜索”这个观点，写成一段面向非技术读者的解释，再写成一段面向技术团队的解释。"
+    },
+    {
+      "id": "Q12",
+      "category": "prudent_writing",
+      "prompt": "我想说服团队不要盲目上多 Agent，请帮我写一版支持谨慎推进的内部说明，要求客观、不极端。"
+    }
+  ]
+}

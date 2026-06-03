@@ -1,0 +1,9 @@
+sample_id,first_response_ms,total_ms,llm_calls,tool_calls,token_in,token_out,success
+video_url_summary_001,2860,18420,2,4,12300,860,true
+video_url_summary_002,3120,19680,2,5,13420,910,true
+local_video_summary_001,3380,20110,2,4,12880,905,true
+small_doc_summary_001,2420,6890,2,2,8400,760,true
+large_doc_ocr_001,3980,25400,2,3,9720,790,true
+web_read_001,2650,7210,2,2,9100,780,true
+kb_query_simple_001,1980,5120,2,1,7020,650,true
+multi_source_complex_001,4210,21350,3,4,15400,1120,true

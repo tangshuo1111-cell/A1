@@ -1,0 +1,13 @@
+{
+  "sample_id": "multi_source_complex_001",
+  "baseline_version": 1,
+  "legacy_path": "unified_main_chain",
+  "trace_keys_present": ["request_id", "session_id", "interaction_mode_zh"],
+  "call_path_snapshot": [
+    "application.chat.run_chat_turn:run_agno_chat_turn_impl",
+    "agents.main_agent.runtime:pan",
+    "agents.middle_agent.runtime:caipan",
+    "agents.answer_agent.runtime:huida"
+  ],
+  "notes": "Complex multi-source baseline prior to lane/mode runtime split."
+}

@@ -1,0 +1,99 @@
+from __future__ import annotations
+
+from threading import Lock
+from types import SimpleNamespace
+
+from agents.answer_agent import AnswerAgent
+from agents.main_agent.schema import AgnoCollaborationPlan, MainXiezuoPan
+from agents.middle_agent.schema import AgnoMaterialBundle, CailiaoPan, EvidenceEnvelope
+from application.chat.run_chat_turn import ChatTurnDeps, run_agno_chat_turn_impl
+from schemas import MainDecision
+
+
+def _plan(*, max_rounds: int = 1, budget_policy: dict | None = None) -> AgnoCollaborationPlan:
+    return AgnoCollaborationPlan(
+        decision=MainDecision(task_id="p8-task", task_status="routed"),
+        force_skip_evidence=False,
+        web_supplement_mode="on_kb_miss_or_hint",
+        answer_composition="default",
+        xiezuo_pan=MainXiezuoPan(
+            renwu_lei="zhishu",
+            zhengju_need=True,
+            allow_kb=True,
+            allow_web=True,
+            fengxian_yinzi=0.5,
+            celue_tag="kb_web",
+        ),
+        needs_retrieval=True,
+        retrieval_strategy="auto",
+        answer_mode="knowledge_grounded",
+        tools_allowed=("fetch_web",),
+        max_rounds=max_rounds,
+        original_user_intent="请根据知识库和网页证据回答：项目代号是什么",
+        budget_policy=budget_policy or {"llm_calls_remaining": 2, "tool_calls_remaining": 2},
+    )
+
+
+def _bundle() -> AgnoMaterialBundle:
+    return AgnoMaterialBundle(
+        knowledge_block="",
+        web_block="",
+        trace=[],
+        knowledge_adequate=False,
+        material_still_insufficient=True,
+        web_judgment_reason="skip",
+        kb_evidence_tier="none",
+        insufficiency_signal="still_empty_after_gather",
+        cailiao_pan=CailiaoPan(
+            gou=False,
+            kb_qiangdu=0.0,
+            bukong_xinhao="que",
+            laiyuan_zhu="wu",
+            use_kb=True,
+            use_web=False,
+            que_shenme="liangzhe",
+            xia_yi_bu="bu_wang",
+        ),
+        material_sufficiency="insufficient",
+        evidence_envelopes=[EvidenceEnvelope(source_type="kb", status="failed", error_code="kb_no_match")],
+        critic_check={
+            "critic_check_id": "critic_p8",
+            "revision_required": True,
+            "safe_to_answer": False,
+            "limitations": ["当前没有成功证据来源，最终回答必须保守说明。"],
+        },
+        answer_limitations=["当前没有成功证据来源，最终回答必须保守说明。"],
+    )
+
+
+def test_complex_chain_exposes_autonomy_loop_fields(monkeypatch) -> None:
+    monkeypatch.setattr(
+        "application.chat.run_chat_turn.agno_web_service.fetch_web_evidence_block",
+        lambda *_a, **_k: "[Web检索] 项目代号是 Atlas",
+    )
+    deps = ChatTurnDeps(
+        histories={},
+        session_prev_video={},
+        session_pending_video={},
+        lock=Lock(),
+        main_agent=SimpleNamespace(pan=lambda *a, **k: _plan()),
+        middle_agent=SimpleNamespace(caipan=lambda *a, **k: _bundle()),
+        answer_agent=AnswerAgent(),
+        run_basic_qa=lambda *a, **k: "基于补充网页证据，项目代号是 Atlas。",
+        path_fingerprint=lambda *a, **k: "fp",
+        nodes_contract=lambda tr: {},
+    )
+    out = run_agno_chat_turn_impl(
+        "请根据知识库和网页证据回答：项目代号是什么",
+        session_id="p8-loop",
+        deps=deps,
+    )
+    extra = out["extra"]
+    assert str(extra["loop_id"]).startswith("loop_")
+    assert isinstance(extra["autonomy_events"], list) and extra["autonomy_events"]
+    assert extra["answer_check"] in {"pass", "revise", "more_evidence"}
+    assert extra["more_evidence_requested"] is True
+    assert extra["retry_requested"] is True
+    assert extra["loop_total_rounds"] == 2
+    assert extra["stop_reason"] == "round_1_completed"
+

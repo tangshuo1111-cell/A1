@@ -1,0 +1,12 @@
+legacy_path,replacement_path,status,phase10_role,retirement_rule
+backend/services/agno_rag_service.py,backend/services/capabilities/knowledge/rag_orchestration_service.py,retired,removed,P5 shim deleted
+backend/services/agno_web_service.py,backend/services/capabilities/web/web_orchestration_service.py,retired,removed,P5 shim deleted
+backend/services/feedback_gate.py,backend/services/execution/feedback_gate.py,retired,removed,P5 shim deleted
+backend/services/pending_ingestion_service.py,backend/services/capabilities/knowledge/pending_ingestion_service.py,retired,removed,P5 shim deleted
+backend/services/video_processing_service.py,backend/services/capabilities/video/processing_service.py,retired,removed,P5 shim deleted
+backend/services/video_segment_service.py,backend/services/capabilities/video/segment_service.py,retired,removed,P5 shim deleted
+backend/services/video_parallel_asr_service.py,backend/services/capabilities/video/parallel_asr_service.py,retired,removed,P5 shim deleted
+backend/services/video_audio_service.py,backend/services/capabilities/video/audio_service.py,retired,removed,P5 shim deleted
+backend/tasks/task_store.py,backend/tasks/orchestration/task_store.py,retired,removed,P5 shim deleted
+backend/tasks/video_task_queue.py,backend/tasks/queue/video_task_queue.py,retired,removed,P5 shim deleted
+backend/workers/video_worker_pool.py,backend/workers/pools/video_worker_pool.py,retired,removed,P5 shim deleted

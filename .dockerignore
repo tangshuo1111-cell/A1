@@ -1,0 +1,22 @@
+# Build context pruning (runtime image copies only backend/ + venv separately)
+.git
+.github
+.vscode
+_local
+frontend
+web
+tests
+docs
+**/__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.ruff_cache
+node_modules
+.next
+coverage.xml
+*.log
+.env
+.env.*
+**/data/*.sqlite
+**/data/*.sqlite-*

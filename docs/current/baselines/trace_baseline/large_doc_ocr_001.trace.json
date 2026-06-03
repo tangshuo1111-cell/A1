@@ -1,0 +1,12 @@
+{
+  "sample_id": "large_doc_ocr_001",
+  "baseline_version": 1,
+  "legacy_path": "unified_main_chain",
+  "trace_keys_present": ["request_id", "session_id", "ocr.provider"],
+  "call_path_snapshot": [
+    "application.chat.run_chat_turn:run_agno_chat_turn_impl",
+    "agents.middle_agent.tool_dispatch:run_tool_by_name",
+    "tools.ocr.ocr_document:_ocr_document"
+  ],
+  "notes": "OCR-heavy document baseline."
+}

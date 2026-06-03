@@ -1,0 +1,26 @@
+sample_id: web_read_001
+intent: 单网页抓取总结
+input:
+  message: "请阅读并总结这个网页 https://example.com/article/baseline-web-001"
+  session_id: "baseline_web_read_001"
+  use_knowledge: false
+  attachments: []
+expected_lane_old: "unified_main_chain"
+expected_lane_new: "web"
+expected_mode_new: "fast"
+expected_call_path:
+  - "application.chat.run_chat_turn:run_agno_chat_turn_impl"
+  - "agents.middle_agent.tool_dispatch:run_tool_by_name"
+  - "tools.web.fetch_with_cookie:_fetch_with_cookie"
+expected_trace_keys:
+  - "request_id"
+  - "session_id"
+  - "v16_web_mcp_mode"
+must_not_regress:
+  - response_includes: "网页"
+  - first_response_ms_le: 3500
+acceptance_after_migration:
+  lane: "web"
+  mode_either_of: ["fast", "complex"]
+  must_call_capability: "capability.web.static_fetch"
+  must_not_call_capability: "capability.video.subtitle_probe"

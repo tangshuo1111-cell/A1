@@ -1,0 +1,21 @@
+{
+  "sample_id": "local_video_summary_001",
+  "baseline_version": 3,
+  "legacy_path": "unified_main_chain",
+  "target_path": "video_fast_path",
+  "trace_keys_present": [
+    "request_id",
+    "lane",
+    "mode",
+    "target_path",
+    "material_layer_used",
+    "material_scope",
+    "material_source_count"
+  ],
+  "call_path_snapshot": [
+    "application.ingress.runtime:route_chat_request",
+    "application.chat.fast_path_entry:run_video_fast_path",
+    "services.capabilities.video.local_video_extract_service:run_local_video_subtitle_extract"
+  ],
+  "notes": "P10 new-path trace baseline"
+}

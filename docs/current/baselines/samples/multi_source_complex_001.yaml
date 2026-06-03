@@ -1,0 +1,29 @@
+sample_id: multi_source_complex_001
+intent: 多来源复杂研究
+input:
+  message: "结合知识库、网页和我上传的文档，比较这三个方案的优缺点并给出建议"
+  session_id: "baseline_multi_source_complex_001"
+  use_knowledge: true
+  attachments:
+    - type: local_file
+      name: "decision_options.docx"
+expected_lane_old: "unified_main_chain"
+expected_lane_new: "general"
+expected_mode_new: "complex"
+expected_call_path:
+  - "application.chat.run_chat_turn:run_agno_chat_turn_impl"
+  - "agents.main_agent.runtime:pan"
+  - "agents.middle_agent.runtime:caipan"
+  - "agents.answer_agent.runtime:huida"
+expected_trace_keys:
+  - "request_id"
+  - "session_id"
+  - "interaction_mode_zh"
+must_not_regress:
+  - response_includes: "建议"
+  - first_response_ms_le: 6000
+acceptance_after_migration:
+  lane: "general"
+  mode_either_of: ["complex", "async"]
+  must_call_capability: "capability.general.tool_chain"
+  must_not_call_capability: "capability.video.subtitle_probe"

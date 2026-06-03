@@ -1,0 +1,111 @@
+[project]
+name = "light-maqa"
+version = "0.7.0"
+description = "Light multi-agent QA with RAG, tools, FastAPI"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "python-dotenv>=1.0.0",
+  "typing-extensions>=4.8.0",
+  "pydantic>=2.0,<3",
+  "openai>=1.40.0",
+  "mcp>=1.8.0",
+  "fastapi>=0.115.0",
+  "uvicorn[standard]>=0.32.0",
+  "scikit-learn>=1.5.0",
+  "beautifulsoup4>=4.12.0",
+  "trafilatura>=1.8.0",
+  "slowapi>=0.1.9",
+  "psycopg[binary]>=3.2.0",
+  "psycopg-pool>=3.2.0",
+  "sentence-transformers>=2.7.0",
+  "agno>=2.5,<3",
+  "yt-dlp>=2024.10.7",
+  # V16 R1：文档处理
+  "markitdown>=0.0.1",
+  "python-docx>=1.1.0",
+  "openpyxl>=3.1.0",
+  "PyMuPDF>=1.23.0",
+  "pdfplumber>=0.10.0",
+  # V16 R2：动态网页（缺失不影响后端启动）
+  "playwright>=1.45.0",
+  "dashscope>=1.25.19",
+  # 限流 Redis 后端（可选；缺失时 slowapi 回退内存）
+  "redis>=5.0",
+]
+
+# 直接 import 说明：
+# - backend/schemas.py 使用 typing_extensions：已列入 dependencies。
+# - backend/api/auth.py 使用 starlette：由 fastapi 传递依赖提供，无需重复钉版本。
+# - backend/retrieval/semantic_retriever.py 使用 numpy：由 scikit-learn / sentence-transformers 等传递安装。
+[project.optional-dependencies]
+# 本地 OCR（Tesseract）；缺失时走降级提示，不阻塞核心后端启动。
+ocr = [
+  "pillow>=10.0.0",
+  "pytesseract>=0.3.10",
+]
+# 本地 ASR（CPU/GPU whisper）；云端 ASR 不依赖此组。
+asr-local = [
+  "faster-whisper>=1.0.0",
+  "openai-whisper>=20231117",
+]
+# 测试夹具生成可搜索 PDF；无此组时 fixture 走内嵌字节或其它路径。
+test-pdf = [
+  "reportlab>=4.0.0",
+  "fpdf2>=2.7.0",
+]
+dev = [
+  "pytest>=8.0",
+  "pytest-asyncio>=0.25.0",
+  "httpx>=0.27.0",
+  "ruff>=0.8.0",
+  "mypy>=1.10",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["backend*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/baselines", "tests/migration", "tests/unit", "tests/backend", "tests/integration", "tests/smoke", "tests/acceptance"]
+pythonpath = ["backend"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+cache_dir = "_local/cache/pytest"
+filterwarnings = ["ignore::DeprecationWarning"]
+markers = [
+  "real_external: tests that call real external services (excluded from CI default)",
+  "smoke: minimal main-path regression",
+  "acceptance: business acceptance assertions",
+  "legacy: historical tests under tests/legacy (not collected by default)",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["backend", "tests", "scripts"]
+# 与 `tests/` 默认门禁分离：归档脚本仅手动 workflow 跑，不参与 Ruff 全量门禁。
+exclude = ["archive"]
+cache-dir = "_local/cache/ruff"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "BLE", "B", "UP", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"backend/agents/middle_agent/runtime.py" = ["E501"]
+"backend/agents/middle_agent/tool_dispatch.py" = ["E501"]
+"backend/agents/middle_agent/multisource_round.py" = ["E501"]
+"backend/agents/middle_agent/material_policy.py" = ["E501"]
+"backend/agents/middle_agent/video_flow.py" = ["E501"]
+"backend/tools/document/__init__.py" = ["F401"]
+"backend/tools/web/__init__.py" = ["F401"]
+"tests/**/*.py" = ["E402", "E731", "E741", "F841", "BLE001"]
+
+[tool.mypy]
+python_version = "3.12"
+strict_optional = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+ignore_missing_imports = true
+files = ["backend/core", "backend/config", "backend/storage"]

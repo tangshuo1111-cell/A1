@@ -1,0 +1,188 @@
+"""Collect turn-level facts for finalize_turn_exit (no routing or tool calls)."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any
+
+from application.chat.chat_contracts import (
+    ApprovalExitSignal,
+    KbSufficiencyResult,
+    MaterialSufficiencyResult,
+    QualityGateResult,
+    SharedMaterialPrepResult,
+    normalize_task_status,
+)
+from application.chat.exit_signals import (
+    material_sufficiency_signal_from_extra,
+    mode_signal_from_extra,
+    pending_kind_signal_from_extra,
+    primary_path_signal_from_extra,
+)
+from application.chat.pending_kind import PendingKind, resolve_pending_kind_for_bundle
+
+
+@dataclass(frozen=True)
+class TurnFacts:
+    router_lane: str = "general"
+    ingress_mode: str = "fast"
+    effective_mode: str = "fast"
+    executor_profile: str = "fast"
+    pending_kind: PendingKind = PendingKind.NONE
+    hard_deadline_limited: bool = False
+    bundle_pending_item_present: bool = False
+    primary_path_candidate: str = ""
+    answer_view_path: str = ""
+    material_sufficiency: str | None = "sufficient"
+    kb_sufficiency: KbSufficiencyResult | None = None
+    material_result: MaterialSufficiencyResult | None = None
+    quality_gate: QualityGateResult | None = None
+    approval: ApprovalExitSignal | None = None
+    async_pending: bool = False
+    hard_failure: bool = False
+    fast_delivery_forbidden: bool = False
+    pipeline_ok: bool = True
+    answer_type: str = ""
+    limitations: tuple[str, ...] = ()
+    shared_material: SharedMaterialPrepResult | None = None
+    legacy_task_status: str | None = None
+    public_mode: str | None = None
+
+
+def quality_gate_from_extra(extra: dict[str, Any]) -> QualityGateResult | None:
+    if "quality_gate.pass" not in extra and "quality_gate" not in extra:
+        return None
+    nested = extra.get("quality_gate")
+    if isinstance(nested, dict):
+        return QualityGateResult(
+            pass_=bool(nested.get("pass", False)),
+            upgrade_profile=bool(nested.get("upgrade_profile", False)),
+            need_second_round=bool(nested.get("need_second_round", False)),
+            need_more_material=bool(nested.get("need_more_material", False)),
+            reason_codes=tuple(nested.get("reason_codes") or ()),
+        )
+    return QualityGateResult(
+        pass_=bool(extra.get("quality_gate.pass", False)),
+        upgrade_profile=bool(extra.get("quality_gate.upgrade_profile", False)),
+        need_second_round=bool(extra.get("quality_gate.need_second_round", False)),
+        need_more_material=bool(extra.get("quality_gate.need_more_material", False)),
+        reason_codes=tuple(extra.get("quality_gate.reason_codes") or ()),
+    )
+
+
+def turn_facts_from_chat_result(
+    result: dict[str, Any],
+    *,
+    ingress: Any | None = None,
+    effective_mode: str | None = None,
+    hard_deadline_limited: bool = False,
+    bundle_pending_item_present: bool = False,
+) -> TurnFacts:
+    """Build TurnFacts from a legacy ChatTurnResult-shaped dict (pre-gate)."""
+    extra = dict(result.get("extra") or {})
+    answer_type = str(result.get("answer_type") or "")
+    raw_pending = str(pending_kind_signal_from_extra(extra) or PendingKind.NONE.value).strip()
+    try:
+        pending_kind = PendingKind(raw_pending)
+    except ValueError:
+        pending_kind = PendingKind.NONE
+
+    router_lane = str(
+        getattr(ingress, "lane", None) or extra.get("router_lane") or extra.get("lane") or "general"
+    )
+    ingress_mode = str(getattr(ingress, "mode", None) or "fast")
+    extra_mode = str(mode_signal_from_extra(extra) or "").strip()
+    if answer_type == "approval_blocked":
+        eff = extra_mode or "blocked"
+    elif answer_type == "async_pending":
+        eff = extra_mode or str(effective_mode or "async")
+    elif effective_mode is not None:
+        eff = str(effective_mode)
+    else:
+        eff = extra_mode or ingress_mode or "fast"
+    executor = str(extra.get("executor_profile") or eff)
+    public_mode = extra_mode or eff
+
+    approval: ApprovalExitSignal | None = None
+    if answer_type == "approval_blocked" or extra.get("approval_gate.blocked"):
+        approval = ApprovalExitSignal(blocked=True)
+    elif answer_type == "commit_executed" or extra.get("approval_gate.executed"):
+        approval = ApprovalExitSignal(
+            commit_executed=True,
+            commit_success=bool(extra.get("commit_success", result.get("pipeline_ok", True))),
+        )
+
+    legacy_status = str(result.get("task_status") or "")
+    legacy_canon = normalize_task_status(legacy_status)
+    async_pending = answer_type == "async_pending" or (
+        legacy_canon == "pending"
+        and answer_type in {"fast_pending", "async_pending"}
+    )
+
+    hard_failure = legacy_canon == "failed" and answer_type != "commit_executed"
+
+    primary_candidate = str(primary_path_signal_from_extra(extra) or "").strip()
+    return TurnFacts(
+        router_lane=router_lane,
+        ingress_mode=ingress_mode,
+        effective_mode=eff,
+        executor_profile=executor,
+        pending_kind=pending_kind,
+        hard_deadline_limited=hard_deadline_limited,
+        bundle_pending_item_present=bundle_pending_item_present,
+        primary_path_candidate=primary_candidate,
+        answer_view_path=primary_candidate,
+        material_sufficiency=str(material_sufficiency_signal_from_extra(extra) or "sufficient"),
+        quality_gate=quality_gate_from_extra(extra),
+        approval=approval,
+        async_pending=async_pending and answer_type != "approval_blocked",
+        hard_failure=hard_failure,
+        fast_delivery_forbidden=False,
+        pipeline_ok=bool(result.get("pipeline_ok", True)),
+        answer_type=answer_type,
+        limitations=tuple(extra.get("limitations") or ()),
+        legacy_task_status=legacy_status or None,
+        public_mode=public_mode,
+    )
+
+
+def build_complex_turn_facts(
+    *,
+    bundle: Any,
+    extra: dict[str, Any],
+    ingress: Any,
+    effective_mode: str,
+    history_snapshot: Any,
+    session_pending_kind: Any,
+    hard_deadline_limited: bool,
+    public_mode: str,
+    executor_profile: str,
+    primary_path_candidate: str,
+    material_sufficiency: str,
+    quality_gate: QualityGateResult | None,
+    limitations: tuple[str, ...],
+) -> TurnFacts:
+    """Build TurnFacts for the complex path without pre-resolving final exit status."""
+    resolved = resolve_pending_kind_for_bundle(
+        bundle=bundle,
+        history_snapshot=history_snapshot,
+        session_pending_kind=session_pending_kind,
+    )
+    pending_kind = resolved if resolved is not None else PendingKind.NONE
+    return TurnFacts(
+        router_lane=str(getattr(ingress, "lane", "general") or "general"),
+        ingress_mode=str(getattr(ingress, "mode", "fast") or "fast"),
+        effective_mode=effective_mode,
+        public_mode=public_mode,
+        executor_profile=executor_profile,
+        pending_kind=pending_kind,
+        hard_deadline_limited=hard_deadline_limited,
+        bundle_pending_item_present=getattr(bundle, "pending_item", None) is not None,
+        primary_path_candidate=primary_path_candidate,
+        answer_view_path=primary_path_candidate,
+        material_sufficiency=material_sufficiency,
+        quality_gate=quality_gate,
+        answer_type="basic_agno",
+        limitations=limitations,
+        legacy_task_status=None,
+    )
