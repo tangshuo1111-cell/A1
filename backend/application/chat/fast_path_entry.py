@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import re
 import time
+import uuid
 from typing import Any
 from urllib.parse import urlparse
 
@@ -870,7 +871,10 @@ def build_fast_result(
         else:
             lane = str(extra.get("router_lane") or fast_path)
     capabilities_called = list(extra.get("capabilities_called") or [])
-    fast_task_id = str(extra.get("fast_task_id") or f"fast-{int(time.time() * 1000)}")
+    fast_task_id = str(
+        extra.get("fast_task_id")
+        or f"fast-{int(time.time() * 1000)}-{uuid.uuid4().hex[:8]}"
+    )
     collab_trace = [f"v15:needs_retrieval_plan=False path={fast_path}", f"v15:fast_path={fast_path}"]
     background_task_id = _background_task_id_from_extra(extra)
     pending_kind = pending_kind_signal_from_extra(extra) or ""
