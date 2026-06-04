@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import copy
 import sys
-from functools import lru_cache
+from functools import cache
 
 from tests._support.bootstrap import bootstrap_historical_test
 
@@ -27,7 +27,7 @@ for _p in [_ROOT, _CORE, _CAP]:
         sys.path.insert(0, _p)
 
 
-@lru_cache(maxsize=None)
+@cache
 def _cached_turn(
     message: str,
     *,
