@@ -7,6 +7,10 @@ import {
   resolveBackgroundTaskId,
 } from "@/lib/chatTaskFields";
 import type { AsyncTaskPollState } from "@/hooks/useAsyncTaskPoll";
+import {
+  humanizePendingKind,
+  humanizeTaskStatus,
+} from "@/lib/contextMeta/statusCopy";
 import type { ChatResponseBody } from "@/lib/types";
 
 interface ChatAsyncStatusProps {
@@ -18,16 +22,6 @@ function formatElapsedMs(ms: number | null | undefined): string | null {
   if (ms == null || ms <= 0) return null;
   if (ms < 1000) return `${ms} ms`;
   return `${(ms / 1000).toFixed(1)} 秒`;
-}
-
-function statusLabel(raw: string | undefined): string {
-  const st = (raw ?? "").toLowerCase();
-  if (st === "pending" || st === "queued") return "排队中";
-  if (st === "running" || st === "in_progress") return "处理中";
-  if (st === "succeeded" || st === "done") return "已完成";
-  if (st === "failed" || st === "error") return "失败";
-  if (st === "partial") return "部分完成";
-  return raw || "—";
 }
 
 export function ChatAsyncStatus({ lastTurn, poll }: ChatAsyncStatusProps) {
@@ -60,8 +54,10 @@ export function ChatAsyncStatus({ lastTurn, poll }: ChatAsyncStatusProps) {
           <p className="mt-0.5">
             状态：{" "}
             {poll.taskStatus
-              ? statusLabel(poll.taskStatus.status || poll.taskStatus.raw_status)
-              : statusLabel(lastTurn.task_status ?? undefined)}
+              ? humanizeTaskStatus(
+                  poll.taskStatus.status || poll.taskStatus.raw_status,
+                )
+              : humanizeTaskStatus(lastTurn.task_status)}
             {poll.polling ? "（轮询中…）" : null}
           </p>
           {formatElapsedMs(poll.backgroundElapsedMs) ? (
@@ -82,9 +78,8 @@ export function ChatAsyncStatus({ lastTurn, poll }: ChatAsyncStatusProps) {
 
       {pendingKind ? (
         <div className="rounded-lg border border-line-subtle bg-surface-elevated/50 px-3 py-2 text-[12px] text-ink-secondary">
-          <p>
-            <span className="font-medium text-ink-primary">pending_kind</span>:{" "}
-            <code className="font-mono text-[11px]">{pendingKind}</code>
+          <p className="font-medium text-ink-primary">
+            {humanizePendingKind(pendingKind) ?? pendingKind}
           </p>
         </div>
       ) : null}

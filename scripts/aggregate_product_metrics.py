@@ -1,7 +1,7 @@
 """
 聚合产品指标 v1 — 从 JSONL 或 stdin（开发/debug）。
 
-字段口径见 docs/pm/产品指标看板.md §7。
+当前字段口径见 docs/pm/04_产品指标看板.md §7。
 周报主路径请用 scripts/report_product_metrics.py（读 PG）。
 """
 

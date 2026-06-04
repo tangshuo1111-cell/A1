@@ -44,7 +44,7 @@ backend/services/execution/async_runtime.py,backend/services/execution/async_run
 backend/services/execution/async_dispatcher.py,backend/services/execution/async_dispatcher.py,new,P9,done,services,视频与 web_heavy_fetch 共用 dispatch 入口,,统一 task dispatch
 backend/services/execution/task_plane_service.py,backend/services/execution/task_plane_service.py,new,P9,done,services,web_heavy_fetch 已通过统一 task plane 入队,,非视频任务接入 async plane
 backend/services/capabilities/web/async_web_pipeline.py,backend/services/capabilities/web/async_web_pipeline.py,new,P9,done,services,web heavy fetch 后台执行接入 task plane,,第二领域接入 async control plane
-docs/current/05_目标运行路径与架构验收表.md,docs/current/05_目标运行路径与架构验收表.md,new,P10,done,docs,tests/migration/test_route_target_table.py + Phase 10 运行路径表已固化 7 类主请求默认路径,,Phase 10 架构验收主文档
+docs/current/03_目标运行路径与架构验收表.md,docs/current/03_目标运行路径与架构验收表.md,new,P10,done,docs,tests/migration/test_route_target_table.py + Phase 10 运行路径表已固化 7 类主请求默认路径,,Phase 10 架构验收主文档
 docs/current/migration/route_target_table.csv,docs/current/migration/route_target_table.csv,new,P10,done,docs,tests/migration/test_route_target_table.py 直接读取并验收 lane/mode/loop/async 字段,,Phase 10 目标运行路径表
 docs/current/migration/legacy_paths_status.csv,docs/current/migration/legacy_paths_status.csv,new,P10,done,docs,P5 旧 shim 已 retired,,Phase 10 旧路径切换状态台账
 tests/migration/test_route_target_table.py,tests/migration/test_route_target_table.py,new,P10,done,tests,tests/migration/test_phase10_architecture_acceptance.py + 8 类主请求 ingress/runtime 断言全绿,,Phase 10 总验收测试

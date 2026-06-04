@@ -213,7 +213,7 @@ Main → Middle → Answer round0 ←─────┘
 
 ## 相关文档
 
-- 原则与阈值：`docs/current/17_默认路由_材料流与质量门控规则.md`
+- 原则与阈值：`docs/current/04_默认路由_材料流与质量门控规则.md`
 - Ingress：`backend/application/ingress/`
 - KB 充分度：`backend/services/capabilities/knowledge/kb_sufficiency.py`
 

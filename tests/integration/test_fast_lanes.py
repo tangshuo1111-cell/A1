@@ -9,6 +9,7 @@ from agents.main_agent.schema import AgnoCollaborationPlan, MainXiezuoPan
 from agents.middle_agent.schema import AgnoMaterialBundle, CailiaoPan
 from application.chat.history_buffer import ChatTurnDeps
 from application.chat.run_chat_turn import run_agno_chat_turn_impl
+from application.ingress.lane_decision_schema import LaneDecision
 from schemas import MainDecision
 
 
@@ -93,6 +94,16 @@ def test_web_fast_lane_emits_trace(monkeypatch: pytest.MonkeyPatch) -> None:
         "services.capabilities.web.web_orchestration_service.fetch_web_evidence_block",
         lambda *_a, **_k: "[Web检索] Fast lane 网页材料",
     )
+    monkeypatch.setattr(
+        "application.chat.run_chat_turn.resolve_lane_decision",
+        lambda **_kw: LaneDecision(
+            lane="web",
+            mode="fast",
+            router_source="rule",
+            router_confidence=1.0,
+            router_decision_ms=0,
+        ),
+    )
     out = run_agno_chat_turn_impl(
         "请阅读并总结这个网页 https://example.com/fast",
         session_id="p7-web",
@@ -113,6 +124,16 @@ def test_video_fast_lane_emits_trace(monkeypatch: pytest.MonkeyPatch) -> None:
             title="p7-video",
             transcript_source="subtitle",
             metadata={"text_source": "subtitle"},
+        ),
+    )
+    monkeypatch.setattr(
+        "application.chat.run_chat_turn.resolve_lane_decision",
+        lambda **_kw: LaneDecision(
+            lane="video",
+            mode="fast",
+            router_source="rule",
+            router_confidence=1.0,
+            router_decision_ms=0,
         ),
     )
     out = run_agno_chat_turn_impl(

@@ -7,3 +7,9 @@ export {
   collectLegacyExtraLines,
   buildContextLines,
 } from "./extractors";
+export {
+  humanizeLane,
+  humanizePendingKind,
+  humanizeTaskStatus,
+  insufficientEvidenceUserNote,
+} from "./statusCopy";

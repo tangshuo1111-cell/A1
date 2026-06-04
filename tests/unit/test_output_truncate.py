@@ -300,9 +300,19 @@ def test_run_agno_chat_turn_impl_short_circuits_when_deadline_exhausted(monkeypa
         "application.chat.run_chat_turn._build_extra",
         lambda *a, **k: {"lane": "default", "primary_path": "deadline-test"},
     )
+    import application.chat.budget_clock as budget_clock_mod
+    import application.chat.run_chat_turn as run_chat_turn_mod
     from agents.main_agent.schema import AgnoCollaborationPlan, MainXiezuoPan
     from application.chat.run_chat_turn import ChatTurnDeps, run_agno_chat_turn_impl
     from schemas import MainDecision
+
+    fake_now = [0.0]
+
+    def _fake_perf_counter() -> float:
+        return fake_now[0]
+
+    monkeypatch.setattr(budget_clock_mod.time, "perf_counter", _fake_perf_counter)
+    monkeypatch.setattr(run_chat_turn_mod.time, "perf_counter", _fake_perf_counter)
 
     plan = AgnoCollaborationPlan(
         decision=MainDecision(task_id="deadline-t1", task_status="routed"),
@@ -351,8 +361,7 @@ def test_run_agno_chat_turn_impl_short_circuits_when_deadline_exhausted(monkeypa
     middle = MagicMock()
 
     def _slow_middle(*args: object, **kwargs: object) -> object:
-        import time
-        time.sleep(19.2)
+        fake_now[0] += 19.2
         return bundle
 
     middle.caipan.side_effect = _slow_middle

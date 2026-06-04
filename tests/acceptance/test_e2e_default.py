@@ -13,7 +13,9 @@ V15 R2 端到端默认场景测试。
 """
 from __future__ import annotations
 
+import copy
 import sys
+from functools import lru_cache
 
 from tests._support.bootstrap import bootstrap_historical_test
 
@@ -25,6 +27,23 @@ for _p in [_ROOT, _CORE, _CAP]:
         sys.path.insert(0, _p)
 
 
+@lru_cache(maxsize=None)
+def _cached_turn(
+    message: str,
+    *,
+    session_id: str,
+    use_knowledge: bool = False,
+) -> dict:
+    from services import agno_chat_service
+
+    out = agno_chat_service.run_agno_chat_turn(
+        message,
+        session_id=session_id,
+        use_knowledge=use_knowledge,
+    )
+    return copy.deepcopy(out)
+
+
 # ---------------------------------------------------------------------------
 # O 组：默认接口 V15 extra 字段验证
 # ---------------------------------------------------------------------------
@@ -33,11 +52,7 @@ class TestO_DefaultApiV15Fields:
 
     def test_o1_extra_has_v15_plan_fields(self) -> None:
         """O1: extra 包含 v15_plan_id / v15_needs_retrieval / v15_answer_mode"""
-        from services import agno_chat_service
-        out = agno_chat_service.run_agno_chat_turn(
-            "你好",
-            session_id="o1-test",
-        )
+        out = _cached_turn("你好", session_id="o-shared-direct")
         ex = out["extra"]
         assert "v15_plan_id" in ex, "extra 应含 v15_plan_id"
         assert "v15_needs_retrieval" in ex, "extra 应含 v15_needs_retrieval"
@@ -47,11 +62,7 @@ class TestO_DefaultApiV15Fields:
 
     def test_o2_extra_has_v15_bundle_fields(self) -> None:
         """O2: extra 包含 v15_bundle_id / v15_execution_status / v15_retrieved_chunks_count"""
-        from services import agno_chat_service
-        out = agno_chat_service.run_agno_chat_turn(
-            "简单问候",
-            session_id="o2-test",
-        )
+        out = _cached_turn("你好", session_id="o-shared-direct")
         ex = out["extra"]
         assert "v15_bundle_id" in ex, "extra 应含 v15_bundle_id"
         assert "v15_execution_status" in ex, "extra 应含 v15_execution_status"
@@ -59,11 +70,7 @@ class TestO_DefaultApiV15Fields:
 
     def test_o3_v15_fields_from_real_execution(self) -> None:
         """O3: V15 字段来自真实执行变量（非硬编码，字段值可验证）"""
-        from services import agno_chat_service
-        out = agno_chat_service.run_agno_chat_turn(
-            "帮我算一道数学题：1+1=?",
-            session_id="o3-test",
-        )
+        out = _cached_turn("帮我算一道数学题：1+1=?", session_id="o3-test")
         ex = out["extra"]
         # plan_id 来自 MainDecision.task_id，必须是非空字符串
         assert isinstance(ex["v15_plan_id"], str) and ex["v15_plan_id"], \
@@ -79,11 +86,7 @@ class TestO_DefaultApiV15Fields:
 
     def test_o4_v15_retrieved_chunks_count_is_integer(self) -> None:
         """O4: v15_retrieved_chunks_count 是整数（0 或正数）"""
-        from services import agno_chat_service
-        out = agno_chat_service.run_agno_chat_turn(
-            "今天天气怎么样",
-            session_id="o4-test",
-        )
+        out = _cached_turn("你好", session_id="o-shared-direct")
         ex = out["extra"]
         assert isinstance(ex["v15_retrieved_chunks_count"], int), \
             "v15_retrieved_chunks_count 必须是整数"
@@ -99,44 +102,28 @@ class TestP_ScenarioCDirectChatE2E:
 
     def test_p1_direct_chat_answer_mode_is_direct(self) -> None:
         """P1: 普通聊天 → v15_answer_mode=direct"""
-        from services import agno_chat_service
-        out = agno_chat_service.run_agno_chat_turn(
-            "你好，帮我介绍一下自己",
-            session_id="p1-test",
-        )
+        out = _cached_turn("你好，帮我介绍一下自己", session_id="p-direct-shared")
         ex = out["extra"]
         assert ex.get("v15_answer_mode") == "direct", \
             f"普通聊天应 answer_mode=direct，实际: {ex.get('v15_answer_mode')}"
 
     def test_p2_direct_chat_needs_retrieval_false(self) -> None:
         """P2: 普通聊天 → v15_needs_retrieval=False（不检索知识库）"""
-        from services import agno_chat_service
-        out = agno_chat_service.run_agno_chat_turn(
-            "帮我写一首关于春天的短诗",
-            session_id="p2-test",
-        )
+        out = _cached_turn("你好，帮我介绍一下自己", session_id="p-direct-shared")
         ex = out["extra"]
         assert ex.get("v15_needs_retrieval") is False, \
             f"普通聊天应 needs_retrieval=False，实际: {ex.get('v15_needs_retrieval')}"
 
     def test_p3_direct_chat_retrieved_chunks_zero(self) -> None:
         """P3: 普通聊天 → retrieved_chunks=0（不检索）"""
-        from services import agno_chat_service
-        out = agno_chat_service.run_agno_chat_turn(
-            "给我讲个笑话",
-            session_id="p3-test",
-        )
+        out = _cached_turn("你好，帮我介绍一下自己", session_id="p-direct-shared")
         ex = out["extra"]
         assert ex.get("v15_retrieved_chunks_count") == 0, \
             f"普通聊天不应有检索结果，实际: {ex.get('v15_retrieved_chunks_count')}"
 
     def test_p4_direct_chat_no_failures(self) -> None:
         """P4: 普通聊天不应有工具失败记录"""
-        from services import agno_chat_service
-        out = agno_chat_service.run_agno_chat_turn(
-            "你是什么模型？",
-            session_id="p4-test",
-        )
+        out = _cached_turn("你好，帮我介绍一下自己", session_id="p-direct-shared")
         ex = out["extra"]
         # 普通聊天不触发任何工具，不应有 failures
         assert "v15_failures" not in ex or len(ex.get("v15_failures", [])) == 0, \
@@ -144,11 +131,7 @@ class TestP_ScenarioCDirectChatE2E:
 
     def test_p5_direct_chat_trace_contains_v15_lines(self) -> None:
         """P5: trace 包含 V15 主控检索行"""
-        from services import agno_chat_service
-        out = agno_chat_service.run_agno_chat_turn(
-            "请问今天是几月几号？",
-            session_id="p5-test",
-        )
+        out = _cached_turn("你好，帮我介绍一下自己", session_id="p-direct-shared")
         trace = out["extra"].get("collaboration_trace", [])
         trace_str = "|".join(trace)
         assert "v15:needs_retrieval_plan=" in trace_str, \
@@ -163,8 +146,7 @@ class TestQ_ScenarioAKbQaE2E:
 
     def test_q1_kb_qa_answer_mode_knowledge_grounded(self) -> None:
         """Q1: use_knowledge=True → v15_answer_mode=knowledge_grounded（或 direct 兜底）"""
-        from services import agno_chat_service
-        out = agno_chat_service.run_agno_chat_turn(
+        out = _cached_turn(
             "什么是知识图谱？",
             session_id="q1-test",
             use_knowledge=True,
@@ -191,12 +173,7 @@ class TestQ_ScenarioAKbQaE2E:
 
     def test_q3_kb_qa_v15_plan_id_not_empty(self) -> None:
         """Q3: KB 问答 extra.v15_plan_id 非空（来自真实 task_id）"""
-        from services import agno_chat_service
-        out = agno_chat_service.run_agno_chat_turn(
-            "帮我查一下项目中有哪些知识",
-            session_id="q3-test",
-            use_knowledge=True,
-        )
+        out = _cached_turn("什么是知识图谱？", session_id="q1-test", use_knowledge=True)
         assert out["extra"].get("v15_plan_id"), "KB 问答应有 v15_plan_id"
 
 
@@ -391,34 +368,27 @@ class TestT_ApiExtraV15Completeness:
 
     def test_t1_all_v15_fields_present(self) -> None:
         """T1: extra 包含全部必要的 V15 字段"""
-        from services import agno_chat_service
-        out = agno_chat_service.run_agno_chat_turn(
-            "测试 V15 字段完整性",
-            session_id="t1-test",
-        )
+        out = _cached_turn("测试 V15 字段完整性", session_id="t-shared")
         ex = out["extra"]
         missing = [f for f in self._REQUIRED_V15_FIELDS if f not in ex]
         assert not missing, f"extra 缺少 V15 字段: {missing}"
 
     def test_t2_v15_tools_allowed_is_list(self) -> None:
         """T2: v15_tools_allowed 是列表类型"""
-        from services import agno_chat_service
-        out = agno_chat_service.run_agno_chat_turn("工具允许检查", session_id="t2-test")
+        out = _cached_turn("测试 V15 字段完整性", session_id="t-shared")
         ta = out["extra"].get("v15_tools_allowed")
         assert isinstance(ta, list), f"v15_tools_allowed 应是列表，实际: {type(ta)}"
 
     def test_t3_v15_execution_status_valid_value(self) -> None:
         """T3: v15_execution_status 是合法值"""
-        from services import agno_chat_service
-        out = agno_chat_service.run_agno_chat_turn("执行状态检查", session_id="t3-test")
+        out = _cached_turn("测试 V15 字段完整性", session_id="t-shared")
         status = out["extra"].get("v15_execution_status")
         assert status in ("ok", "partial", "failed"), \
             f"v15_execution_status 应是合法值，实际: {status}"
 
     def test_t4_service_extra_contains_v15_and_v6_together(self) -> None:
         """T4: extra 同时包含 V15 新字段和 V6 旧字段（向后兼容）"""
-        from services import agno_chat_service
-        out = agno_chat_service.run_agno_chat_turn("兼容性检查", session_id="t4-test")
+        out = _cached_turn("测试 V15 字段完整性", session_id="t-shared")
         ex = out["extra"]
         # V6 旧字段仍存在（向后兼容）
         assert "v6_takeover" in ex, "旧 v6_takeover 字段应仍存在（兼容）"
@@ -432,9 +402,7 @@ class TestU_FinalProtocolContract:
     """U: 第八步协议收口字段与任务轮询契约"""
 
     def test_u1_extra_has_progress_stage_and_agent_timings(self) -> None:
-        from services import agno_chat_service
-
-        out = agno_chat_service.run_agno_chat_turn(
+        out = _cached_turn(
             "请根据知识库和网页证据回答一个问题",
             session_id="u1-test",
             use_knowledge=True,

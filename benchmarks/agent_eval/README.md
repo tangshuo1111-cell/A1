@@ -4,11 +4,11 @@
 
 ## 文件说明
 
-- [questions_v1.json](D:/1/Rag_and_Agent_repo_staging/项目代码/benchmarks/agent_eval/questions_v1.json)
+- [questions_v1.json](/D:/1/A1_publish/benchmarks/agent_eval/questions_v1.json)
   - 固定题集
-- [scoring_guide.md](D:/1/Rag_and_Agent_repo_staging/项目代码/benchmarks/agent_eval/scoring_guide.md)
+- [scoring_guide.md](/D:/1/A1_publish/benchmarks/agent_eval/scoring_guide.md)
   - 评分标准
-- [baseline_2026-05-26.json](D:/1/Rag_and_Agent_repo_staging/项目代码/benchmarks/agent_eval/baseline_2026-05-26.json)
+- [baseline_2026-05-26.json](/D:/1/A1_publish/benchmarks/agent_eval/baseline_2026-05-26.json)
   - 第 1 轮人工评分基线
 
 ## 推荐工作流

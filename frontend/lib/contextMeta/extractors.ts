@@ -7,67 +7,17 @@
 import type { ChatResponseBody } from "../types";
 import type { ContextLines, V15DebugRow } from "./types";
 import { isLegacyExtraKey } from "./legacy";
+import {
+  humanizeLane,
+  humanizePendingKind,
+  humanizeTaskStatus,
+  insufficientEvidenceUserNote,
+} from "./statusCopy";
 
 function asStr(v: unknown): string | null {
   if (v === null || v === undefined) return null;
   if (typeof v === "string" && v.trim()) return v.trim();
   return null;
-}
-
-function humanizeLane(raw: string | null): string | null {
-  if (!raw) return null;
-  switch (raw) {
-    case "kb":
-      return "知识库直答";
-    case "document":
-      return "文档理解";
-    case "web":
-      return "网页读取";
-    case "video":
-      return "视频处理";
-    case "general":
-      return "通用回答";
-    default:
-      return raw;
-  }
-}
-
-function humanizeStatus(raw: string | null): string | null {
-  if (!raw) return null;
-  switch (raw) {
-    case "done":
-      return "已完成";
-    case "partial":
-      return "部分完成";
-    case "failed":
-      return "未完成";
-    case "queued":
-      return "排队中";
-    case "running":
-      return "处理中";
-    default:
-      return raw;
-  }
-}
-
-function humanizePendingKind(raw: string | null): string | null {
-  if (!raw) return null;
-  switch (raw) {
-    case "more_web_material":
-      return "需要补充网页材料";
-    case "more_document_material":
-      return "需要补充文档材料";
-    case "more_video_material":
-      return "需要补充视频材料";
-    case "more_kb_material":
-      return "需要补充知识库材料";
-    case "escalate_to_complex":
-      return "已升级到复杂处理";
-    case "escalate_to_async":
-      return "已升级到异步任务";
-    default:
-      return raw;
-  }
 }
 
 function safeJson(v: unknown, max = 900): string {
@@ -368,7 +318,7 @@ export function buildContextLines(res: ChatResponseBody): ContextLines {
     (extra as { insufficient_evidence?: boolean }).insufficient_evidence ===
     true
   ) {
-    fallbackNote = "证据不足 · 回答偏保守";
+    fallbackNote = insufficientEvidenceUserNote();
   } else if (
     asStr(
       (extra as { why_still_insufficient?: unknown }).why_still_insufficient,
@@ -463,7 +413,7 @@ export function buildContextLines(res: ChatResponseBody): ContextLines {
     toolsSummary,
     fallbackNote,
     laneLabel: humanizeLane(lane),
-    statusLabel: humanizeStatus(taskStatus),
+    statusLabel: taskStatus ? humanizeTaskStatus(taskStatus) : null,
     upgradeReason,
     materialsSummary,
     materialsCountLabel,

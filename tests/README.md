@@ -38,9 +38,9 @@ python -m pytest -q -m "not real_external"
 
 ## 与验收文档的关系
 
-- **路径验收**：`tests/migration/test_trace_baseline_new.py` ↔ `docs/current/05_目标运行路径与架构验收表.md`
+- **路径验收**：`tests/migration/test_trace_baseline_new.py` ↔ `docs/current/03_目标运行路径与架构验收表.md`
 - **产品指标字段**：`tests/backend/application/chat/test_turn_exit_gate.py::test_product_metrics_v1_canonical_fields`
-- **评测体系说明**：`docs/pm/评测与验收体系.md`
+- **当前评测体系说明**：`docs/pm/05_评测与验收体系.md`
 
 ## 风格约定
 
