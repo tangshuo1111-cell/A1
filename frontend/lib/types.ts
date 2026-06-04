@@ -86,6 +86,7 @@ export interface TaskStatusBody {
   result_source_id?: string;
   result_ttl_seconds?: number;
   expires_at?: string | null;
+  task_enqueue_to_finish_ms?: number;
   result_ready?: boolean;
 }
 

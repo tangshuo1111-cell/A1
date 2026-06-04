@@ -5,6 +5,7 @@ from __future__ import annotations
 from application.chat.chat_contracts import (
     ExecutorProfile,
     KbSufficiencyResult,
+    MaterialGateFacts,
     QualityGateResult,
 )
 
@@ -23,6 +24,37 @@ _SOFT_LIMITATION_MARKERS = (
     "本轮按直答快路径处理",
     "未要求事实性证据",
 )
+_KB_EMPTY_TEMPLATE_MARKERS = (
+    "retrieved_chunks 为空",
+    "无法基于知识库材料作答",
+)
+_INSUFFICIENT_MATERIAL_LEVELS = frozenset({"insufficient", "no_match", "low_confidence"})
+
+
+def _material_insufficient_for_web_fallback(facts: MaterialGateFacts) -> bool:
+    if facts.material_still_insufficient:
+        return True
+    return str(facts.material_sufficiency or "").strip().lower() in _INSUFFICIENT_MATERIAL_LEVELS
+
+
+def _apply_material_gate_facts(
+    reasons: list[str],
+    *,
+    executor_profile: ExecutorProfile,
+    round_index: int,
+    material_facts: MaterialGateFacts | None,
+) -> bool:
+    """Read Middle facts; return whether corrective web/material round is needed."""
+    if material_facts is None or executor_profile != "complex" or round_index != 0:
+        return False
+    if not material_facts.try_rag_executed:
+        return False
+    if not _material_insufficient_for_web_fallback(material_facts):
+        return False
+    if not material_facts.allow_web or material_facts.has_web_evidence:
+        return False
+    reasons.append("material_insufficient")
+    return True
 
 
 def evaluate_quality_gate(
@@ -35,6 +67,7 @@ def evaluate_quality_gate(
     lane: str = "general",
     round_index: int = 0,
     complex_reason_codes: tuple[str, ...] = (),
+    material_facts: MaterialGateFacts | None = None,
 ) -> QualityGateResult:
     text = (answer_text or "").strip()
     lims = list(limitations or [])
@@ -54,6 +87,16 @@ def evaluate_quality_gate(
 
     if _has_blocking_limitations(lims):
         reasons.append("limitations_present")
+
+    if any(marker in text for marker in _KB_EMPTY_TEMPLATE_MARKERS):
+        reasons.append("evidence_not_used")
+
+    material_need_more = _apply_material_gate_facts(
+        reasons,
+        executor_profile=executor_profile,
+        round_index=round_index,
+        material_facts=material_facts,
+    )
 
     kb_in_scope = lane == "kb" or kb_sufficiency is not None
     if (
@@ -97,12 +140,17 @@ def evaluate_quality_gate(
                 reasons.append("answer_tail_incomplete")
 
     reasons = list(dict.fromkeys(reasons))
+    need_more_material = (
+        "kb_insufficient" in reasons
+        or material_need_more
+        or ("evidence_not_used" in reasons and material_facts is not None and _material_insufficient_for_web_fallback(material_facts))
+    )
 
     if executor_profile == "complex" and round_index == 0 and reasons:
         return QualityGateResult(
             pass_=False,
             need_second_round=True,
-            need_more_material="kb_insufficient" in reasons,
+            need_more_material=need_more_material,
             reason_codes=tuple(reasons),
         )
 
@@ -126,7 +174,7 @@ def evaluate_quality_gate(
         return QualityGateResult(
             pass_=False,
             need_second_round=True,
-            need_more_material="kb_insufficient" in reasons,
+            need_more_material=need_more_material,
             reason_codes=tuple(reasons),
         )
 

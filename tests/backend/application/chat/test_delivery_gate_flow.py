@@ -1,9 +1,12 @@
 """Tests for delivery_gate_flow thin orchestrator."""
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 from application.chat.delivery_gate_flow import (
     QualityGateInput,
     gate_input_from_ingress,
+    material_gate_facts_from_bundle,
     run_delivery_gate,
 )
 from application.ingress.lane_decision_schema import LaneDecision
@@ -69,3 +72,29 @@ class TestDeliveryGateFlow:
         )
         assert outcome.gate.pass_ is True
         assert outcome.deliver is True
+
+    def test_material_gate_facts_from_bundle_wires_middle_facts(self):
+        bundle = SimpleNamespace(
+            material_sufficiency="insufficient",
+            material_still_insufficient=True,
+            web_block="",
+        )
+        plan = SimpleNamespace(needs_retrieval=True, xiezuo_pan=SimpleNamespace(allow_web=True))
+        facts = material_gate_facts_from_bundle(bundle, plan=plan)
+        assert facts is not None
+        assert facts.material_still_insufficient is True
+        assert facts.try_rag_executed is True
+        assert facts.allow_web is True
+        assert facts.has_web_evidence is False
+
+        inp = gate_input_from_ingress(
+            ingress=_ingress(complex_candidate=True, complex_reason_codes=("comparison",)),
+            executor_profile="complex",
+            round_index=0,
+            answer_text="当前未从知识库检索到可用片段（retrieved_chunks 为空），无法基于知识库材料作答。",
+            material_facts=facts,
+        )
+        outcome = run_delivery_gate(inp, ingress=_ingress(complex_candidate=True))
+        assert outcome.gate.need_second_round is True
+        assert outcome.gate.need_more_material is True
+        assert outcome.deliver is False

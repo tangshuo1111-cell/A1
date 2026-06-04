@@ -14,6 +14,12 @@ interface ChatAsyncStatusProps {
   poll: AsyncTaskPollState;
 }
 
+function formatElapsedMs(ms: number | null | undefined): string | null {
+  if (ms == null || ms <= 0) return null;
+  if (ms < 1000) return `${ms} ms`;
+  return `${(ms / 1000).toFixed(1)} 秒`;
+}
+
 function statusLabel(raw: string | undefined): string {
   const st = (raw ?? "").toLowerCase();
   if (st === "pending" || st === "queued") return "排队中";
@@ -58,6 +64,16 @@ export function ChatAsyncStatus({ lastTurn, poll }: ChatAsyncStatusProps) {
               : statusLabel(lastTurn.task_status ?? undefined)}
             {poll.polling ? "（轮询中…）" : null}
           </p>
+          {formatElapsedMs(poll.backgroundElapsedMs) ? (
+            <p className="mt-0.5 text-ink-tertiary">
+              后台完成耗时：{formatElapsedMs(poll.backgroundElapsedMs)}
+            </p>
+          ) : null}
+          {poll.taskResult?.ready && poll.taskResult.result ? (
+            <p className="mt-1 text-ink-secondary">
+              最终结果已写入下方对话（或见任务结果接口）。
+            </p>
+          ) : null}
           {poll.pollError ? (
             <p className="mt-1 text-amber-800 dark:text-amber-300">{poll.pollError}</p>
           ) : null}

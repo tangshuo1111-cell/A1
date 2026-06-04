@@ -104,6 +104,19 @@
 
 ---
 
+## Product Metrics v1（`turn_exit_gate` 统一写入）
+
+| Field | Level | Type | Source |
+|---|---|---|---|
+| `quality_gate_passed` | PROD | bool | `turn_exit_gate.envelope_to_extra_fields` |
+| `insufficient_evidence` | PROD | bool | same |
+| `is_complex_task` | PROD | bool | same |
+| `failure_reason_code` | PROD | string | same |
+| `timing_total_ms` | PROD | int | same（apply_turn_exit 补写） |
+| `answer_char_count` | PROD | int | same |
+
+---
+
 ## Validation
 
 ```

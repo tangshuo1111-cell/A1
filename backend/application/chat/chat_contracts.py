@@ -60,6 +60,17 @@ class MaterialSufficiencyResult:
 
 
 @dataclass(frozen=True)
+class MaterialGateFacts:
+    """Middle 产出的只读材料事实，供 quality_gate 消费（gate 只读、不重判）。"""
+
+    material_sufficiency: str = "sufficient"
+    material_still_insufficient: bool = False
+    try_rag_executed: bool = False
+    has_web_evidence: bool = False
+    allow_web: bool = False
+
+
+@dataclass(frozen=True)
 class QualityGateResult:
     pass_: bool = False
     upgrade_profile: bool = False

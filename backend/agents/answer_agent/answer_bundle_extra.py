@@ -39,7 +39,10 @@ def huida_to_executor_hint(
     ]
 
     if hp.da_fengshi == "zhijie":
-        celue_text = "直接、自然回答用户问题；如有材料只作背景依据，不堆砌"
+        celue_text = (
+            "直接、自然回答用户问题；像口头解释，不要写章节标题或 markdown 模板；"
+            "如有材料只作背景依据，不堆砌；可保留轻量 emoji"
+        )
     elif hp.da_fengshi == "baoshou":
         celue_text = (
             "采用保守语气：明确说明所引材料相关性偏弱、避免过度承诺；"

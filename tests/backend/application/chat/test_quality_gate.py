@@ -1,7 +1,11 @@
 """Unit tests for complexity_policy and quality_gate."""
 from __future__ import annotations
 
-from application.chat.chat_contracts import KbSufficiencyResult, RetrievalSnapshot
+from application.chat.chat_contracts import (
+    KbSufficiencyResult,
+    MaterialGateFacts,
+    RetrievalSnapshot,
+)
 from application.chat.complexity_policy import evaluate_complex_candidate
 from application.chat.quality_gate import evaluate_quality_gate
 from services.capabilities.knowledge.kb_sufficiency import evaluate_kb_sufficiency, tier_from_score
@@ -27,10 +31,56 @@ class TestComplexityPolicy:
         assert sig.complex_candidate is True
         assert "diagnostic_reasoning" in sig.reason_codes
 
-    def test_support_and_oppose_is_complex_candidate(self):
-        sig = evaluate_complex_candidate("先给支持论据，再给反对论据，最后做判断。")
+    def test_two_perspective_is_multi_dimension(self):
+        sig = evaluate_complex_candidate(
+            "请站在产品经理和工程师两个视角，分别说明如何验收一个 AI 问答系统的默认主路径是否生效。"
+        )
         assert sig.complex_candidate is True
-        assert "pro_con" in sig.reason_codes
+        assert "multi_dimension" in sig.reason_codes
+        sig = evaluate_complex_candidate(
+            "假设你要设计一个多材料 AI 问答系统，请说明路由、质量门和统一出口应如何分工，并解释为什么。"
+        )
+        assert sig.complex_candidate is True
+        assert "solution_design" in sig.reason_codes
+
+    def test_sandbox_upgrade_01_is_candidate(self):
+        sig = evaluate_complex_candidate(
+            "这是一个需要多步推理的问题：如果系统默认先 fast 再 quality gate 升级 complex，"
+            "请分析 partial 交付对用户体验的影响，并给出三条改进建议。"
+        )
+        assert sig.complex_candidate is True
+        assert "multi_step" in sig.reason_codes or "decision_tradeoff" in sig.reason_codes
+
+
+class TestComplexTaskScope:
+    def test_execution_complex_mode(self):
+        from application.chat.complexity_policy import is_complex_task_scope
+
+        assert is_complex_task_scope(mode="complex", executor_profile="complex") is True
+
+    def test_async_profile(self):
+        from application.chat.complexity_policy import is_complex_task_scope
+
+        assert is_complex_task_scope(mode="async", executor_profile="async") is True
+
+    def test_complex_candidate_strong_codes(self):
+        from application.chat.complexity_policy import is_complex_task_scope
+
+        assert is_complex_task_scope(
+            mode="fast",
+            executor_profile="fast",
+            complex_candidate=True,
+            complex_reason_codes=("solution_design",),
+        ) is True
+
+    def test_weak_only_not_in_scope(self):
+        from application.chat.complexity_policy import is_complex_task_scope
+
+        assert is_complex_task_scope(
+            mode="fast",
+            complex_candidate=True,
+            complex_reason_codes=("multi_analysis",),
+        ) is False
 
 
 class TestKbSufficiency:
@@ -191,3 +241,26 @@ class TestQualityGate:
             complex_reason_codes=("solution_design",),
         )
         assert "answer_truncated" not in gate.reason_codes
+
+    def test_complex_material_insufficient_triggers_second_round_and_need_more_material(self):
+        gate = evaluate_quality_gate(
+            executor_profile="complex",
+            round_index=0,
+            complex_candidate=True,
+            answer_text=(
+                "当前未从知识库检索到可用片段（retrieved_chunks 为空），"
+                "无法基于知识库材料作答。"
+            ),
+            material_facts=MaterialGateFacts(
+                material_sufficiency="insufficient",
+                material_still_insufficient=True,
+                try_rag_executed=True,
+                has_web_evidence=False,
+                allow_web=True,
+            ),
+        )
+        assert gate.pass_ is False
+        assert gate.need_second_round is True
+        assert gate.need_more_material is True
+        assert "material_insufficient" in gate.reason_codes
+        assert "evidence_not_used" in gate.reason_codes

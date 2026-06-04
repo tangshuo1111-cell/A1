@@ -25,6 +25,7 @@ FEATURE_FLAGS: dict[str, bool] = {
     "ENABLE_DRAFT_ANSWER_V2": True,           # S9 — 后台 final_answer 草稿链
     "ENABLE_TURN_CACHE": True,                # S8 — within-turn 幂等
     "ENABLE_TURN_STITCHER": True,             # S8 — 任务结果回灌
+    "ENABLE_ANSWER_TEXT_POLISH": True,        # 用户可见回答 markdown 乱格式清理（保留 emoji）
     "ENABLE_COMPLEX_PENDING_KIND_V2": True,   # S7c — complex/multisource PendingKind
     # Quality gate / shared retrieval (doc §17)
     "ENABLE_COMPLEXITY_POLICY": True,
@@ -34,8 +35,7 @@ FEATURE_FLAGS: dict[str, bool] = {
     "ENABLE_APPROVAL_GATE_V1": True,
     # Turn exit gate — shadow off by default; gate always single-writes canonical exit.
     "ENABLE_TURN_EXIT_GATE_SHADOW": False,
-    # RAG: commit 后自动写 embedding（默认关，与现网一致）
-    "ENABLE_EMBED_ON_COMMIT": False,
+    # RAG: 结构化切块实验开关（与 EMBEDDING_ENABLED 无关）
     "ENABLE_STRUCTURE_CHUNKING": False,
 }
 
@@ -182,7 +182,10 @@ def turn_exit_gate_shadow_active() -> bool:
 
 
 def embed_on_commit_active() -> bool:
-    return is_enabled("ENABLE_EMBED_ON_COMMIT")
+    """Commit 后是否写 rag_embeddings。唯一事实源：``EMBEDDING_ENABLED``（与检索共用）。"""
+    from config.settings import settings
+
+    return bool(settings.embedding_enabled)
 
 
 def assert_valid_flag_combination(flags: dict[str, bool] | None = None) -> None:

@@ -7,16 +7,66 @@ import re
 from application.chat.chat_contracts import ComplexCandidateSignal
 
 _STRONG_COMPARE = ("对比", "比较", "异同", "优缺点", "适用场景")
-_STRONG_DECISION = ("推荐", "取舍", "权衡", "优先级", "排序", "选哪个", "做决策", "帮我做决策", "该不该", "应该怎么选")
-_STRONG_MULTI_DIM = ("多个角度", "多个维度", "分情况", "从不同", "三个角度", "四个角度", "五个角度")
+_STRONG_MULTI_DIM = (
+    "多个角度",
+    "多个维度",
+    "分情况",
+    "从不同",
+    "三个角度",
+    "四个角度",
+    "五个角度",
+    "两个视角",
+    "两个角度",
+    "双视角",
+)
 _STRONG_DEBATE = ("正反", "支持与反对", "双边论证", "辩证", "支持论据", "反对论据", "支持者", "反对者", "两边")
 _STRONG_CROSS_MATERIAL = ("综合判断", "结合多", "跨材料", "多份知识", "多份文档")
-_STRONG_DESIGN = ("设计方案", "整改路径", "阶段计划", "路线图")
-_STRONG_DIAGNOSTIC = ("可能解释", "验证方法", "原因是什么", "机制层面")
+_STRONG_DESIGN = (
+    "设计方案",
+    "整改路径",
+    "阶段计划",
+    "路线图",
+    "设计一个",
+    "如何分工",
+    "分工",
+    "架构设计",
+)
+_STRONG_DIAGNOSTIC = (
+    "可能解释",
+    "验证方法",
+    "原因是什么",
+    "机制层面",
+    "多步推理",
+)
+_STRONG_DECISION = (
+    "推荐",
+    "取舍",
+    "权衡",
+    "优先级",
+    "排序",
+    "选哪个",
+    "做决策",
+    "帮我做决策",
+    "该不该",
+    "应该怎么选",
+    "改进建议",
+)
 
 _WEAK_COMPLEX = ("综合", "评估", "分析", "分别", "同时", "并给出")
 
 _SIMPLE_EXPLAIN = ("是什么", "什么意思", "定义", "解释", "含义")
+
+# 产品指标 v1 + mode_selector 共用：强复杂 reason code（单一事实源）
+STRONG_COMPLEX_REASON_CODES = frozenset({
+    "comparison",
+    "decision_tradeoff",
+    "multi_dimension",
+    "pro_con",
+    "cross_material",
+    "solution_design",
+    "diagnostic_reasoning",
+    "multi_step",
+})
 
 
 def evaluate_complex_candidate(message: str) -> ComplexCandidateSignal:
@@ -35,6 +85,10 @@ def evaluate_complex_candidate(message: str) -> ComplexCandidateSignal:
 
     _hit(_STRONG_COMPARE, "comparison", "strong")
     _hit(_STRONG_DECISION, "decision_tradeoff", "strong")
+    if "多步推理" in msg or "多步" in msg:
+        triggers.append("strong:multi_step")
+        if "multi_step" not in codes:
+            codes.append("multi_step")
     _hit(_STRONG_MULTI_DIM, "multi_dimension", "strong")
     _hit(_STRONG_DEBATE, "pro_con", "strong")
     _hit(_STRONG_CROSS_MATERIAL, "cross_material", "strong")
@@ -51,6 +105,10 @@ def evaluate_complex_candidate(message: str) -> ComplexCandidateSignal:
         len(msg) <= 80
         and any(token in msg for token in _SIMPLE_EXPLAIN)
         and not codes
+        and "请说明" not in msg
+        and "如何" not in msg
+        and "设计" not in msg
+        and msg.count("，") + msg.count(",") == 0
     )
     if is_simple:
         return ComplexCandidateSignal(complex_candidate=False)
@@ -126,3 +184,31 @@ def is_save_request(message: str) -> bool:
     """消息是否表达「保存/入库/收藏」这类落库诉求（轻量动词级，区别于 commit 高置信兜底）。"""
     msg = message or ""
     return any(v in msg for v in _SAVE_VERBS)
+
+
+def is_complex_task_scope(
+    *,
+    mode: str = "",
+    executor_profile: str = "",
+    pending_kind: str | None = None,
+    primary_path: str = "",
+    complex_candidate: bool = False,
+    complex_reason_codes: tuple[str, ...] | list[str] | None = None,
+) -> bool:
+    """产品指标 v1：复杂任务范围（执行档位 + 已验证题型信号，单一事实源）。"""
+    mode_l = str(mode or "").strip().lower()
+    profile_l = str(executor_profile or "").strip().lower()
+    if mode_l == "complex" or profile_l in {"complex", "async"}:
+        return True
+    pending_l = str(pending_kind or "").strip().lower()
+    if pending_l in {"escalate_to_complex", "escalate_to_async"}:
+        return True
+    path_l = str(primary_path or "").lower()
+    if path_l.endswith("_async") or "async" in path_l:
+        return True
+    if not complex_candidate:
+        return False
+    codes = set(complex_reason_codes or ())
+    if codes & STRONG_COMPLEX_REASON_CODES:
+        return True
+    return bool("multi_analysis" in codes and ("multi_step" in codes or "multi_question" in codes or len(codes) >= 2))

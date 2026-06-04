@@ -1,13 +1,13 @@
 version: 2
 updates:
   - package-ecosystem: pip
-    directory: "/项目代码"
+    directory: "/"
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
 
   - package-ecosystem: npm
-    directory: "/项目代码/frontend"
+    directory: "/frontend"
     schedule:
       interval: weekly
     open-pull-requests-limit: 5

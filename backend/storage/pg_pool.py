@@ -191,6 +191,51 @@ def _migrate_schema() -> None:
             vec BYTEA NOT NULL
         );
         """,
+        """
+        CREATE TABLE IF NOT EXISTS turn_product_metrics (
+            id BIGSERIAL PRIMARY KEY,
+            task_id TEXT NOT NULL,
+            session_id TEXT,
+            request_id TEXT,
+            created_at TEXT NOT NULL,
+            task_status TEXT NOT NULL,
+            mode TEXT,
+            executor_profile TEXT,
+            is_complex_task BOOLEAN NOT NULL DEFAULT FALSE,
+            quality_gate_passed BOOLEAN,
+            insufficient_evidence BOOLEAN NOT NULL DEFAULT FALSE,
+            timing_total_ms INTEGER,
+            answer_char_count INTEGER,
+            retrieved_chunks_count INTEGER NOT NULL DEFAULT 0,
+            temporary_materials_count INTEGER NOT NULL DEFAULT 0,
+            failure_reason_code TEXT,
+            sample_label TEXT,
+            message_text TEXT,
+            answer_summary TEXT
+        );
+        """,
+        """
+        ALTER TABLE turn_product_metrics ADD COLUMN IF NOT EXISTS sample_label TEXT;
+        """,
+        """
+        ALTER TABLE turn_product_metrics ADD COLUMN IF NOT EXISTS message_text TEXT;
+        """,
+        """
+        ALTER TABLE turn_product_metrics ADD COLUMN IF NOT EXISTS answer_summary TEXT;
+        """,
+        """
+        ALTER TABLE turn_product_metrics ADD COLUMN IF NOT EXISTS async_final_answer TEXT;
+        """,
+        """
+        ALTER TABLE turn_product_metrics ADD COLUMN IF NOT EXISTS async_poll_status TEXT;
+        """,
+        """
+        ALTER TABLE turn_product_metrics ADD COLUMN IF NOT EXISTS async_background_ms INTEGER;
+        """,
+        """
+        CREATE INDEX IF NOT EXISTS idx_turn_product_metrics_created
+        ON turn_product_metrics (created_at);
+        """,
     ]
     with pool.connection() as conn:
         with conn.cursor() as cur:

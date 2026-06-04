@@ -35,7 +35,7 @@
 `auto` 的真实落点由运行时条件决定：
 
 - `EMBEDDING_ENABLED=1` 且 `rag_embeddings` 有数据：优先走 `hybrid`
-- `EMBEDDING_ENABLED=0`：自动降级为 `keyword`
+- `EMBEDDING_ENABLED=0`：自动降级为 `keyword`（且不 commit 写向量）
 - `hybrid` 失败：降级 `semantic`
 - `semantic` 失败：再降级 `keyword`
 
@@ -93,26 +93,36 @@
 ### 后端
 
 ```powershell
-python -m pip install -r requirements.lock
+py -3.12 -m pip install -r requirements.lock
 # 须配置 .env 中 DATABASE_URL=postgresql://…（见 .env.example）。本地可先启动 PostgreSQL
 # 或仅起数据库：docker compose up -d postgres
-python scripts/run_dev.py --backend
+py -3.12 scripts/run_dev.py --backend
 ```
 
 若需**直接**启动 uvicorn（与 `run_dev.py` 一致：`PYTHONPATH` **仅**含 `backend/`，cwd 为仓库根）：
 
 ```powershell
 $env:PYTHONPATH = "backend"
-python -m uvicorn api.main:app --host 127.0.0.1 --port 8000
+py -3.12 -m uvicorn api.main:app --host 127.0.0.1 --port 8000
 ```
 
-多 worker（`>1` 时关闭 `--reload`）：`python scripts/run_dev.py --backend --workers 4`。`Dockerfile` 中生产进程默认 **`uvicorn --workers 2`**。
+多 worker（`>1` 时关闭 `--reload`）：`py -3.12 scripts/run_dev.py --backend --workers 4`。`Dockerfile` 中生产进程默认 **`uvicorn --workers 2`**。
 
 对外提供或共享后端时，在 `.env` 中设置 **`API_BEARER_TOKEN`**（见 `.env.example`）。非空时除 `/health`、`/docs`、`/openapi.json`、`/redoc` 外，所有 API 须带请求头 **`Authorization: Bearer <与环境中相同的 token>`**；未设置该变量则与旧行为一致（本地开发可留空）。前端在 **`frontend/.env.local`** 设置 **`NEXT_PUBLIC_API_BEARER_TOKEN`**（与后端相同值）时，`frontend/lib/client.ts` 会自动为 API 请求附带该头；未设置则不发送 `Authorization`。
 
 **运行数据与数据库**：服务端会话、任务、RAG、向量元数据等均落在 **PostgreSQL**。必须在 `.env` 配置 **`DATABASE_URL=postgresql://…`**（见 `.env.example`）；未配置则进程启动会失败。**生产/一体化运行**推荐 **`docker compose up`**（`docker-compose.yml` 已包含 `postgres` 与 `DATABASE_URL`）。本地可单独启动数据库：`docker compose up -d postgres`，再运行 `scripts/run_dev.py --backend`。pytest 默认期望本机或 CI 中已提供可用的 `DATABASE_URL`（与 compose 账号一致）。
 
-（依赖以 `requirements.lock` 为准，由 `pyproject.toml` 经 `pip-compile` 生成。更新锁文件时请使用 **Python 3.12**（与本仓库 `Dockerfile` / 工具链一致），例如：`py -3.12 -m piptools compile pyproject.toml --extra dev -o requirements.lock --strip-extras`。）
+（依赖以 `requirements.lock` 为准，由 `pyproject.toml` 经 `pip-compile` 生成。更新锁文件时请使用 **Python 3.12**（与本仓库 `Dockerfile` / 工具链一致）。当前锁文件默认覆盖 `dev + ocr + asr-local + test-pdf`，例如：`py -3.12 -m piptools compile pyproject.toml --extra dev --extra ocr --extra asr-local --extra test-pdf -o requirements.lock --strip-extras`。）
+
+### 运行时外部依赖
+
+`requirements.lock` 已覆盖 Python 包依赖，但以下运行时组件仍需按场景准备：
+
+- Playwright 浏览器：`py -3.12 -m playwright install chromium`
+- OCR 本地 fallback：默认文档 OCR 主路应走腾讯云等外部 provider；只有启用 `local_tesseract`，或腾讯 OCR 失败后希望自动回退本地 OCR 时，才需要系统安装 [Tesseract OCR](https://github.com/tesseract-ocr/tesseract)
+- 音视频处理：视频链在“无字幕 -> 抽音频 / 分段 -> 在线 ASR”这条路径上会真实依赖 `ffmpeg`
+
+如果你只跑默认聊天主链、KB、网页和普通文档流程，Playwright 是最常见的额外依赖；`Tesseract` 不是默认必需项，`ffmpeg` 则主要在视频能力开启时需要。
 
 ### 前端
 

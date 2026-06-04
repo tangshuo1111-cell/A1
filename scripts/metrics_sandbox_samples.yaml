@@ -1,0 +1,28 @@
+# 离线指标沙箱：6 条能力代表题（默认 use_knowledge=false，无 KB ingest）
+# A simple_01  Fast 快路径直答
+# B complex_01 Complex 主链（多维度推理）
+# C complex_03 CRAG 二轮 + Tavily 补网
+# D upgrade_01 Fast→Complex 升级 / partial 语义
+# F insufficiency_02 PDF 上传 + 材料链
+# G async_02     Async 网页后台抓取 + poll 终答
+samples:
+  - id: simple_01
+    tag: simple
+    message: "1+1 等于多少？请直接回答。"
+  - id: complex_01
+    tag: complex
+    message: "请从成本、风险、交付速度三个维度对比微服务与单体架构，并给出团队选型建议和适用场景。"
+  - id: complex_03
+    tag: complex
+    message: "请比较 Keyword 检索、向量检索和 Hybrid 检索的优缺点，并说明在什么条件下应优先 Hybrid。"
+  - id: upgrade_01
+    tag: complex
+    message: "这是一个需要多步推理的问题：如果系统默认先 fast 再 quality gate 升级 complex，请分析 partial 交付对用户体验的影响，并给出三条改进建议。"
+  - id: insufficiency_02
+    tag: insufficiency
+    message: "根据我上传的 confidential_board_pack.pdf 中的表格，对比方案 A 和方案 B 的 ROI。"
+    upload_file: "C:/Users/Admin/Desktop/OpenClaw_TikTok_Temu_自动化解决方案(3)_20260422102333.pdf"
+    upload_filename: "confidential_board_pack.pdf"
+  - id: async_02
+    tag: async
+    message: "这个网页抓取请先排队后台处理，稍后给我结果：https://cn.nytimes.com/business/20260602/china-military-nvidia-chips/"

@@ -35,7 +35,7 @@ def test_knowledge_grounded_prompt_includes_compact_output_rules(monkeypatch) ->
         prompt = fake.prompts[-1]
         assert "【输出要求】" in prompt
         assert "先给结论" in prompt
-        assert "避免重复" in prompt
-        assert "不要复述材料标题" in prompt
+        assert "少重复材料原句" in prompt
+        assert "不要复述题目或材料标题" in prompt
     finally:
         reset_turn_cache(token)

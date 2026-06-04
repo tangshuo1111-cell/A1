@@ -18,35 +18,33 @@ import sys
 import types
 from pathlib import Path
 
-import pytest
-
-# 让 `pg_settings` 作为全局 fixture 可被各 @pytest.mark.pg 用例直接以参数引用，
-# 测试文件无需再 import（避免 F401/F811）。
-from tests._support.pg_fixtures import pg_settings  # noqa: E402,F401
-
-# Keep pytest imports from writing __pycache__ into the source tree.
-sys.dont_write_bytecode = True
-
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+BACKEND_ROOT = PROJECT_ROOT / "backend"
+if str(BACKEND_ROOT) not in sys.path:
+    sys.path.insert(0, str(BACKEND_ROOT))
 
+# 必须在 import config.settings 之前写入（pg_fixtures 会触发 settings 单例）。
+sys.dont_write_bytecode = True
 os.environ.setdefault("PYTHONDONTWRITEBYTECODE", "1")
-# 默认集成测 / 需 PG 的用例：本地请先启动 PostgreSQL，或与 docker-compose 中账号一致。
-# CI 在 workflow 中覆盖为 services.postgres 主机名。主链以 PostgreSQL 为准。
 os.environ.setdefault(
     "DATABASE_URL",
     "postgresql://light_maqa:light_maqa_dev@127.0.0.1:5432/light_maqa",
 )
 os.environ.setdefault("RAG_HYBRID", "0")
-os.environ.setdefault("USE_LLM_ROUTER", "0")
+os.environ["USE_LLM_ROUTER"] = "0"
 os.environ.setdefault("ENABLE_ANSWER_CRITIC", "0")
 os.environ.setdefault("EMBEDDING_ENABLED", "0")
-# 默认测试基线与业务口径对齐：统一请求 auto，
-# 再由 auto 在 embedding 关闭时稳定回退到 keyword。
 os.environ.setdefault("RETRIEVAL_MODE", "auto")
 os.environ.setdefault("ENABLE_WEB_SEARCH", "0")
 os.environ.setdefault("CHECKPOINT_BACKEND", "memory")
 os.environ.setdefault("RUNTIME_DB_MEMORY", "1")
 os.environ.setdefault("RATE_LIMIT_CHAT", "10000/minute")
+
+import pytest
+
+# 让 `pg_settings` 作为全局 fixture 可被各 @pytest.mark.pg 用例直接以参数引用，
+# 测试文件无需再 import（避免 F401/F811）。
+from tests._support.pg_fixtures import pg_settings  # noqa: E402,F401
 
 if os.environ.get("ALLOW_REAL_SENTENCE_TRANSFORMERS", "").lower() not in {"1", "true", "yes", "on"}:
     fake_sentence_transformers = types.ModuleType("sentence_transformers")

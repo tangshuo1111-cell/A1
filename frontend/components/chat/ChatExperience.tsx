@@ -5,7 +5,7 @@
  * 组合 hooks 与 UI 子组件；自身不含业务逻辑。
  */
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { AppHeader } from "@/components/layout/AppHeader";
 import { ChatComposer } from "@/components/chat/ChatComposer";
 import { ChatEmptyState } from "@/components/chat/ChatEmptyState";
@@ -14,9 +14,10 @@ import { ContextRail } from "@/components/chat/ContextRail";
 import { VideoCookiesGuide } from "@/components/chat/VideoCookiesGuide";
 import { useHealthStatus } from "@/hooks/useHealthStatus";
 import { useVideoGuide } from "@/hooks/useVideoGuide";
-import { useAsyncTaskPoll } from "@/hooks/useAsyncTaskPoll";
+import { useAsyncTaskPoll, type AsyncTaskCompletePayload } from "@/hooks/useAsyncTaskPoll";
 import { useChatSession } from "@/hooks/useChatSession";
 import { ChatAsyncStatus } from "@/components/chat/ChatAsyncStatus";
+import { TurnStatusSummary } from "@/components/chat/TurnStatusSummary";
 
 const ENV_FORCE_DEBUG_RAIL = process.env.NEXT_PUBLIC_SHOW_DEBUG_PANEL === "1";
 
@@ -44,6 +45,7 @@ export function ChatExperience() {
     setLongVideoGate,
     sendText,
     send,
+    appendAssistantMessage,
   } = useChatSession({
     connection,
     setConnection,
@@ -51,9 +53,27 @@ export function ChatExperience() {
     applyVideoSignal: applySignal,
   });
 
-  const asyncTaskPoll = useAsyncTaskPoll(lastTurn);
+  const handleAsyncTaskComplete = useCallback(
+    (payload: AsyncTaskCompletePayload) => {
+      if (payload.answer) {
+        appendAssistantMessage(payload.answer, {
+          chainLabel: "后台任务完成",
+          elapsedMs: payload.backgroundElapsedMs,
+        });
+        return;
+      }
+      if (payload.errorMessage) {
+        appendAssistantMessage(`后台任务未完成：${payload.errorMessage}`, {
+          chainLabel: "后台任务",
+        });
+      }
+    },
+    [appendAssistantMessage],
+  );
 
-  const [debugRailOpen, setDebugRailOpen] = useState(false);
+  const asyncTaskPoll = useAsyncTaskPoll(lastTurn, handleAsyncTaskComplete);
+
+  const [debugRailOpen, setDebugRailOpen] = useState(true);
   const showDebugRail = ENV_FORCE_DEBUG_RAIL || debugRailOpen;
   const empty = messages.length === 0 && !isGenerating;
 
@@ -76,7 +96,7 @@ export function ChatExperience() {
             onClick={() => setDebugRailOpen((v) => !v)}
             className="text-[11px] font-medium text-ink-tertiary underline-offset-2 hover:text-ink-secondary hover:underline"
           >
-            {debugRailOpen ? "隐藏调试面板" : "显示调试面板"}
+            {debugRailOpen ? "隐藏回答依据" : "显示回答依据"}
           </button>
         </div>
       ) : null}
@@ -101,6 +121,8 @@ export function ChatExperience() {
       ) : null}
 
       <ChatAsyncStatus lastTurn={lastTurn} poll={asyncTaskPoll} />
+
+      <TurnStatusSummary lastTurn={lastTurn} health={health} />
 
       <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
         <main className="flex min-h-0 min-w-0 flex-1 flex-col">

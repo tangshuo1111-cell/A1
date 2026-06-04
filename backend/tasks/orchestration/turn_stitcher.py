@@ -123,6 +123,19 @@ def stitch_slot_to_pending_video(slot: TaskStitchSlot) -> Any:
     )
 
 
+def stitch_slot_to_inline_material(slot: TaskStitchSlot) -> str:
+    """web / document 异步任务摘要：注入 v13 内联材料供下一轮 Middle/Answer 消费。"""
+    lane = (slot.lane or "web").strip() or "web"
+    body = (slot.summary_text or "").strip()
+    if not body:
+        return ""
+    return (
+        f"【以下为已完成的后台任务摘要（{lane}）】\n"
+        f"{body}\n"
+        f"【摘要结束】"
+    )
+
+
 def maybe_attach_task_result(
     *,
     session_id: str,

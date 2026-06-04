@@ -193,3 +193,47 @@ def test_answer_agent_v6_class_kb_weak_triggers_baoshou(monkeypatch):
     # KB 完全无结果 → V14 no_match=True → da_fengshi 应为 baoshou（保守边界）
     assert hp.da_fengshi == "baoshou", \
         f"KB 无结果时 da_fengshi 应为 baoshou（V14 no_match 保守路径），实际: {hp.da_fengshi}"
+
+
+def test_knowledge_grounded_empty_chunks_uses_web_block():
+    """KB 空但有 round1 web_block 时，Answer 应调用执行器而非模板短路。"""
+    from dataclasses import replace
+
+    from agents.answer_agent import AnswerAgent
+    from agents.main_agent import MainAgent
+    from agents.middle_agent import MiddleAgent
+
+    m = MainAgent()
+    plan = m.pan(
+        "请比较 Keyword 检索和向量检索",
+        session_id=None,
+        http_use_knowledge=True,
+        clock=BudgetClock.start(),
+    )
+    plan = replace(plan, answer_mode="knowledge_grounded", needs_retrieval=True)
+    mid = MiddleAgent()
+    bundle = mid.caipan(
+        "请比较 Keyword 检索和向量检索",
+        plan=plan,
+        http_use_knowledge=True,
+        clock=BudgetClock.start(),
+    )
+    bundle = replace(
+        bundle,
+        retrieved_chunks=[],
+        web_block="[Web检索] Hybrid 检索结合关键词与向量召回。",
+    )
+
+    fake = _FakeZhixing()
+    a = AnswerAgent(zhixing=fake)
+    text, _hp = a.huida(
+        "请比较 Keyword 检索和向量检索",
+        context_block=None,
+        plan=plan,
+        bundle=bundle,
+        clock=BudgetClock.start(),
+    )
+    assert text == "FAKE_ANSWER"
+    assert len(fake.calls) == 1
+    assert fake.calls[0]["knowledge_block"] is None
+    assert "Hybrid" in (fake.calls[0]["web_search_block"] or "")

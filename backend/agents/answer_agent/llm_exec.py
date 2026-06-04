@@ -146,11 +146,12 @@ def run_basic_qa(
     if (executor_hint or "").strip():
         strat = f"【作答策略】\n{executor_hint.strip()}\n\n"
     output_rule = ""
-    if kb:
+    if kb or web:
         output_rule = (
             "【输出要求】\n"
-            "先给结论；按用户要求分段；每部分尽量控制在2-3点；"
-            "避免重复、不要复述题目、不要复述材料标题。\n\n"
+            "先给结论；用自然段或短列表表达；不要复述题目或材料标题；"
+            "不要用 --- / ### / **章节标题** 这类 markdown 模板；"
+            "可保留 ✅ ⚠️ 📌 等轻量 emoji。\n\n"
         )
     if context_block:
         prompt = (

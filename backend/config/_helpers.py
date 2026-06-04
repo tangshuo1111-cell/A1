@@ -127,3 +127,25 @@ def _resolve_router_model() -> str:
         or _env_str("LLM_ROUTER_MODEL")
         or _resolve_default_llm_model()
     )
+
+
+def _resolve_v16_web_search_api_key() -> str:
+    """V16 网页搜索 key：优先 V16_WEB_SEARCH_API_KEY，兼容 TAVILY_API_KEY。"""
+    for key in ("V16_WEB_SEARCH_API_KEY", "TAVILY_API_KEY"):
+        v = _env_opt_str(key)
+        if v:
+            return v
+    return ""
+
+
+def _resolve_v16_web_search_provider() -> str:
+    """
+    网页搜索 provider。显式配置优先；仅有 API key 时默认 tavily（与文档常见用法一致）。
+    """
+    for name in ("V16_WEB_SEARCH_PROVIDER", "V16_SEARCH_PROVIDER"):
+        v = _env_opt_str(name)
+        if v:
+            return v.lower()
+    if _resolve_v16_web_search_api_key():
+        return "tavily"
+    return ""

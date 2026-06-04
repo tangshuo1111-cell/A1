@@ -45,6 +45,8 @@ from application.chat.complex_pending_mapping import complex_pending_kind_active
 from application.chat.decision_arbitrator import arbitrate_mode, resolve_session_pending_kind
 from application.chat.delivery_gate_flow import (
     gate_input_from_ingress,
+    material_gate_facts_from_bundle,
+    merge_delivery_extra,
     run_delivery_gate,
 )
 from application.chat.exit_signals import (
@@ -114,6 +116,7 @@ from services.capabilities.web import (  # noqa: F401 - 测试经 run_chat_turn.
 )
 from tasks.orchestration.turn_stitcher import (
     consume_stitch_slot,
+    stitch_slot_to_inline_material,
     stitch_slot_to_pending_video,
     turn_stitcher_active,
 )
@@ -248,6 +251,7 @@ def _run_complex_delivery_with_gate(
         answer_text=answer_text,
         shared_prep=shared_prep,
         limitations=list(getattr(bundle, "answer_limitations", []) or []),
+        material_facts=material_gate_facts_from_bundle(bundle, plan=plan),
     )
     complex_outcome = run_delivery_gate(
         gate_input,
@@ -304,6 +308,21 @@ def _run_complex_delivery_with_gate(
                 material_bundle=bundle,
                 clock=budget_clock,
             )
+            gate_input_r1 = gate_input_from_ingress(
+                ingress=ingress,
+                executor_profile="complex",
+                round_index=1,
+                answer_text=answer_text,
+                shared_prep=shared_prep_out,
+                limitations=list(getattr(bundle, "answer_limitations", []) or []),
+                material_facts=material_gate_facts_from_bundle(bundle, plan=plan),
+            )
+            r1_outcome = run_delivery_gate(
+                gate_input_r1,
+                ingress=ingress,
+                shared_prep=shared_prep_out,
+            )
+            delivery_extra = merge_delivery_extra(delivery_extra, r1_outcome)
 
     return bundle, answer_text, delivery_extra, shared_prep_out, knowledge_block, web_block, collab_trace
 
@@ -407,6 +426,7 @@ def _with_turn_exit_gate(
     effective_mode: str | None = None,
     hard_deadline_limited: bool = False,
     bundle_pending_item_present: bool = False,
+    user_message: str | None = None,
 ) -> ChatTurnResult:
     return apply_turn_exit_to_chat_turn(
         result,
@@ -414,6 +434,7 @@ def _with_turn_exit_gate(
         effective_mode=effective_mode,
         hard_deadline_limited=hard_deadline_limited,
         bundle_pending_item_present=bundle_pending_item_present,
+        user_message=user_message,
     )
 
 
@@ -972,6 +993,9 @@ def _maybe_return_fast_result(
     use_knowledge: bool = False,
 ) -> tuple[Any | None, str, dict[str, Any]]:
     """Run delivery gate; return (fast_result|None, effective_mode, timing)."""
+    from application.chat.answer_text_polish import polish_user_answer
+
+    answer_text = polish_user_answer(answer_text)
     elapsed = _format_ms((time.perf_counter() - t0) * 1000)
     lane_extra_merged = {
         **timing,
@@ -1083,6 +1107,8 @@ def run_agno_chat_turn_impl(
     if turn_cache_active():
         turn_cache_token = bind_turn_cache(TurnCache(request_id=request_id))
     stitch_applied = False
+    stitch_lane: str | None = None
+    effective_v13_text = v13_text_content
 
     # --- Stage 1: session snapshot ---
     ts = time.perf_counter()
@@ -1091,18 +1117,25 @@ def run_agno_chat_turn_impl(
         context_block = _format_context(hist)
         prev_video_ref = deps.session_prev_video.get(key)
         pending_video = deps.session_pending_video.get(key)
-        if turn_stitcher_active() and pending_video is None:
+        if turn_stitcher_active():
             stitch_slot = consume_stitch_slot(session_id)
-            if stitch_slot is not None and stitch_slot.lane == "video":
-                pending_video = stitch_slot_to_pending_video(stitch_slot)
-                deps.session_pending_video[key] = pending_video
-                stitch_applied = True
+            if stitch_slot is not None:
+                if stitch_slot.lane == "video" and pending_video is None:
+                    pending_video = stitch_slot_to_pending_video(stitch_slot)
+                    deps.session_pending_video[key] = pending_video
+                    stitch_applied = True
+                    stitch_lane = stitch_slot.lane
+                elif stitch_slot.lane in ("web", "document") and not (effective_v13_text or "").strip():
+                    effective_v13_text = stitch_slot_to_inline_material(stitch_slot)
+                    stitch_applied = True
+                    stitch_lane = stitch_slot.lane
         history_snapshot = SessionHistorySnapshot.from_history(
             session_id=session_id, context_block=context_block,
             turns=len(hist), prev_video=prev_video_ref,
             pending_video_text=pending_video,
         )
     timing["session_snapshot_ms"] = _format_ms((time.perf_counter() - ts) * 1000)
+    v13_text_content = effective_v13_text
 
     ingress = resolve_lane_decision(
         message=message,
@@ -1135,7 +1168,7 @@ def run_agno_chat_turn_impl(
     if early_turn is not None:
         if turn_cache_token is not None:
             reset_turn_cache(turn_cache_token)
-        return _with_turn_exit_gate(early_turn, ingress=ingress)
+        return _with_turn_exit_gate(early_turn, ingress=ingress, user_message=message)
 
     effective_mode, arbitrator_reason, arbitrator_trace = _arbitrate_turn_mode(
         ingress=ingress,
@@ -1169,6 +1202,8 @@ def run_agno_chat_turn_impl(
             extra.update(load_answer_llm_metrics())
         if stitch_applied:
             extra["turn_stitch.applied"] = True
+            if stitch_lane:
+                extra["turn_stitch.lane"] = stitch_lane
         kb_calls = 1 if int(extra.get("v15_retrieved_chunks_count") or 0) > 0 else 0
         if tc is not None and int(extra.get("turn_cache.hits") or 0) > 0:
             kb_calls = max(kb_calls, 1)
@@ -1197,6 +1232,7 @@ def run_agno_chat_turn_impl(
             async_result,
             ingress=ingress,
             effective_mode=effective_mode,
+            user_message=message,
         )
 
     if ingress_router_active():
@@ -1226,6 +1262,7 @@ def run_agno_chat_turn_impl(
                     fast_result,
                     ingress=ingress,
                     effective_mode=effective_mode,
+                    user_message=message,
                 )
 
         fast_result, effective_mode, timing = _maybe_return_lane_fast(
@@ -1255,6 +1292,7 @@ def run_agno_chat_turn_impl(
                 fast_result,
                 ingress=ingress,
                 effective_mode=effective_mode,
+                user_message=message,
             )
 
     plan, main_dec = _run_main_stage(
@@ -1342,8 +1380,10 @@ def run_agno_chat_turn_impl(
     timing["session_update_ms"] = _format_ms((time.perf_counter() - ts) * 1000)
 
     # --- Stage 6: output guard ---
+    from application.chat.answer_text_polish import polish_user_answer
     from config.cost_rule import COST
 
+    answer_text = polish_user_answer(answer_text)
     if len(answer_text) > COST.max_output_chars:
         answer_text = answer_text[: COST.max_output_chars]
 
@@ -1409,4 +1449,5 @@ def run_agno_chat_turn_impl(
         effective_mode=effective_mode,
         hard_deadline_limited=hard_deadline_limited,
         bundle_pending_item_present=getattr(bundle, "pending_item", None) is not None,
+        user_message=message,
     )

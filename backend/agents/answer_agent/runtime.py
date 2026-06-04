@@ -370,10 +370,12 @@ class AnswerAgent:
                     max_chunks=2,
                     max_chars=900,
                 )
+            elif (bundle.web_block or "").strip():
+                kb_for_answer = None
             else:
                 return (
-                    "当前未从知识库检索到可用片段（retrieved_chunks 为空），"
-                    "无法基于知识库材料作答。请补充资料或调整提问。", hp)
+                    "当前未从知识库检索到可用片段，也未获得可用的外部网页证据，"
+                    "无法基于材料作答。请补充资料或调整提问。", hp)
         elif answer_mode == "temporary_material":
             if bundle.temporary_materials:
                 kb_for_answer = "\n\n---\n\n".join(bundle.temporary_materials)

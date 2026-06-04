@@ -1,0 +1,22 @@
+# 产品指标隔离验证 — 独立 PG（勿与主 compose 共用 volume/port）
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: "no"
+    environment:
+      POSTGRES_USER: light_maqa
+      POSTGRES_PASSWORD: light_maqa_dev
+      POSTGRES_DB: light_maqa_metrics_sandbox
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U light_maqa -d light_maqa_metrics_sandbox"]
+      interval: 3s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    volumes:
+      - metrics_sandbox_pg_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+volumes:
+  metrics_sandbox_pg_data:

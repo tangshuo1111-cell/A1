@@ -89,6 +89,10 @@ export interface ChatSessionState {
   setLongVideoGate: (v: LongVideoGate | null) => void;
   sendText: (text: string, opts?: SendTextOpts) => Promise<void>;
   send: () => Promise<void>;
+  appendAssistantMessage: (
+    content: string,
+    meta?: Pick<ChatMessage, "chainLabel" | "elapsedMs">,
+  ) => void;
 }
 
 export function useChatSession(opts: {
@@ -107,6 +111,27 @@ export function useChatSession(opts: {
   const [generatingSince, setGeneratingSince] = useState<number | null>(null);
   const [pipelineNotice, setPipelineNotice] = useState<string | null>(null);
   const [longVideoGate, setLongVideoGate] = useState<LongVideoGate | null>(null);
+
+  const appendAssistantMessage = useCallback(
+    (
+      content: string,
+      meta?: Pick<ChatMessage, "chainLabel" | "elapsedMs">,
+    ) => {
+      const trimmed = content.trim();
+      if (!trimmed) return;
+      setMessages((m) => [
+        ...m,
+        {
+          id: id(),
+          role: "assistant",
+          content: sanitizeAssistantAnswer(trimmed),
+          chainLabel: meta?.chainLabel,
+          elapsedMs: meta?.elapsedMs,
+        },
+      ]);
+    },
+    [],
+  );
 
   const sendText = useCallback(
     async (text: string, sendOpts?: SendTextOpts) => {
@@ -233,5 +258,6 @@ export function useChatSession(opts: {
     setLongVideoGate,
     sendText,
     send,
+    appendAssistantMessage,
   };
 }

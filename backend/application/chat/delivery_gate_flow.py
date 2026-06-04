@@ -8,6 +8,7 @@ from typing import Any
 from application.chat.chat_contracts import (
     ExecutorProfile,
     KbSufficiencyResult,
+    MaterialGateFacts,
     QualityGateResult,
     SharedMaterialPrepResult,
 )
@@ -30,6 +31,7 @@ class QualityGateInput:
     lane: str
     answer_text: str
     kb_sufficiency: KbSufficiencyResult | None = None
+    material_facts: MaterialGateFacts | None = None
     limitations: tuple[str, ...] = ()
 
 
@@ -80,6 +82,7 @@ def run_delivery_gate(
         lane=gate_input.lane,
         round_index=gate_input.round_index,
         complex_reason_codes=gate_input.complex_reason_codes,
+        material_facts=gate_input.material_facts,
     )
     extra = apply_quality_gate_extra(
         extra,
@@ -110,6 +113,25 @@ def run_delivery_gate(
     return DeliveryGateOutcome(gate=gate, extra=extra, deliver=True, upgrade_profile=False)
 
 
+def material_gate_facts_from_bundle(
+    bundle: Any,
+    *,
+    plan: Any | None = None,
+) -> MaterialGateFacts | None:
+    """Assemble read-only Middle facts for quality_gate (no re-judgment)."""
+    if bundle is None:
+        return None
+    web_block = str(getattr(bundle, "web_block", "") or "").strip()
+    xiezuo = getattr(plan, "xiezuo_pan", None) if plan is not None else None
+    return MaterialGateFacts(
+        material_sufficiency=str(getattr(bundle, "material_sufficiency", "sufficient") or "sufficient"),
+        material_still_insufficient=bool(getattr(bundle, "material_still_insufficient", False)),
+        try_rag_executed=bool(getattr(plan, "needs_retrieval", False)) if plan is not None else False,
+        has_web_evidence=bool(web_block),
+        allow_web=bool(getattr(xiezuo, "allow_web", False)) if xiezuo is not None else False,
+    )
+
+
 def gate_input_from_ingress(
     *,
     ingress: Any,
@@ -118,6 +140,7 @@ def gate_input_from_ingress(
     answer_text: str,
     shared_prep: SharedMaterialPrepResult | None = None,
     limitations: list[str] | None = None,
+    material_facts: MaterialGateFacts | None = None,
 ) -> QualityGateInput:
     kb_suff = shared_prep.kb_sufficiency if shared_prep is not None else None
     return QualityGateInput(
@@ -128,6 +151,7 @@ def gate_input_from_ingress(
         lane=str(getattr(ingress, "lane", "general") or "general"),
         answer_text=answer_text,
         kb_sufficiency=kb_suff,
+        material_facts=material_facts,
         limitations=tuple(limitations or ()),
     )
 

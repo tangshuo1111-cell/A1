@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from application.chat.complexity_policy import STRONG_COMPLEX_REASON_CODES
 from config.feature_flags import complexity_policy_active
 
 from .request_classifier import RequestSignals
@@ -25,16 +26,7 @@ def select_mode(
     if signals.has_ocr_intent:
         return "complex", 0.94
     if complexity_policy_active():
-        strong_complex_codes = {
-            "comparison",
-            "decision_tradeoff",
-            "multi_dimension",
-            "pro_con",
-            "cross_material",
-            "solution_design",
-            "diagnostic_reasoning",
-        }
-        if complex_candidate and any(code in strong_complex_codes for code in complex_reason_codes):
+        if complex_candidate and any(code in STRONG_COMPLEX_REASON_CODES for code in complex_reason_codes):
             return "complex", 0.92
         if complex_candidate:
             return "fast", 0.91

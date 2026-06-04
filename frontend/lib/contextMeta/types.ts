@@ -2,6 +2,11 @@ export interface ContextLines {
   retrievalLabel: string | null;
   toolsSummary: string | null;
   fallbackNote: string | null;
+  laneLabel: string | null;
+  statusLabel: string | null;
+  upgradeReason: string | null;
+  materialsSummary: string | null;
+  materialsCountLabel: string | null;
   /** V15 R1：plan 摘要（needs_retrieval / answer_mode / tools_allowed） */
   v15Plan: string | null;
   /** V15 R1：bundle 摘要（material_sufficiency / failures / retrieved_chunks） */

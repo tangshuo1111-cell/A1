@@ -11,6 +11,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -181,6 +182,31 @@ class Settings(AiModelSettings, SearchAndStorageSettings, ToolsAndMediaSettings)
 settings = Settings()
 
 
+def _log_embedding_index_state(log: logging.Logger) -> None:
+    """EMBEDDING_ENABLED=1 时探活 rag_embeddings，无行则 warn（避免 silent keyword 降级）。"""
+    try:
+        from storage.pg_pool import get_pool
+
+        with get_pool().connection() as conn, conn.cursor() as cur:
+            cur.execute("SELECT COUNT(*) FROM rag_embeddings;")
+            row = cur.fetchone()
+            count = int(row[0]) if row else 0
+    except Exception as exc:  # noqa: BLE001
+        log.warning(
+            "EMBEDDING_ENABLED=1 but rag_embeddings check failed (%s); "
+            "auto retrieval may fall back to keyword",
+            exc,
+        )
+        return
+    if count <= 0:
+        log.warning(
+            "EMBEDDING_ENABLED=1 but rag_embeddings has no rows; "
+            "auto retrieval will use keyword until chunks are indexed on commit"
+        )
+    else:
+        log.info("embedding index: rag_embeddings rows=%s", count)
+
+
 def log_runtime_bootstrap() -> None:
     """启动时打印当前模式，便于区分 no-key 与 real-llm。"""
     import logging
@@ -191,6 +217,8 @@ def log_runtime_bootstrap() -> None:
         settings.app_env, settings.api_host, settings.api_port,
         settings.retrieval_mode, settings.embedding_enabled,
     )
+    if settings.embedding_enabled:
+        _log_embedding_index_state(log)
     if settings.llm_effective_for_router:
         log.info("LLM: router model=%s base=%s", settings.llm_router_model, settings.openai_base_url)
     elif not settings.openai_api_key:

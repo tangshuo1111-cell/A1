@@ -14,6 +14,62 @@ function asStr(v: unknown): string | null {
   return null;
 }
 
+function humanizeLane(raw: string | null): string | null {
+  if (!raw) return null;
+  switch (raw) {
+    case "kb":
+      return "知识库直答";
+    case "document":
+      return "文档理解";
+    case "web":
+      return "网页读取";
+    case "video":
+      return "视频处理";
+    case "general":
+      return "通用回答";
+    default:
+      return raw;
+  }
+}
+
+function humanizeStatus(raw: string | null): string | null {
+  if (!raw) return null;
+  switch (raw) {
+    case "done":
+      return "已完成";
+    case "partial":
+      return "部分完成";
+    case "failed":
+      return "未完成";
+    case "queued":
+      return "排队中";
+    case "running":
+      return "处理中";
+    default:
+      return raw;
+  }
+}
+
+function humanizePendingKind(raw: string | null): string | null {
+  if (!raw) return null;
+  switch (raw) {
+    case "more_web_material":
+      return "需要补充网页材料";
+    case "more_document_material":
+      return "需要补充文档材料";
+    case "more_video_material":
+      return "需要补充视频材料";
+    case "more_kb_material":
+      return "需要补充知识库材料";
+    case "escalate_to_complex":
+      return "已升级到复杂处理";
+    case "escalate_to_async":
+      return "已升级到异步任务";
+    default:
+      return raw;
+  }
+}
+
 function safeJson(v: unknown, max = 900): string {
   try {
     return JSON.stringify(v).slice(0, max);
@@ -256,6 +312,17 @@ export function buildContextLines(res: ChatResponseBody): ContextLines {
     asStr(res.primary_path) ??
     asStr((extra as { primary_path?: unknown }).primary_path) ??
     asStr((extra as { path_hints?: unknown }).path_hints);
+  const lane = asStr((extra as { lane?: unknown }).lane);
+  const taskStatus = asStr(res.task_status);
+  const pendingKind = asStr((extra as { pending_kind?: unknown }).pending_kind);
+  const chunksCount =
+    typeof (extra as { v15_retrieved_chunks_count?: unknown }).v15_retrieved_chunks_count === "number"
+      ? String((extra as { v15_retrieved_chunks_count: number }).v15_retrieved_chunks_count)
+      : null;
+  const tempCount =
+    typeof (extra as { v15_temporary_materials_count?: unknown }).v15_temporary_materials_count === "number"
+      ? String((extra as { v15_temporary_materials_count: number }).v15_temporary_materials_count)
+      : null;
 
   const retrievalLabel = primary
     ? String(primary)
@@ -272,6 +339,27 @@ export function buildContextLines(res: ChatResponseBody): ContextLines {
     (extra as { path_hints: unknown[] }).path_hints.length
       ? `hints · ${(extra as { path_hints: string[] }).path_hints.slice(0, 3).join(", ")}`
       : null);
+
+  let materialsSummary: string | null = null;
+  const materialParts: string[] = [];
+  if (chunksCount) materialParts.push(`检索片段 ${chunksCount}`);
+  if (tempCount) materialParts.push(`临时材料 ${tempCount}`);
+  const docQuality = asStr((extra as { v16_doc_quality_level?: unknown }).v16_doc_quality_level);
+  if (docQuality) materialParts.push(`文档质量 ${docQuality}`);
+  const webQuality = asStr((extra as { v16_web_quality_level?: unknown }).v16_web_quality_level);
+  if (webQuality) materialParts.push(`网页质量 ${webQuality}`);
+  const videoQuality = asStr((extra as { v16_video_quality_level?: unknown }).v16_video_quality_level);
+  if (videoQuality) materialParts.push(`视频质量 ${videoQuality}`);
+  if (materialParts.length > 0) {
+    materialsSummary = materialParts.join(" · ");
+  }
+
+  const materialsCountLabel =
+    chunksCount || tempCount
+      ? [chunksCount ? `片段 ${chunksCount}` : null, tempCount ? `临时材料 ${tempCount}` : null]
+          .filter(Boolean)
+          .join(" / ")
+      : null;
 
   let fallbackNote: string | null = null;
   if (res.has_insufficient_info_notice) {
@@ -321,7 +409,7 @@ export function buildContextLines(res: ChatResponseBody): ContextLines {
   const sufficiency = asStr(
     (extra as { v15_material_sufficiency?: unknown }).v15_material_sufficiency,
   );
-  const chunksCount =
+  const bundleChunksCount =
     typeof (extra as { v15_retrieved_chunks_count?: unknown })
       .v15_retrieved_chunks_count === "number"
       ? ((extra as { v15_retrieved_chunks_count?: number })
@@ -335,11 +423,11 @@ export function buildContextLines(res: ChatResponseBody): ContextLines {
   )
     ? ((extra as { v15_failures: unknown[] }).v15_failures as unknown[])
     : [];
-  if (sufficiency || chunksCount !== null || failures.length > 0) {
+  if (sufficiency || bundleChunksCount !== null || failures.length > 0) {
     const parts: string[] = [];
     if (execStatus && execStatus !== "ok") parts.push(`exec=${execStatus}`);
     if (sufficiency) parts.push(`sufficiency=${sufficiency}`);
-    if (chunksCount !== null) parts.push(`chunks=${chunksCount}`);
+    if (bundleChunksCount !== null) parts.push(`chunks=${bundleChunksCount}`);
     if (failures.length > 0) {
       const failNames = failures
         .slice(0, 2)
@@ -361,10 +449,24 @@ export function buildContextLines(res: ChatResponseBody): ContextLines {
     (extra as { v15_execution_status?: unknown }).v15_execution_status,
   );
 
+  let upgradeReason: string | null = null;
+  if (humanizePendingKind(pendingKind)) {
+    upgradeReason = humanizePendingKind(pendingKind);
+  } else if (asStr((extra as { why_still_insufficient?: unknown }).why_still_insufficient)) {
+    upgradeReason = asStr((extra as { why_still_insufficient?: unknown }).why_still_insufficient);
+  } else if (asStr((extra as { v15_material_sufficiency?: unknown }).v15_material_sufficiency)) {
+    upgradeReason = `材料判断：${asStr((extra as { v15_material_sufficiency?: unknown }).v15_material_sufficiency)}`;
+  }
+
   return {
     retrievalLabel,
     toolsSummary,
     fallbackNote,
+    laneLabel: humanizeLane(lane),
+    statusLabel: humanizeStatus(taskStatus),
+    upgradeReason,
+    materialsSummary,
+    materialsCountLabel,
     v15Plan,
     v15Bundle,
     v14RetrievalLine,

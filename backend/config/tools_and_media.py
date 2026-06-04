@@ -6,7 +6,14 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from ._helpers import _env_bool, _env_float, _env_int, _env_str
+from ._helpers import (
+    _env_bool,
+    _env_float,
+    _env_int,
+    _env_str,
+    _resolve_v16_web_search_api_key,
+    _resolve_v16_web_search_provider,
+)
 
 
 @dataclass
@@ -249,10 +256,10 @@ class ToolsAndMediaSettings:
         default_factory=lambda: _env_str("V16_SEARCH_PROVIDER", "").strip().lower()
     )
     v16_web_search_provider: str = field(
-        default_factory=lambda: _env_str("V16_WEB_SEARCH_PROVIDER", "").strip().lower()
+        default_factory=_resolve_v16_web_search_provider
     )
     v16_web_search_api_key: str = field(
-        default_factory=lambda: _env_str("V16_WEB_SEARCH_API_KEY", "")
+        default_factory=_resolve_v16_web_search_api_key
     )
     v16_web_search_endpoint: str = field(
         default_factory=lambda: _env_str("V16_WEB_SEARCH_ENDPOINT", "")

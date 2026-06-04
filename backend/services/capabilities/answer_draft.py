@@ -63,7 +63,10 @@ def _call_fast_llm(prompt: str) -> str:
             messages=[
                 {
                     "role": "system",
-                    "content": "你是一个中文轻量助手。用最短可用答案回复，不展开，不寒暄过度。",
+                    "content": (
+                        "你是一个中文轻量助手。用自然口语回复，先结论后补充；"
+                        "避免 --- / ### / **标题** 等 markdown 模板；可保留 ✅ ⚠️ 📌。"
+                    ),
                 },
                 {"role": "user", "content": prompt},
             ],

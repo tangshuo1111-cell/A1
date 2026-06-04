@@ -20,6 +20,24 @@ from tools.ocr.registry import OcrToolSchema, register
 
 _CLOUD_PROVIDERS = frozenset({"generic_http", "remote", "tencent", "tencentcloud"})
 _FIXTURE_PROVIDERS = frozenset({"mock", "fake"})
+_FALLBACK_ELIGIBLE_ERRORS = frozenset(
+    {
+        ocr_errors.OCR_PROVIDER_ERROR,
+        ocr_errors.OCR_INVALID_RESPONSE,
+        ocr_errors.OCR_EMPTY_RESULT,
+    }
+)
+
+
+def _local_tesseract_fallback_allowed(path: Path, primary_out: OcrProviderOutcome) -> bool:
+    provider = (settings.v16_ocr_provider or "").strip().lower()
+    if provider not in {"tencent", "tencentcloud"}:
+        return False
+    if path.suffix.lower() == ".pdf":
+        return False
+    if primary_out.ok:
+        return False
+    return (primary_out.error_code or "") in _FALLBACK_ELIGIBLE_ERRORS
 
 
 def _pdf_page_count(path: Path) -> int | None:
@@ -159,6 +177,8 @@ def _ocr_document(
         )
 
     # ── 外部云 OCR：external + paid ──────────────────────────────────────
+    fallback_warning = ""
+    fallback_provider = ""
     if provider in _CLOUD_PROVIDERS:
         if not settings.v16_enable_external_processing:
             return _failed(
@@ -246,6 +266,14 @@ def _ocr_document(
                     region=settings.v16_tencent_region,
                     timeout_sec=float(settings.v16_ocr_timeout_sec or 60.0),
                 )
+            if _local_tesseract_fallback_allowed(path, out):
+                fallback_out = run_local_tesseract(path)
+                if fallback_out.ok:
+                    fallback_provider = "local_tesseract"
+                    fallback_warning = (
+                        f"primary_ocr_failed:{out.error_code or 'unknown'} -> local_tesseract"
+                    )
+                    out = fallback_out
         else:
             ep = (settings.v16_ocr_endpoint or "").strip()
             if not ep:
@@ -312,6 +340,9 @@ def _ocr_document(
         "source_type": "ocr_document",
         "file_path": str(path),
         "provider": provider,
+        "primary_provider": provider,
+        "fallback_provider": fallback_provider,
+        "fallback_used": bool(fallback_provider),
         "provider_type": out.provider_type,
         "production_ready": out.production_ready,
         "external_processing": out.external_processing,
@@ -319,6 +350,7 @@ def _ocr_document(
         "cost_used": estimated_cost,
         "pages": out.pages,
         "page_count": len(out.pages) if out.pages else 1,
+        "quality_degraded": bool(fallback_provider),
     }
     return DocumentToolResult(
         tool_name="ocr_document",
@@ -329,8 +361,14 @@ def _ocr_document(
         structured_data={"pages": out.pages, "page_count": len(out.pages) if out.pages else 1},
         metadata=md,
         quality={"quality_level": "usable", "text_length": len(out.text)},
+        warnings=[fallback_warning] if fallback_warning else [],
         duration_ms=duration_ms,
-        trace=[f"v16:ocr success provider={provider} type={out.provider_type} len={len(out.text)}"],
+        trace=[
+            (
+                f"v16:ocr success provider={provider} fallback={fallback_provider or 'none'} "
+                f"type={out.provider_type} len={len(out.text)}"
+            )
+        ],
     )
 
 

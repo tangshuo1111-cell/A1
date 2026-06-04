@@ -246,3 +246,44 @@ def test_default_shadow_off_no_exit_shadow_in_trace() -> None:
 
 def test_exit_compare_fields_fixed() -> None:
     assert EXIT_COMPARE_FIELDS == ("task_status", "pending_kind", "primary_path", "mode")
+
+
+def test_product_metrics_v1_canonical_fields() -> None:
+    from application.chat.turn_exit_gate import envelope_to_extra_fields
+
+    env = finalize_turn_exit(
+        TurnFacts(
+            router_lane="general",
+            effective_mode="complex",
+            executor_profile="complex",
+            material_sufficiency="insufficient",
+            quality_gate=QualityGateResult(
+                pass_=False,
+                need_second_round=True,
+                need_more_material=True,
+                reason_codes=("kb_insufficient",),
+            ),
+            legacy_task_status="partial",
+        )
+    )
+    extra = envelope_to_extra_fields(env)
+    assert extra["is_complex_task"] is True
+    assert extra["insufficient_evidence"] is True
+    assert extra["quality_gate_passed"] is False
+    assert extra["failure_reason_code"] == "insufficiency"
+
+
+def test_answer_summary_truncates() -> None:
+    from application.chat.turn_exit_gate import _answer_summary
+
+    long = "答" * 400
+    out = _answer_summary(long, limit=50)
+    assert len(out) == 50
+    assert out.endswith("…")
+
+
+def test_sample_label_from_sandbox_session() -> None:
+    from application.chat.turn_exit_gate import _sample_label_from_session
+
+    assert _sample_label_from_session("sandbox_complex_01_ab12cd34") == "complex_01"
+    assert _sample_label_from_session("user-session-xyz") is None
