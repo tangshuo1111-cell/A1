@@ -5,6 +5,7 @@ import { ApiRequestError } from "@/lib/client";
 import { sanitizeAssistantAnswer } from "@/lib/answerSanitizer";
 import { fetchWebVideoMetadata, postChat } from "@/lib/api";
 import { extractFirstWhitelistVideoUrl } from "@/lib/videoUrl";
+import { extractSourceHints } from "@/lib/contextMeta";
 import { detectVideoCookiesNeed } from "@/hooks/useVideoGuide";
 import type { CookiesGuideSignal } from "@/hooks/useVideoGuide";
 import type {
@@ -13,6 +14,24 @@ import type {
   ChatResponseBody,
   ConnectionState,
 } from "@/lib/types";
+
+const SESSION_STORAGE_KEY = "maqa_session_id";
+
+function readStoredSessionId(): string | null {
+  try {
+    return sessionStorage.getItem(SESSION_STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredSessionId(sid: string): void {
+  try {
+    sessionStorage.setItem(SESSION_STORAGE_KEY, sid);
+  } catch {
+    /* ignore quota / private-mode errors */
+  }
+}
 
 function id() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -32,7 +51,7 @@ function assistantErrorMessage(err: unknown): string {
           ? (err.body as ApiErrorBody).error!.error_layer
           : null;
       if (layer === "storage") {
-        return "服务器存储/数据库异常（可检查 data 目录与 SQLite）。详情见响应体或日志。";
+        return "服务器存储/数据库异常（可检查 PostgreSQL 连接与 DATABASE_URL 配置）。详情见响应体或日志。";
       }
       if (layer === "tool") {
         return "服务器工具层异常（502）。请查看后端日志中的 tool 相关错误。";
@@ -105,7 +124,7 @@ export function useChatSession(opts: {
 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(() => readStoredSessionId());
   const [lastTurn, setLastTurn] = useState<ChatResponseBody | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingSince, setGeneratingSince] = useState<number | null>(null);
@@ -185,7 +204,10 @@ export function useChatSession(opts: {
           confirm_long_web_video_asr: !!sendOpts?.confirmLongWebVideoAsr,
         });
         setLastTurn(res);
-        if (res.session_id) setSessionId(res.session_id);
+        if (res.session_id) {
+          setSessionId(res.session_id);
+          writeStoredSessionId(res.session_id);
+        }
         if (res.pipeline_ok === false && res.pipeline_hint_zh) {
           setPipelineNotice(res.pipeline_hint_zh);
         }
@@ -198,6 +220,10 @@ export function useChatSession(opts: {
           ? sanitizeAssistantAnswer(res.answer as string)
           : "本轮未返回正文。可以换个说法或稍后重试。";
 
+        const ex =
+          res.extra && typeof res.extra === "object" ? (res.extra as Record<string, unknown>) : null;
+        const sourceHints = extractSourceHints(ex, ex?.lane as string | undefined);
+
         setMessages((m) => [
           ...m,
           {
@@ -209,6 +235,7 @@ export function useChatSession(opts: {
               typeof res.workflow_elapsed_ms === "number"
                 ? res.workflow_elapsed_ms
                 : undefined,
+            sourceHints: sourceHints.length > 0 ? sourceHints : null,
           },
         ]);
       } catch (e) {

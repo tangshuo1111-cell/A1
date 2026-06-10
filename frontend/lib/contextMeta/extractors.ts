@@ -423,3 +423,45 @@ export function buildContextLines(res: ChatResponseBody): ContextLines {
     v15FinalStatus,
   };
 }
+
+/**
+ * 从 ChatResponseBody 提取用户侧可读的来源标签（非 debug 轨）。
+ * 返回最多 3 条简短字符串，空时返回 []。
+ */
+export function extractSourceHints(
+  extra: Record<string, unknown> | null | undefined,
+  lane: string | null | undefined,
+): string[] {
+  if (!extra) return [];
+  const hints: string[] = [];
+
+  const laneStr = asStr(lane) ?? asStr(extra.lane);
+
+  if (laneStr === "kb") {
+    const count = extra.v15_retrieved_chunks_count ?? extra.v12_retrieved_chunks_count;
+    if (typeof count === "number" && count > 0) {
+      hints.push(`知识库 · ${count} 条片段`);
+    } else {
+      hints.push("知识库");
+    }
+    const srcId = asStr(extra.v15_retrieved_source_id);
+    if (srcId) hints.push(srcId.slice(0, 40));
+  } else if (laneStr === "web") {
+    const domain = asStr(extra.v16_web_domain);
+    if (domain) hints.push(`网页 · ${domain}`);
+    else hints.push("网页");
+  } else if (laneStr === "video") {
+    const src = asStr(extra.v16_video_transcript_source);
+    hints.push(src ? `视频 · ${src}` : "视频");
+  } else if (laneStr === "document") {
+    const srcType = asStr(extra.v16_doc_source_type);
+    hints.push(srcType ? `文档 · ${srcType}` : "文档");
+  } else if (laneStr === "general" || laneStr === "complex") {
+    const tmpCount = extra.v15_temporary_materials_count;
+    if (typeof tmpCount === "number" && tmpCount > 0) {
+      hints.push(`${tmpCount} 个来源`);
+    }
+  }
+
+  return hints.slice(0, 3);
+}

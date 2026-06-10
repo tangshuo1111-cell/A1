@@ -64,18 +64,34 @@ export function ChatMessageList({
               >
                 <p className="whitespace-pre-wrap break-words">{display}</p>
                 {m.role === "assistant" &&
-                (m.chainLabel || m.elapsedMs != null) ? (
-                  <p className="mt-2 border-t border-line-subtle/60 pt-2 text-[10px] leading-snug text-ink-tertiary">
-                    {m.chainLabel ? (
-                      <span className="font-medium text-ink-secondary">
-                        {m.chainLabel}
-                      </span>
+                (m.chainLabel || m.elapsedMs != null || (m.sourceHints && m.sourceHints.length > 0)) ? (
+                  <div className="mt-2 border-t border-line-subtle/60 pt-2 space-y-1">
+                    {(m.chainLabel || m.elapsedMs != null) ? (
+                      <p className="text-[10px] leading-snug text-ink-tertiary">
+                        {m.chainLabel ? (
+                          <span className="font-medium text-ink-secondary">
+                            {m.chainLabel}
+                          </span>
+                        ) : null}
+                        {m.chainLabel && m.elapsedMs != null ? " · " : null}
+                        {m.elapsedMs != null
+                          ? `本轮耗时 ${formatElapsedSeconds(m.elapsedMs)}`
+                          : null}
+                      </p>
                     ) : null}
-                    {m.chainLabel && m.elapsedMs != null ? " · " : null}
-                    {m.elapsedMs != null
-                      ? `本轮耗时 ${formatElapsedSeconds(m.elapsedMs)}`
-                      : null}
-                  </p>
+                    {m.sourceHints && m.sourceHints.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {m.sourceHints.map((hint) => (
+                          <span
+                            key={hint}
+                            className="inline-block rounded-full border border-line-subtle bg-surface-input px-2 py-0.5 text-[10px] text-ink-tertiary"
+                          >
+                            {hint}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
                 ) : null}
               </div>
             </article>

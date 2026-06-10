@@ -5,7 +5,7 @@ from typing import Any
 
 from agents.main_agent import MainAgent
 from application.chat.budget_clock import BudgetClock
-from application.chat.complexity_policy import evaluate_complex_candidate
+from application.chat.complexity_policy import STRONG_COMPLEX_REASON_CODES, evaluate_complex_candidate
 from config.feature_flags import is_enabled
 from config.router_policy import ROUTER_POLICY
 
@@ -73,6 +73,12 @@ def route_chat_request(
         complex_reason_codes=tuple(complex_signal.reason_codes),
     )
     confidence = min(lane_confidence, mode_confidence)
+    if (
+        mode == "complex"
+        and complex_signal.complex_candidate
+        and set(complex_signal.reason_codes) & STRONG_COMPLEX_REASON_CODES
+    ):
+        confidence = max(confidence, 0.88)
     router_source = "rule"
     fallback = False
     escalated = False

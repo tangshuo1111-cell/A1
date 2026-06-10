@@ -68,3 +68,72 @@ jobs:
           name: kb-nightly-eval
           path: _local/kb_nightly.json
           if-no-files-found: error
+
+  agent-smoke:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: light_maqa
+          POSTGRES_PASSWORD: light_maqa_dev
+          POSTGRES_DB: light_maqa
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U light_maqa -d light_maqa"
+          --health-interval 4s
+          --health-timeout 5s
+          --health-retries 12
+          --health-start-period 10s
+    env:
+      LIGHT_MAQA_FAKE_LLM: "1"
+      PLAYWRIGHT_BROWSERS_PATH: "0"
+      DATABASE_URL: postgresql://light_maqa:light_maqa_dev@localhost:5432/light_maqa
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements.lock
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.lock
+
+      - name: Run agent eval (fake LLM smoke)
+        run: |
+          mkdir -p _local
+          python scripts/benchmarks/run_agent_eval.py \
+            --runner local \
+            --output _local/agent_smoke.json
+
+      - name: Score agent eval (structural only)
+        run: |
+          python scripts/benchmarks/score_agent_eval.py \
+            _local/agent_smoke.json \
+            --output _local/agent_smoke.summary.json
+
+      - name: Assert no http_500
+        run: |
+          python - <<'EOF'
+          import json, sys
+          summary = json.loads(open("_local/agent_smoke.summary.json").read())
+          http_500 = summary["summary"]["http_500"]
+          if http_500 > 0:
+              print(f"FAIL: {http_500} request(s) returned HTTP 500", file=sys.stderr)
+              sys.exit(1)
+          print(f"OK: http_500={http_500}")
+          EOF
+
+      - name: Upload agent smoke artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-smoke-eval
+          path: |
+            _local/agent_smoke.json
+            _local/agent_smoke.summary.json
+          if-no-files-found: error

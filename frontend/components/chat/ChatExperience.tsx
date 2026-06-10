@@ -120,7 +120,7 @@ export function ChatExperience() {
         </div>
       ) : null}
 
-      <ChatAsyncStatus lastTurn={lastTurn} poll={asyncTaskPoll} />
+      <ChatAsyncStatus lastTurn={lastTurn} poll={asyncTaskPoll} onAction={setInput} />
 
       <TurnStatusSummary lastTurn={lastTurn} health={health} />
 

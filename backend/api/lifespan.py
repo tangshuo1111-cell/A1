@@ -31,6 +31,13 @@ async def app_lifespan(_app: FastAPI) -> AsyncIterator[None]:
             warmup_semantic_runtime()
         except Exception:  # noqa: BLE001
             logging.getLogger("light_maqa").warning("semantic runtime warmup failed", exc_info=True)
+
+    try:
+        from workers.entry.worker_bootstrap import bootstrap_all_workers
+        bootstrap_all_workers()
+    except Exception:  # noqa: BLE001
+        logging.getLogger("light_maqa").warning("worker bootstrap failed", exc_info=True)
+
     yield
 
     close_pg_pool()

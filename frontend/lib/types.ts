@@ -104,6 +104,8 @@ export interface ChatMessage {
   chainLabel?: string | null;
   /** 本轮工作流耗时 ms（仅 assistant） */
   elapsedMs?: number | null;
+  /** 来源标签，供消息下方折叠展示（仅 assistant） */
+  sourceHints?: string[] | null;
 }
 
 export interface ApiErrorBody {

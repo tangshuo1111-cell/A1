@@ -16,6 +16,7 @@ import type { ChatResponseBody } from "@/lib/types";
 interface ChatAsyncStatusProps {
   lastTurn: ChatResponseBody | null;
   poll: AsyncTaskPollState;
+  onAction?: (text: string) => void;
 }
 
 function formatElapsedMs(ms: number | null | undefined): string | null {
@@ -24,7 +25,7 @@ function formatElapsedMs(ms: number | null | undefined): string | null {
   return `${(ms / 1000).toFixed(1)} 秒`;
 }
 
-export function ChatAsyncStatus({ lastTurn, poll }: ChatAsyncStatusProps) {
+export function ChatAsyncStatus({ lastTurn, poll, onAction }: ChatAsyncStatusProps) {
   if (!lastTurn) return null;
 
   const taskId = resolveBackgroundTaskId(lastTurn);
@@ -88,15 +89,33 @@ export function ChatAsyncStatus({ lastTurn, poll }: ChatAsyncStatusProps) {
         <div className="rounded-lg border border-violet-900/25 bg-violet-950/10 px-3 py-2 text-[12px] leading-relaxed text-ink-secondary dark:bg-violet-950/30">
           <p className="font-medium text-ink-primary">待确认入库</p>
           <p className="mt-1">
-            材料已准备好（material_pending）。如需保存到知识库，请直接回复「保存到知识库」或按助手提示确认。
+            材料已准备好（material_pending）。确认后将保存到知识库，支持后续检索与追问。
           </p>
+          {onAction ? (
+            <button
+              type="button"
+              onClick={() => onAction("保存到知识库")}
+              className="mt-2 rounded border border-violet-400/40 bg-violet-500/10 px-2.5 py-1 text-[11px] font-medium text-violet-700 hover:bg-violet-500/20 dark:text-violet-300"
+            >
+              保存到知识库
+            </button>
+          ) : null}
         </div>
       ) : null}
 
       {partial ? (
         <div className="rounded-lg border border-amber-900/25 bg-amber-950/10 px-3 py-2 text-[12px] text-ink-secondary dark:bg-amber-950/30">
           <p className="font-medium text-ink-primary">部分完成</p>
-          <p className="mt-1">本轮在 SLA 内返回了部分结果；可稍后继续追问或等待后台任务完成。</p>
+          <p className="mt-1">本轮在 SLA 内返回了部分结果；可继续追问以获取完整内容。</p>
+          {onAction ? (
+            <button
+              type="button"
+              onClick={() => onAction("请继续上一轮的内容，补充完整")}
+              className="mt-2 rounded border border-amber-400/40 bg-amber-500/10 px-2.5 py-1 text-[11px] font-medium text-amber-700 hover:bg-amber-500/20 dark:text-amber-300"
+            >
+              继续追问
+            </button>
+          ) : null}
         </div>
       ) : null}
     </div>

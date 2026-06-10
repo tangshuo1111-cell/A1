@@ -6,6 +6,7 @@ export {
   collectOtherExtraReplayLines,
   collectLegacyExtraLines,
   buildContextLines,
+  extractSourceHints,
 } from "./extractors";
 export {
   humanizeLane,
