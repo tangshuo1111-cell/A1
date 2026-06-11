@@ -22,6 +22,14 @@ EvidenceTier = Literal["none", "weak", "usable", "strong"]
 KbSufficiencyLevel = Literal["none", "weak", "adequate_simple", "adequate_complex", "insufficient"]
 MaterialSufficiencyLevel = Literal["sufficient", "insufficient", "no_match", "low_confidence"]
 
+# Round 6 — unified material lifecycle (prepare → pending_commit → committed)
+MaterialState = Literal["prepared", "pending_commit", "committed", "discarded", "failed"]
+MaterialSource = Literal["text", "upload", "web", "local_video", "web_video", "document"]
+
+# Trace layer labels (HTTP extra — unchanged across rounds)
+MaterialLayer = Literal["temporary", "pending", "committed"]
+MaterialScope = Literal["session", "pending", "knowledge"]
+
 
 @dataclass(frozen=True)
 class ComplexCandidateSignal:
@@ -128,3 +136,117 @@ class TurnExitEnvelope:
     quality_gate: dict[str, Any]
     winner_rule: str
     trace: dict[str, Any] = field(default_factory=dict)
+
+
+# ---------------------------------------------------------------------------
+# Agent stage results (Round 4) — agents must not emit HTTP / routing fields
+# ---------------------------------------------------------------------------
+
+AGENT_FORBIDDEN_EXTRA_KEYS: frozenset[str] = frozenset(
+    {
+        "ok",
+        "task_id",
+        "workflow_elapsed_ms",
+        "http_status",
+        "primary_path",
+        "route_response_flags",
+        "task_status",
+    }
+)
+
+
+def coerce_main_agent_result(value: Any) -> MainAgentResult:
+    if isinstance(value, MainAgentResult):
+        return value
+    return MainAgentResult(plan=value)
+
+
+def coerce_middle_agent_result(value: Any) -> MiddleAgentResult:
+    if isinstance(value, MiddleAgentResult):
+        return value
+    return MiddleAgentResult(bundle=value)
+
+
+def coerce_answer_agent_result(value: Any) -> AnswerAgentResult:
+    if isinstance(value, AnswerAgentResult):
+        return value
+    if isinstance(value, tuple) and len(value) == 2:
+        return AnswerAgentResult(answer_text=value[0], huida_pan=value[1])
+    raise TypeError(f"cannot coerce answer agent result from {type(value)!r}")
+
+
+def assert_agent_extra_safe(extra: dict[str, Any]) -> dict[str, Any]:
+    """Reject agent-owned extras that collide with turn-level HTTP fields."""
+    bad = AGENT_FORBIDDEN_EXTRA_KEYS.intersection(extra.keys())
+    if bad:
+        raise ValueError(f"agent extra must not set turn-level fields: {sorted(bad)}")
+    return extra
+
+
+@dataclass(frozen=True)
+class PreparedMaterial:
+    """Parsed in-turn material — not yet in pending store (prepare 只解析、不入库)."""
+
+    pending_id: str
+    session_id: str
+    source: MaterialSource
+    title: str = ""
+    preview_text: str = ""
+    state: MaterialState = "prepared"
+
+
+@dataclass(frozen=True)
+class PendingMaterial:
+    """Awaiting user commit (pending store, not ingested)."""
+
+    pending_id: str
+    session_id: str
+    source: MaterialSource
+    title: str = ""
+    preview_text: str = ""
+    state: MaterialState = "pending_commit"
+    error_code: str = ""
+
+
+@dataclass(frozen=True)
+class CommittedMaterial:
+    """Post-commit — written to knowledge store."""
+
+    pending_id: str
+    source_id: str
+    session_id: str
+    source: MaterialSource
+    chunk_count: int = 0
+    title: str = ""
+    state: MaterialState = "committed"
+    success: bool = True
+    error_code: str = ""
+
+
+@dataclass(frozen=True)
+class MainAgentResult:
+    """Main stage — collaboration plan only; no turn exit fields."""
+
+    plan: Any
+    collab_trace: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class MiddleAgentResult:
+    """Middle stage — material bundle + optional gate facts for quality_gate."""
+
+    bundle: Any
+    material_gate_facts: MaterialGateFacts | None = None
+
+
+@dataclass(frozen=True)
+class AnswerAgentResult:
+    """Answer stage — final text + pan; agent_extra is v6_* diagnostics only."""
+
+    answer_text: str
+    huida_pan: Any
+    agent_extra: dict[str, Any] = field(default_factory=dict)
+
+    def __iter__(self):
+        yield self.answer_text
+        yield self.huida_pan

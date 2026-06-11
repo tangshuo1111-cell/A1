@@ -6,9 +6,9 @@ from dataclasses import dataclass
 from threading import Lock
 
 from agents.answer_agent import AnswerAgent
-from agents.history_context import PendingVideoText, PrevVideoRef
 from agents.main_agent import MainAgent
 from agents.middle_agent import MiddleAgent
+from domain.session_types import PendingVideoText, PrevVideoRef
 
 
 def history_key(session_id: str | None) -> str:

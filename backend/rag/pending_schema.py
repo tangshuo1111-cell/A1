@@ -20,7 +20,7 @@ V13 R2：
 from __future__ import annotations
 
 import uuid
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from typing import Any
 
@@ -214,3 +214,34 @@ class PendingKnowledgeItem:
             "committed_chunk_count": self.committed_chunk_count,
             "preview_text": self.preview_text[:200] if self.preview_text else "",
         }
+
+
+_PENDING_ITEM_FIELDS = (
+    "pending_id",
+    "session_id",
+    "source_type",
+    "title",
+    "raw_source",
+    "text",
+    "preview_text",
+    "metadata",
+    "parser_name",
+    "extract_status",
+    "error_code",
+    "created_at",
+    "commit_status",
+    "pending_kind",
+    "committed_source_id",
+    "committed_chunk_count",
+)
+
+
+def pending_item_to_dict(item: PendingKnowledgeItem) -> dict[str, Any]:
+    """Serialize pending item for PG persistence (Round 7)."""
+    return asdict(item)
+
+
+def pending_item_from_dict(data: dict[str, Any]) -> PendingKnowledgeItem:
+    """Deserialize pending item from PG payload_json."""
+    kwargs = {k: data[k] for k in _PENDING_ITEM_FIELDS if k in data}
+    return PendingKnowledgeItem(**kwargs)

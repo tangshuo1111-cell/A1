@@ -61,8 +61,56 @@ def test_video_metadata_route_times_out_fast(monkeypatch):
 
     with TestClient(app) as client:
         r = client.post("/video/metadata", json={"url": "https://example.com/video"})
-        assert r.status_code == 200
+        assert r.status_code == 504
         body = r.json()
         assert body["ok"] is False
-        assert body["error"] == "video_probe_timeout"
-        assert isinstance(body.get("latency_ms"), int)
+        assert body["error"]["code"] == "video_probe_timeout"
+
+
+def test_chat_agno_upload_rejects_empty_file() -> None:
+    with TestClient(app) as client:
+        r = client.post(
+            "/chat/agno/upload",
+            data={"message": "请帮我解析", "session_id": "upload-empty"},
+            files={"file": ("demo.txt", b"", "text/plain")},
+        )
+        assert r.status_code == 400
+        body = r.json()
+        assert body["ok"] is False
+        assert body["error"]["code"] == "EMPTY_FILE"
+
+
+def test_chat_agno_upload_passes_decoded_file_to_service(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    def _fake_turn(message: str, **kwargs):
+        captured["message"] = message
+        captured.update(kwargs)
+        return {
+            "ok": True,
+            "answer": "已进入 pending",
+            "session_id": kwargs.get("session_id"),
+            "request_id": kwargs.get("request_id"),
+            "answer_type": "basic_agno",
+            "task_status": "pending",
+            "primary_path": "upload_prepare",
+            "extra": {"pending_kind": "material_pending"},
+            "workflow_elapsed_ms": 1,
+        }
+
+    monkeypatch.setattr("services.agno_chat_service.run_agno_chat_turn", _fake_turn)
+
+    with TestClient(app) as client:
+        r = client.post(
+            "/chat/agno/upload",
+            data={"message": "请帮我解析", "session_id": "upload-ok", "use_knowledge": "true"},
+            files={"file": ("demo.txt", "hello upload".encode("utf-8"), "text/plain")},
+        )
+        assert r.status_code == 200
+        body = r.json()
+        assert body["ok"] is True
+        assert captured["message"] == "请帮我解析"
+        assert captured["session_id"] == "upload-ok"
+        assert captured["use_knowledge"] is True
+        assert captured["v13_title"] == "demo.txt"
+        assert captured["v13_file_content"] == "hello upload"

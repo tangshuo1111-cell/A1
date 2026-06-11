@@ -30,7 +30,7 @@ from __future__ import annotations
 import logging
 import uuid
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
@@ -51,7 +51,7 @@ from api.routes import (
 )
 from config.settings import settings
 from core.cost_recorder import flush_request_cost
-from core.errors import AppError, http_status_for_category
+from core.errors import AppError, ErrorCategory, http_status_for_error
 from core.request_context import set_request_id, set_session_id
 from observability import MetricsTimer, metrics_incr, metrics_record_request
 
@@ -148,6 +148,40 @@ async def request_logging_and_metrics(request: Request, call_next):
 
 @app.exception_handler(AppError)
 async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
-    status = http_status_for_category(exc.category)
     rid = getattr(request.state, "request_id", None)
-    return JSONResponse(status_code=status, content=exc.to_api_body(request_id=rid))
+    return JSONResponse(status_code=http_status_for_error(exc), content=exc.to_api_body(request_id=rid))
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    """Normalize legacy HTTPException detail dicts to ErrorResponse shape."""
+    rid = getattr(request.state, "request_id", None)
+    detail = exc.detail
+    if isinstance(detail, dict) and detail.get("code"):
+        body: dict[str, object] = {
+            "ok": False,
+            "error": {
+                "code": str(detail["code"]),
+                "message": str(detail.get("message") or ""),
+                "category": ErrorCategory.VALIDATION.value,
+                "error_layer": "api",
+                "debug_stage": "api",
+            },
+        }
+        if rid:
+            body["request_id"] = rid
+        return JSONResponse(status_code=exc.status_code, content=body)
+    message = detail if isinstance(detail, str) else str(detail)
+    body = {
+        "ok": False,
+        "error": {
+            "code": "HTTP_ERROR",
+            "message": message,
+            "category": ErrorCategory.VALIDATION.value,
+            "error_layer": "api",
+            "debug_stage": "api",
+        },
+    }
+    if rid:
+        body["request_id"] = rid
+    return JSONResponse(status_code=exc.status_code, content=body)

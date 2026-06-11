@@ -12,7 +12,8 @@ from agents.middle_agent.schema import AgnoMaterialBundle, CailiaoPan
 from application.chat.chat_contracts import QualityGateResult
 from application.chat.delivery_gate_flow import gate_input_from_ingress, run_delivery_gate
 from application.chat.history_buffer import ChatTurnDeps
-from application.chat.run_chat_turn import _finalize_fast_path_delivery, run_agno_chat_turn_impl
+from application.chat.executors.fast_executor_delivery import finalize_fast_path_delivery as _finalize_fast_path_delivery
+from application.chat.run_chat_turn import run_agno_chat_turn_impl
 from application.ingress.lane_decision_schema import LaneDecision
 from config import feature_flags
 from schemas import MainDecision
@@ -95,7 +96,7 @@ class TestTraceContractIntegration:
 
 class TestMultisourceQualityGateIntegration:
     def test_multisource_uses_delivery_gate_not_answer_review(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from application.chat.complex_path_entry import run_multisource_round0_answer
+        from application.chat.executors.complex.complex_path_impl import run_multisource_round0_answer
 
         monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_QUALITY_GATE", True)
         monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_THREE_AGENT_AUTONOMY", False)
@@ -143,7 +144,7 @@ class TestMultisourceQualityGateIntegration:
 
 class TestFeedbackExecutionGatedByQuality:
     def test_feedback_only_when_quality_requests(self) -> None:
-        from application.chat.complex_path_entry import run_feedback_round_execution
+        from application.chat.executors.complex.complex_path_impl import run_feedback_round_execution
 
         bundle = SimpleNamespace(bundle_id="b1", material_sufficiency="insufficient", web_block=None)
         deps = SimpleNamespace(answer_agent=SimpleNamespace(runtime=SimpleNamespace()))
@@ -254,8 +255,11 @@ class TestComplexModeBlocksFastExits:
         )
 
         with (
-            patch("application.chat.run_chat_turn.resolve_lane_decision", return_value=fake_ingress),
-            patch("application.chat.run_chat_turn._try_canned_fast_answer", return_value=("这是一条本可 canned 的快答。", {"fast_path": "local_term_explain"})),
+            patch("application.ingress.resolve_lane_decision", return_value=fake_ingress),
+            patch(
+                "application.chat.executors.fast_executor_general.try_canned_fast_answer",
+                return_value=("这是一条本可 canned 的快答。", {"fast_path": "local_term_explain"}),
+            ),
         ):
             out = run_agno_chat_turn_impl(
                 "帮我做决策：该不该现在重构主链？",

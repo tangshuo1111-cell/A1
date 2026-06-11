@@ -63,6 +63,9 @@ _tmp_clean_debug.sqlite
 .coverage
 coverage.xml
 htmlcov/
+# Playwright 运行产物（勿入仓）
+**/test-results/
+**/playwright-report/
 .ruff_cache/
 **/.ruff_cache/
 __pycache__/

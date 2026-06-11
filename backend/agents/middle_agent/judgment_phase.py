@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import Any
 
-from agents.history_context import PrevVideoRef, SessionHistorySnapshot
+from agents.shared.history_context import PrevVideoRef, SessionHistorySnapshot
 from agents.main_agent import AgnoCollaborationPlan
 from application.chat.chat_contracts import KbSufficiencyResult
 from schemas import MainDecision
@@ -287,7 +287,7 @@ class MiddleJudgmentPhaseMixin:
         if anchor is None:
             return None, ""
         # 用结构化锚点 + 原 message 一起拼检索 query：source_id 是 V7 入库时注入的
-        # `video:<basename>` 命名空间，FTS5 会把它当成强权重 token 命中，从而
+        # `video:<basename>` 命名空间，PG tsvector 会把它当成强权重 token 命中，从而
         # 把"刚才那个视频"这种指代真转成"在 video: 命名空间里检索"的实体行为。
         msg = (message or "").strip()
         followup_query = f"{anchor.source_id} {msg}".strip()

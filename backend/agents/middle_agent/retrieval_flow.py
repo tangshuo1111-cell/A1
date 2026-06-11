@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from agents.history_context import PrevVideoRef
+from agents.shared.history_context import PrevVideoRef
 from agents.main_agent import AgnoCollaborationPlan
 from application.chat.chat_contracts import KbSufficiencyResult
 from services.capabilities.knowledge import retrieve_service as _retrieve_svc

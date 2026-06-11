@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from application.chat.fast_path_entry import _kb_should_prefer_complex
+from application.chat.executors.fast_lanes.kb_fast_impl import _kb_should_prefer_complex
 
 
 def test_kb_prefers_complex_for_strong_compare_shape() -> None:

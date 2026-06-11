@@ -67,6 +67,16 @@ export function humanizePendingKind(raw: string | null | undefined): string | nu
       return "需要补充视频材料";
     case "more_kb_material":
       return "需要补充知识库材料";
+    case "fast_pending":
+      return "快速通道等待中";
+    case "processing_pending":
+      return "后台处理中";
+    case "material_pending":
+      return "待确认入库";
+    case "partial_pending":
+      return "部分完成";
+    case "none":
+      return null;
     default:
       return raw;
   }

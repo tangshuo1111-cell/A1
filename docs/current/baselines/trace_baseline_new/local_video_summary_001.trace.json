@@ -14,7 +14,7 @@
   ],
   "call_path_snapshot": [
     "application.ingress.runtime:route_chat_request",
-    "application.chat.fast_path_entry:run_video_fast_path",
+    "application.chat.executors.fast_lanes.video_fast_impl:run_video_fast_path",
     "services.capabilities.video.local_video_extract_service:run_local_video_subtitle_extract"
   ],
   "notes": "P10 new-path trace baseline"

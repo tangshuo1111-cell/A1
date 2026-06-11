@@ -8,9 +8,10 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import PlainTextResponse
 
 from api.deps import verify_admin_optional
-from observability import metrics_snapshot
+from observability import metrics_prometheus_text, metrics_snapshot
 from storage import task_job_store
 
 router = APIRouter(dependencies=[Depends(verify_admin_optional)])
@@ -19,6 +20,11 @@ router = APIRouter(dependencies=[Depends(verify_admin_optional)])
 @router.get("/metrics")
 def get_metrics() -> dict:
     return {"ok": True, **metrics_snapshot()}
+
+
+@router.get("/metrics/prometheus", response_class=PlainTextResponse)
+def get_metrics_prometheus() -> str:
+    return metrics_prometheus_text()
 
 
 @router.get("/tasks/recent")

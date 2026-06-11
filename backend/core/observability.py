@@ -93,6 +93,34 @@ def metrics_snapshot() -> dict[str, Any]:
         }
 
 
+def metrics_prometheus_text() -> str:
+    """Exposition format for Prometheus scrape + Grafana dashboards."""
+    snap = metrics_snapshot()
+    lines: list[str] = []
+
+    def _emit(name: str, value: int | float, labels: str = "") -> None:
+        suffix = f"{{{labels}}}" if labels else ""
+        lines.append(f"light_maqa_{name}{suffix} {value}")
+
+    for key, value in sorted(snap["counters"].items()):
+        safe = key.replace(".", "_").replace("-", "_")
+        _emit(f"counter_{safe}", value)
+    _emit("http_latency_avg_ms", snap["http_latency_avg_ms"])
+    for mode, count in sorted(snap["retrieval_modes"].items()):
+        _emit("retrieval_mode_total", count, f'mode="{mode}"')
+    for node, count in sorted(snap["graph_nodes"].items()):
+        _emit("graph_node_total", count, f'node="{node}"')
+    return "\n".join(lines) + "\n"
+
+
+def reset_metrics_for_tests() -> None:
+    """Clear in-process metrics so tests can assert exact snapshots."""
+    with _metrics_lock:
+        _metrics_counts.clear()
+        _metrics_retrieval.clear()
+        _metrics_nodes.clear()
+
+
 class MetricsTimer:
     def __init__(self) -> None:
         self._t0 = time.perf_counter()

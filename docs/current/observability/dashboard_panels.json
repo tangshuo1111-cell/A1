@@ -1,0 +1,33 @@
+{
+  "title": "Light Maqa — chat governance metrics",
+  "scrape_path": "/internal/metrics/prometheus",
+  "snapshot_path": "/internal/metrics",
+  "panels": [
+    {
+      "id": "chat_sync_ratio",
+      "title": "Chat sync ok/fail",
+      "metrics": ["light_maqa_counter_chat_sync_ok", "light_maqa_counter_chat_sync_fail"]
+    },
+    {
+      "id": "http_latency",
+      "title": "HTTP latency avg (ms)",
+      "metrics": ["light_maqa_http_latency_avg_ms"]
+    },
+    {
+      "id": "task_terminal",
+      "title": "Task terminal statuses",
+      "metrics_prefix": "light_maqa_counter_task_terminal_"
+    },
+    {
+      "id": "retrieval_modes",
+      "title": "Retrieval modes",
+      "metrics_prefix": "light_maqa_retrieval_mode_total"
+    },
+    {
+      "id": "metrics_trend",
+      "title": "Long-term trend (JSONL via record_metrics_trend.py)",
+      "source": "data/observability/metrics_trend.jsonl",
+      "metrics": ["chat_sync_total", "chat_sync_fail", "http_requests_total"]
+    }
+  ]
+}

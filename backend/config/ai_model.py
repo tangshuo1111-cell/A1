@@ -37,6 +37,9 @@ class AiModelSettings:
     use_llm_router: bool = field(
         default_factory=lambda: _env_bool("USE_LLM_ROUTER", True)
     )
+    fake_llm_enabled: bool = field(
+        default_factory=lambda: _env_bool("LIGHT_MAQA_FAKE_LLM", False)
+    )
 
     middle_llm_model: str | None = field(
         default_factory=lambda: _env_opt_str("MIDDLE_MODEL")

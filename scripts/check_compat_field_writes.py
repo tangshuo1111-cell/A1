@@ -8,6 +8,7 @@ Exit codes:
     0  No forbidden writes (or no retired field rules yet).
     1  One or more writes to retired fields detected.
 """
+
 from __future__ import annotations
 
 import argparse

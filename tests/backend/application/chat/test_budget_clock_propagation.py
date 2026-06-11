@@ -60,7 +60,7 @@ class TestBudgetClockPropagation:
         _disable_fast_lanes(monkeypatch)
         monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_BUDGET_CLOCK_V2", True)
         monkeypatch.setattr(
-            "application.chat.run_chat_turn._build_extra",
+            "application.chat.response_assembly.build_extra",
             lambda *a, **k: {"lane": "agno_basic", "primary_path": "agno_basic", "mode": "complex"},
         )
         started = time.perf_counter()

@@ -72,5 +72,30 @@ services:
           cpus: "1.5"
           memory: "1.5G"
 
+  frontend:
+    image: node:20-alpine
+    restart: unless-stopped
+    working_dir: /app/frontend
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      BACKEND_URL: http://api:8000
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+    command: >
+      sh -lc "npm ci &&
+      npm run build &&
+      npm run start -- --hostname 0.0.0.0 --port 3000"
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/app
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
 volumes:
   pg_data:

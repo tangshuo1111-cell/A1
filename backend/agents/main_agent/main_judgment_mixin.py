@@ -8,7 +8,7 @@ from __future__ import annotations
 from dataclasses import replace
 
 import llm.router as _llm_router_mod
-from agents.history_context import SessionHistorySnapshot
+from agents.shared.history_context import SessionHistorySnapshot
 from llm.router import LlmIntentResult
 from schemas import MainDecision
 from video.url_fetch import extract_video_url

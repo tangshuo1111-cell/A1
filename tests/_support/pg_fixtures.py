@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import os
+import socket
+from urllib.parse import urlparse
 
 import pytest
 
@@ -31,6 +33,14 @@ def pg_settings(monkeypatch: pytest.MonkeyPatch) -> None:
     """Reset pool to real PostgreSQL; skip when unreachable."""
     url = pg_dsn()
     monkeypatch.setattr(settings, "database_url", url)
+    parsed = urlparse(url)
+    if parsed.hostname:
+        port = parsed.port or 5432
+        try:
+            with socket.create_connection((parsed.hostname, port), timeout=1.5):
+                pass
+        except OSError as exc:
+            pytest.skip(f"PostgreSQL 端口不可达：{parsed.hostname}:{port} ({exc!s})")
 
     from storage import pg_pool, task_job_store
     from storage.conversation_store import reset_conversation_schema_boot_for_tests

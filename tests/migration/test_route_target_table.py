@@ -176,7 +176,7 @@ def test_simple_document_request_stays_in_document_fast_lane() -> None:
 
 def test_multisource_request_enters_complex_autonomy_loop(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "application.chat.complex_path_entry.agno_web_service.fetch_web_evidence_block",
+        "services.capabilities.web.web_orchestration_service.fetch_web_evidence_block",
         lambda *_a, **_k: "[Web检索] 方案 B 具备更好的上线节奏。",
     )
     out = run_agno_chat_turn_impl(

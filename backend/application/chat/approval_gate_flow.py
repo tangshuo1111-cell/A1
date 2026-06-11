@@ -22,6 +22,7 @@ from application.chat.exit_signals import (
 from application.chat.material_flow import material_trace_for_extra
 from application.chat.turn_exit_extra import build_common_exit_extra
 from application.chat.turn_exit_gate import apply_turn_exit_to_chat_turn
+from application.chat.turn_response_builder import build_chat_turn_result
 from application.chat.turn_facts import TurnFacts
 from application.ingress.request_classifier import classify_request
 from config.feature_flags import approval_gate_active
@@ -147,17 +148,15 @@ def build_approval_blocked_turn_result(
         pipeline_ok=False,
     )
     return apply_turn_exit_to_chat_turn(
-        {
-            "ok": True,
-            "answer": build_approval_blocked_answer(result),
-            "session_id": session_id,
-            "request_id": request_id,
-            "task_id": None,
-            "answer_type": "approval_blocked",
-            "pipeline_ok": False,
-            "extra": extra,
-            "workflow_elapsed_ms": elapsed_ms,
-        },
+        build_chat_turn_result(
+            answer=build_approval_blocked_answer(result),
+            session_id=session_id,
+            request_id=request_id,
+            answer_type="approval_blocked",
+            pipeline_ok=False,
+            extra=extra,
+            elapsed_ms=elapsed_ms,
+        ),
         facts=facts,
         ingress=ingress,
     )
@@ -198,16 +197,15 @@ def build_commit_executed_turn_result(
             "commit_chunk_count": int(getattr(commit_result, "chunk_count", 0) or 0),
         }
     )
-    extra.update(
-        material_trace_for_extra(
-            executor_profile="fast",
-            approval_kind="pending_commit",
-            pending_count=0,
-        )
+    from application.chat.material_lifecycle import committed_material_from_result, trace_fields_for_state
+
+    committed = committed_material_from_result(commit_result, session_id=session_id or "")
+    commit_trace = trace_fields_for_state(
+        "committed" if committed.success else "failed",
+        source_count=committed.chunk_count,
     )
-    extra["material_layer_used"] = "committed"
-    extra["material_scope"] = "knowledge"
-    extra["material_source_count"] = int(getattr(commit_result, "chunk_count", 0) or 0)
+    extra.update(material_trace_for_extra(executor_profile="fast", approval_kind="pending_commit", pending_count=0))
+    extra.update(commit_trace)
     commit_ok = bool(getattr(commit_result, "success", False))
     set_mode_signal(extra, "fast")
     set_material_sufficiency_signal(extra, "sufficient" if commit_ok else "insufficient")
@@ -231,17 +229,15 @@ def build_commit_executed_turn_result(
         pipeline_ok=pipeline_ok,
     )
     return apply_turn_exit_to_chat_turn(
-        {
-            "ok": True,
-            "answer": answer,
-            "session_id": session_id,
-            "request_id": request_id,
-            "task_id": None,
-            "answer_type": "commit_executed",
-            "pipeline_ok": pipeline_ok,
-            "extra": extra,
-            "workflow_elapsed_ms": elapsed_ms,
-        },
+        build_chat_turn_result(
+            answer=answer,
+            session_id=session_id,
+            request_id=request_id,
+            answer_type="commit_executed",
+            pipeline_ok=pipeline_ok,
+            extra=extra,
+            elapsed_ms=elapsed_ms,
+        ),
         facts=facts,
         ingress=ingress,
     )

@@ -350,7 +350,7 @@ def test_run_web_fast_path_demotes_when_dynamic_required(
     enable_capability_fact_web,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from application.chat import fast_path_entry
+    from application.chat.executors.fast_lanes import web_fast_impl
     from services.capabilities.contracts import CapabilityAdvice, CapabilityFact
 
     fact = CapabilityFact(
@@ -371,7 +371,7 @@ def test_run_web_fast_path_demotes_when_dynamic_required(
         lambda *_a, **_k: (_ for _ in ()).throw(AssertionError("fetch must not run")),
     )
 
-    out = fast_path_entry.run_web_fast_path(
+    out = web_fast_impl.run_web_fast_path(
         message="请总结 https://spa.example.com/page",
         context_block=None,
         clock=BudgetClock.start(),
@@ -388,7 +388,7 @@ def test_run_web_fast_path_uses_direct_material_helper(
     enable_capability_fact_web,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from application.chat import fast_path_entry
+    from application.chat.executors.fast_lanes import web_fast_impl
     from services.capabilities.contracts import CapabilityAdvice, CapabilityFact
 
     fact = CapabilityFact(
@@ -410,7 +410,7 @@ def test_run_web_fast_path_uses_direct_material_helper(
         lambda *_a, **_k: "[网页正文] example.com\nURL: https://example.com/article\n正文:\n真实网页正文",
     )
 
-    out = fast_path_entry.run_web_fast_path(
+    out = web_fast_impl.run_web_fast_path(
         message="https://example.com/article 这个网页讲了什么",
         context_block=None,
         clock=BudgetClock.start(),
@@ -428,7 +428,7 @@ def test_run_web_fast_path_returns_fulltext_when_requested(
     enable_capability_fact_web,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from application.chat import fast_path_entry
+    from application.chat.executors.fast_lanes import web_fast_impl
     from services.capabilities.contracts import CapabilityAdvice, CapabilityFact
 
     fact = CapabilityFact(
@@ -450,7 +450,7 @@ def test_run_web_fast_path_returns_fulltext_when_requested(
         lambda *_a, **_k: "[网页正文] example.com\nURL: https://example.com/article\n正文:\n第一段\n第二段",
     )
 
-    out = fast_path_entry.run_web_fast_path(
+    out = web_fast_impl.run_web_fast_path(
         message="https://example.com/article 把整个网页的全文提取出来给我",
         context_block=None,
         clock=BudgetClock.start(),

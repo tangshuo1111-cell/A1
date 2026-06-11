@@ -12,6 +12,8 @@ from application.chat.chat_contracts import (
     QualityGateResult,
     SharedMaterialPrepResult,
 )
+from application.chat.domain.events import TurnEvent, quality_escalated_event
+from application.chat.domain.reason_codes import QUALITY_REQUIRES_COMPLEX
 from application.chat.quality_gate import evaluate_quality_gate
 from application.chat.shared_material_prep import shared_prep_trace_extra
 from application.chat.trace_writer import (
@@ -154,6 +156,14 @@ def gate_input_from_ingress(
         material_facts=material_facts,
         limitations=tuple(limitations or ()),
     )
+
+
+def build_delivery_events(outcome: DeliveryGateOutcome) -> list[TurnEvent]:
+    """Emit profile events from delivery gate outcome (no direct mode mutation)."""
+    if outcome.upgrade_profile:
+        codes = tuple(outcome.gate.reason_codes) or (QUALITY_REQUIRES_COMPLEX,)
+        return [quality_escalated_event(reason_codes=codes)]
+    return []
 
 
 def merge_delivery_extra(target: dict[str, Any], outcome: DeliveryGateOutcome) -> dict[str, Any]:

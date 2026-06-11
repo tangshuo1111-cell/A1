@@ -30,14 +30,14 @@ os.environ.setdefault("EMBEDDING_ENABLED", "0")
 os.environ.setdefault("RETRIEVAL_MODE", "keyword")
 os.environ.setdefault("USE_TFIDF_RERANK", "0")
 
-from rag.pending_store import reset_for_tests
+from services.pending_store import reset_pending_store_for_tests
 
 
 @pytest.fixture(autouse=True)
 def _reset_pending():
-    reset_for_tests()
+    reset_pending_store_for_tests()
     yield
-    reset_for_tests()
+    reset_pending_store_for_tests()
 
 
 @pytest.fixture
@@ -219,7 +219,7 @@ def test_v14_answer_low_confidence_via_trace_raises_baoshou():
         session_id="sess_lowconf",
         http_use_knowledge=True,
         clock=BudgetClock.start(),
-    )
+    ).plan
     bundle = AgnoMaterialBundle(
         knowledge_block=None,
         web_block=None,
@@ -279,7 +279,7 @@ def test_v14_used_context_agno_turn_default_path(
 
     rs.init_schema()
 
-    from rag.pending_store import reset_for_tests as _rst
+    from services.pending_store import reset_pending_store_for_tests as _rst
     from services import agno_chat_service
 
     _rst()

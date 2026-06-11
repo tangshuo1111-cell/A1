@@ -1,0 +1,23 @@
+{
+  "backend/storage/store_factory.py": {
+    "lines": 67
+  },
+  "backend/storage/pg_chat_session_store.py": {
+    "lines": 160
+  },
+  "backend/storage/memory_chat_session_store.py": {
+    "lines": 68
+  },
+  "backend/workers/entry/task_plane_worker.py": {
+    "lines": 65
+  },
+  "backend/workers/entry/worker_bootstrap.py": {
+    "lines": 27
+  },
+  "backend/tasks/orchestration/turn_stitcher.py": {
+    "lines": 164
+  },
+  "backend/tasks/orchestration/task_store.py": {
+    "lines": 34
+  }
+}

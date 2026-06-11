@@ -25,10 +25,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from rag.pending_schema import (
-    PendingKnowledgeItem,
-)
-from rag.pending_store import PendingStore, get_default_store
+from rag.pending_schema import PendingKnowledgeItem
 from rag.source_parsers import (
     parse_asr_source,
     parse_document_source,
@@ -41,6 +38,7 @@ from rag.source_parsers import (
     parse_web_url_source,
     parse_web_video_source,
 )
+from services.pending_store import PendingStore, get_pending_store
 
 logger = logging.getLogger("light_maqa")
 
@@ -105,7 +103,7 @@ def prepare_text_source(
     返回 PendingKnowledgeItem（已加入 pending store）。
     extract_status 为 "ok" 时可用于临时回答；"empty_content" 时不可用。
     """
-    _store = store or get_default_store()
+    _store = store or get_pending_store()
     payload, parser_name, error_code = parse_text_source(
         text, session_id=session_id, title=title
     )
@@ -139,7 +137,7 @@ def prepare_document_source(
     失败时 extract_status=error_code，不得 commit。
     返回 PendingKnowledgeItem（已加入 pending store）。
     """
-    _store = store or get_default_store()
+    _store = store or get_pending_store()
     payload, parser_name, error_code = parse_document_source(
         file_path, file_content=file_content
     )
@@ -182,7 +180,7 @@ def prepare_file_source(
             store=store,
         )
 
-    _store = store or get_default_store()
+    _store = store or get_pending_store()
     payload, parser_name, error_code = parse_file_source(
         file_path, file_content=file_content
     )
@@ -219,7 +217,7 @@ def prepare_web_url_source(
     返回 PendingKnowledgeItem（已加入 pending store）。
     失败时 extract_status 为 error_code；失败态不得 commit。
     """
-    _store = store or get_default_store()
+    _store = store or get_pending_store()
     payload, parser_name, error_code = parse_web_url_source(
         url,
         fetch_method=fetch_method,
@@ -273,7 +271,7 @@ def prepare_video_source(
     调用方（Middle Agent）负责提取视频文本；本函数只负责 payload 标准化和 pending 存储。
     返回 PendingKnowledgeItem（已加入 pending store）。
     """
-    _store = store or get_default_store()
+    _store = store or get_pending_store()
     payload, parser_name, error_code = parse_video_source(
         source_type=source_type,
         raw_source=raw_source,
@@ -306,7 +304,7 @@ def prepare_local_video_source(
     session_id: str,
     store: PendingStore | None = None,
 ) -> PendingKnowledgeItem:
-    _store = store or get_default_store()
+    _store = store or get_pending_store()
     payload, parser_name, error_code = parse_local_video_source(file_path, session_id=session_id)
     extract_status = "ok" if not error_code else error_code  # noqa: SIM212
     item = PendingKnowledgeItem.create(
@@ -327,7 +325,7 @@ def prepare_web_video_source(
     session_id: str,
     store: PendingStore | None = None,
 ) -> PendingKnowledgeItem:
-    _store = store or get_default_store()
+    _store = store or get_pending_store()
     payload, parser_name, error_code = parse_web_video_source(url, session_id=session_id)
     extract_status = "ok" if not error_code else error_code  # noqa: SIM212
     item = PendingKnowledgeItem.create(
@@ -350,7 +348,7 @@ def prepare_ocr_source(
     estimated_cost: float = 0.0,
     store: PendingStore | None = None,
 ) -> PendingKnowledgeItem:
-    _store = store or get_default_store()
+    _store = store or get_pending_store()
     payload, parser_name, error_code = parse_ocr_document_source(file_path, estimated_cost=estimated_cost, session_id=session_id)
     extract_status = "ok" if not error_code else error_code  # noqa: SIM212
     item = PendingKnowledgeItem.create(
@@ -373,7 +371,7 @@ def prepare_asr_source(
     estimated_cost: float = 0.0,
     store: PendingStore | None = None,
 ) -> PendingKnowledgeItem:
-    _store = store or get_default_store()
+    _store = store or get_pending_store()
     payload, parser_name, error_code = parse_asr_source(
         file_path,
         duration_sec=duration_sec,
@@ -400,7 +398,7 @@ def prepare_web_search_source(
     provider_override: str = "",
     store: PendingStore | None = None,
 ) -> PendingKnowledgeItem:
-    _store = store or get_default_store()
+    _store = store or get_pending_store()
     payload, parser_name, error_code = parse_web_search_source(query, provider_override=provider_override, session_id=session_id)
     extract_status = "ok" if not error_code else error_code  # noqa: SIM212
     item = PendingKnowledgeItem.create(
@@ -435,7 +433,7 @@ def commit_pending(
     """
     from storage import knowledge_store as ks
 
-    _store = store or get_default_store()
+    _store = store or get_pending_store()
     item = _store.get(pending_id)
 
     if item is None:
@@ -516,7 +514,7 @@ def commit_pending_by_session(
 
     返回 CommitResult 列表。
     """
-    _store = store or get_default_store()
+    _store = store or get_pending_store()
     items = _store.list_for_session(session_id, only_committable=True)
     results = []
     for item in items:
@@ -533,7 +531,7 @@ def commit_most_recent_pending(
     """
     保存 session 最近一个可提交 pending（跨轮「保存」最常见场景）。
     """
-    _store = store or get_default_store()
+    _store = store or get_pending_store()
     item = _store.get_recent(session_id, only_committable=True)
     if item is None:
         return CommitResult(
@@ -554,7 +552,7 @@ def list_pending(
     store: PendingStore | None = None,
 ) -> list[PendingKnowledgeItem]:
     """列出 session 的 pending 资料（默认只列可提交的）。"""
-    _store = store or get_default_store()
+    _store = store or get_pending_store()
     return _store.list_for_session(session_id, only_committable=only_committable)
 
 
@@ -564,7 +562,7 @@ def discard_pending(
     store: PendingStore | None = None,
 ) -> bool:
     """丢弃指定 pending（用户取消）。"""
-    _store = store or get_default_store()
+    _store = store or get_pending_store()
     return _store.discard(pending_id)
 
 

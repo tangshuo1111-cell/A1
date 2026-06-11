@@ -65,7 +65,7 @@ def test_path_kb_when_sample_loaded(monkeypatch: pytest.MonkeyPatch) -> None:
     kb_snip = f"样例文档含 {KB_MARK}"
 
     monkeypatch.setattr(
-        "application.chat.run_chat_turn.resolve_lane_decision",
+        "application.ingress.resolve_lane_decision",
         lambda **kw: LaneDecision(
             request_id="req-kb",
             session_id=str(kw.get("session_id") or ""),
@@ -102,13 +102,13 @@ def test_path_kb_when_sample_loaded(monkeypatch: pytest.MonkeyPatch) -> None:
             capabilities_called=("capability.kb.retrieve",),
         )
 
-    monkeypatch.setattr("application.chat.run_chat_turn.run_shared_material_prep", _fake_shared_prep)
+    monkeypatch.setattr("application.chat.shared_material_prep.run_shared_material_prep", _fake_shared_prep)
     monkeypatch.setattr(
         "services.capabilities.web.web_orchestration_service.fetch_web_evidence_block",
         lambda *_a, **_k: "",
     )
     monkeypatch.setattr(
-        "application.chat.fast_path_entry.summarize_fast_material",
+        "application.chat.executors.fast_lanes.fast_llm.summarize_fast_material",
         lambda **kw: f"ok-kb-{KB_MARK}",
     )
     out = agno_chat_service.run_agno_chat_turn(

@@ -91,7 +91,7 @@ def test_autonomy_flag_off_skips_feedback_loop(monkeypatch: pytest.MonkeyPatch) 
         called["web"] += 1
         return "[Web检索] 不应触发 round_1"
 
-    monkeypatch.setattr("application.chat.run_chat_turn.agno_web_service.fetch_web_evidence_block", _never)
+    monkeypatch.setattr("services.capabilities.web.web_orchestration_service.fetch_web_evidence_block", _never)
     out = run_agno_chat_turn_impl(
         "请根据知识库和网页证据回答：项目代号是什么",
         session_id="p8-autonomy-off",
@@ -108,7 +108,7 @@ def test_autonomy_flag_off_skips_feedback_loop(monkeypatch: pytest.MonkeyPatch) 
 def test_autonomy_flag_on_runs_feedback_loop(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_THREE_AGENT_AUTONOMY", True)
     monkeypatch.setattr(
-        "application.chat.run_chat_turn.agno_web_service.fetch_web_evidence_block",
+        "services.capabilities.web.web_orchestration_service.fetch_web_evidence_block",
         lambda *_a, **_k: "[Web检索] 项目代号是 Atlas",
     )
     out = run_agno_chat_turn_impl(

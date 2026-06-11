@@ -1,9 +1,11 @@
-"""Mode arbitration — sole product-level fast/complex/async demotion point (§5.6)."""
+"""Mode arbitration — emits events; ``TurnDecision.mode`` is written by state machine only."""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
 from application.chat.budget_clock import BudgetClock
+from application.chat.domain.events import TurnEvent, mode_arbitrated_event
+from application.chat.domain.reason_codes import canonical_code
 from application.chat.pending_kind import PendingKind
 from application.ingress.lane_decision_schema import LaneDecision, ModeName
 from services.capabilities.contracts import CapabilityAdvice
@@ -27,7 +29,7 @@ def resolve_session_pending_kind(
     return PendingKind.NONE
 
 
-def arbitrate_mode(
+def resolve_arbitration_detail(
     *,
     session_pending: PendingKind,
     ingress: LaneDecision,
@@ -36,7 +38,7 @@ def arbitrate_mode(
     clock: BudgetClock,
     reserved_ms: int = ARBITRATOR_RESERVE_MS,
 ) -> tuple[ModeName, str]:
-    """Return final mode and reason. Precedence is fixed (§5.6)."""
+    """Return proposed mode and detail reason (§5.6 precedence). Does not mutate turn state."""
     if session_pending != PendingKind.NONE:
         return "complex", "session_pending_active"
 
@@ -50,3 +52,45 @@ def arbitrate_mode(
         return "complex", "multi_source_compare"
 
     return ingress.mode, "ingress_mode"
+
+
+def build_arbitration_event(
+    *,
+    session_pending: PendingKind,
+    ingress: LaneDecision,
+    main_plan: AgnoCollaborationPlan | None,
+    capability_advice: CapabilityAdvice | None,
+    clock: BudgetClock,
+    reserved_ms: int = ARBITRATOR_RESERVE_MS,
+) -> TurnEvent:
+    """Emit ``ModeArbitrated`` event with canonical reason codes."""
+    mode, detail = resolve_arbitration_detail(
+        session_pending=session_pending,
+        ingress=ingress,
+        main_plan=main_plan,
+        capability_advice=capability_advice,
+        clock=clock,
+        reserved_ms=reserved_ms,
+    )
+    code = canonical_code(detail, lane=ingress.lane, ingress_mode=ingress.mode)
+    return mode_arbitrated_event(mode=mode, reason_codes=(code,), detail_reason=detail)
+
+
+def arbitrate_mode(
+    *,
+    session_pending: PendingKind,
+    ingress: LaneDecision,
+    main_plan: AgnoCollaborationPlan | None,
+    capability_advice: CapabilityAdvice | None,
+    clock: BudgetClock,
+    reserved_ms: int = ARBITRATOR_RESERVE_MS,
+) -> tuple[ModeName, str]:
+    """Backward-compatible detail API for tests and trace strings."""
+    return resolve_arbitration_detail(
+        session_pending=session_pending,
+        ingress=ingress,
+        main_plan=main_plan,
+        capability_advice=capability_advice,
+        clock=clock,
+        reserved_ms=reserved_ms,
+    )

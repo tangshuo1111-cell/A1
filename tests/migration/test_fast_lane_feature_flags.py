@@ -92,7 +92,7 @@ def test_lane_fast_flag_off_escalates_to_complex(
         monkeypatch.setitem(feature_flags.FEATURE_FLAGS, lane_flag, True)
     monkeypatch.setitem(feature_flags.FEATURE_FLAGS, flag, False)
     monkeypatch.setattr(
-        "application.chat.run_chat_turn._build_extra",
+        "application.chat.response_assembly.build_extra",
         lambda *a, **k: {"lane": "agno_basic", "primary_path": "agno_basic", "mode": "complex"},
     )
     out = run_agno_chat_turn_impl(message, session_id=f"p7-{flag}", deps=_legacy_deps(), **kwargs)
@@ -114,7 +114,7 @@ def test_general_fast_flag_off_skips_canned_shortcut(monkeypatch: pytest.MonkeyP
         monkeypatch.setitem(feature_flags.FEATURE_FLAGS, lane_flag, True)
     monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_FAST_LANE_GENERAL", False)
     monkeypatch.setattr(
-        "application.chat.run_chat_turn._build_extra",
+        "application.chat.response_assembly.build_extra",
         lambda *a, **k: {"lane": "agno_basic", "primary_path": "agno_basic", "mode": "complex"},
     )
     out = run_agno_chat_turn_impl("你好", session_id="p7-general-off", deps=_legacy_deps())

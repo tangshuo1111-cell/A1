@@ -100,7 +100,7 @@ def test_tool_budget_exhausted_blocks_round1_fetch(monkeypatch) -> None:
         called["web"] += 1
         return "[Web检索] 不应被调用"
 
-    monkeypatch.setattr("application.chat.run_chat_turn.agno_web_service.fetch_web_evidence_block", _never)
+    monkeypatch.setattr("services.capabilities.web.web_orchestration_service.fetch_web_evidence_block", _never)
     out = run_agno_chat_turn_impl(
         "请根据知识库和网页证据回答：项目代号是什么",
         session_id="p8-tool-exhausted",

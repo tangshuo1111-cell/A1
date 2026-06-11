@@ -111,7 +111,7 @@ def consume_stitch_slot(session_id: str | None) -> TaskStitchSlot | None:
 
 
 def stitch_slot_to_pending_video(slot: TaskStitchSlot) -> Any:
-    from agents.history_context import PendingVideoText
+    from domain.session_types import PendingVideoText
 
     return PendingVideoText(
         text=slot.summary_text,

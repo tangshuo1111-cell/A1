@@ -354,7 +354,12 @@ def build_extra(
         extra,
         str(extra.get("answer_view_path") or resolve_complex_primary_path(bundle)),
     )
-    extra.update(deps.answer_agent.xiezuo_extra(plan, bundle))
+    from application.chat.turn_response_builder import merge_agent_extra_into_turn_extra
+
+    collab_fn = getattr(deps.answer_agent, "collab_extra", None) or getattr(
+        deps.answer_agent, "xiezuo_extra", lambda *_a, **_k: {}
+    )
+    extra = merge_agent_extra_into_turn_extra(extra, collab_fn(plan, bundle))
     _rc = _apply_v12_extra(
         extra=extra,
         bundle=bundle,

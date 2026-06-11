@@ -213,8 +213,9 @@ def log_runtime_bootstrap() -> None:
 
     log = logging.getLogger("light_maqa")
     log.info(
-        "config: APP_ENV=%s API=%s:%s retrieval=%s embedding=%s",
-        settings.app_env, settings.api_host, settings.api_port,
+        "config: APP_ENV=%s store=%s fake_llm=%s API=%s:%s retrieval=%s embedding=%s",
+        settings.app_env, settings.store_backend, settings.fake_llm_enabled,
+        settings.api_host, settings.api_port,
         settings.retrieval_mode, settings.embedding_enabled,
     )
     if settings.embedding_enabled:

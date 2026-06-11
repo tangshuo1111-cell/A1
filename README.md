@@ -455,7 +455,8 @@ flowchart TD
 - `backend/application/chat/shared_material_prep.py`
 - `backend/application/chat/delivery_gate_flow.py`
 - `backend/application/chat/approval_gate_flow.py`
-- `backend/application/chat/async_entry.py`
+- `backend/application/chat/executors/async_executor.py`
+- `backend/application/chat/executors/async_path/build_pending.py`
 
 这些文件决定：
 - 什么时候走 Fast

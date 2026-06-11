@@ -4,7 +4,6 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 from application.chat.material_flow import material_trace_from_bundle, resolve_material_trace
-from rag.pending_schema import STATUS_COMMITTED, STATUS_PENDING
 
 
 def test_resolve_material_trace_kb_retrieval():
@@ -17,8 +16,15 @@ def test_resolve_material_trace_kb_retrieval():
 def test_material_trace_from_pending_bundle():
     bundle = SimpleNamespace(
         pending_item=SimpleNamespace(
-            commit_status=STATUS_PENDING,
-            material_status=STATUS_PENDING,
+            commit_status="pending",
+            material_status="pending",
+            source_type="text",
+            extract_status="ok",
+            pending_id="p",
+            session_id="s",
+            title="",
+            preview_text="",
+            metadata={},
         ),
         retrieved_chunks=[],
         temporary_materials=[],
@@ -31,8 +37,17 @@ def test_material_trace_from_pending_bundle():
 def test_material_trace_from_committed_pending():
     bundle = SimpleNamespace(
         pending_item=SimpleNamespace(
-            commit_status=STATUS_COMMITTED,
-            material_status=STATUS_COMMITTED,
+            commit_status="committed",
+            material_status="committed",
+            source_type="text",
+            extract_status="ok",
+            pending_id="p",
+            session_id="s",
+            title="",
+            preview_text="",
+            committed_source_id="kb:1",
+            committed_chunk_count=1,
+            metadata={},
         ),
         retrieved_chunks=[],
         temporary_materials=[],

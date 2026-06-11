@@ -93,13 +93,18 @@ def route_chat_request(
             fallback = True
             escalated = True
         else:
-            plan = main_agent.pan(
-                message,
-                session_id=session_id,
-                http_use_knowledge=use_knowledge,
-                context_snippet=context_snippet,
-                clock=clock,
+            from application.chat.chat_contracts import coerce_main_agent_result
+
+            main_result = coerce_main_agent_result(
+                main_agent.pan(
+                    message,
+                    session_id=session_id,
+                    http_use_knowledge=use_knowledge,
+                    context_snippet=context_snippet,
+                    clock=clock,
+                )
             )
+            plan = main_result.plan
             lane = _lane_from_main_plan(plan, use_knowledge=use_knowledge, has_document_payload=signals.has_document_payload)
             mode = _mode_from_main_plan(plan, default_mode=mode)
             router_source = "main_agent"

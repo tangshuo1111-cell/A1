@@ -29,7 +29,7 @@ def test_run_chat_turn_passes_clock_to_answer(
         )
 
     monkeypatch.setattr(
-        "application.chat.run_chat_turn._build_extra",
+        "application.chat.response_assembly.build_extra",
         lambda *_a, **_k: {"lane": "agno_basic", "primary_path": "agno_basic", "mode": "complex"},
     )
 

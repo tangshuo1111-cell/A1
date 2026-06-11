@@ -18,12 +18,14 @@ async def app_lifespan(_app: FastAPI) -> AsyncIterator[None]:
     from config.settings import log_runtime_bootstrap, settings
     from core.structured_logger import setup_structured_logging
     from retrieval.semantic_retriever import warmup_semantic_runtime
+    from config.validate_startup import validate_startup_config
     from storage.pg_pool import close_pg_pool, get_pool, validate_database_url
 
     lvl = getattr(logging, settings.log_level, logging.INFO)
     setup_structured_logging(level=lvl)
     log_runtime_bootstrap()
 
+    validate_startup_config()
     validate_database_url()
     get_pool()
     if settings.embedding_enabled:

@@ -77,9 +77,9 @@ def test_gate_rejects_when_privacy_scope_blocks_external_processing(tmp_path):
     try:
         msg = _question(base, "missing.html")
         clock = BudgetClock.start()
-        plan = MainAgent().pan(msg, session_id="v17r2-private", clock=clock)
+        plan = MainAgent().pan(msg, session_id="v17r2-private", clock=clock).plan
         private_plan = replace(plan, privacy_scope="private_sensitive")
-        bundle = MiddleAgent().caipan(msg, plan=private_plan, clock=clock)
+        bundle = MiddleAgent().caipan(msg, plan=private_plan, clock=clock).bundle
         review = AnswerAgent().review_multisource(msg, plan=private_plan, bundle=bundle, current_round=0)
         gate = evaluate_feedback_request(
             feedback_request=review["feedback_request"],
@@ -271,7 +271,7 @@ def test_default_chain_builds_feedback_request_and_round1_web(monkeypatch):
     middle = SimpleNamespace(caipan=lambda *a, **k: bundle)
     answer = AnswerAgent()
     monkeypatch.setattr(
-        "application.chat.run_chat_turn.agno_web_service.fetch_web_evidence_block",
+        "services.capabilities.web.web_orchestration_service.fetch_web_evidence_block",
         lambda message, max_results=3: "[Web检索] 项目代号是 Atlas",
     )
 

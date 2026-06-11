@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 from types import SimpleNamespace
 
-from application.chat import fast_path_entry
+from application.chat.executors.fast_lanes import fast_common
 
 
 def test_structured_fast_answer_uses_larger_budget_and_structured_system_prompt() -> None:
@@ -22,7 +22,7 @@ def test_structured_fast_answer_uses_larger_budget_and_structured_system_prompt(
 
     sys.modules["openai"] = SimpleNamespace(OpenAI=_FakeClient)
     try:
-        out = fast_path_entry.run_fast_llm_answer("请按 3-5 个要点详细总结这段内容")
+        out = fast_common.run_fast_llm_answer("请按 3-5 个要点详细总结这段内容")
     finally:
         sys.modules.pop("openai", None)
 
@@ -49,7 +49,7 @@ def test_default_fast_answer_keeps_small_budget() -> None:
 
     sys.modules["openai"] = SimpleNamespace(OpenAI=_FakeClient)
     try:
-        out = fast_path_entry.run_fast_llm_answer("这个功能是做什么的")
+        out = fast_common.run_fast_llm_answer("这个功能是做什么的")
     finally:
         sys.modules.pop("openai", None)
 
@@ -73,7 +73,7 @@ def test_web_page_body_summary_uses_slightly_larger_budget() -> None:
 
     sys.modules["openai"] = SimpleNamespace(OpenAI=_FakeClient)
     try:
-        out = fast_path_entry.summarize_fast_material(
+        out = fast_common.summarize_fast_material(
             lane="web",
             message="请简要概括这个网页",
             material="[网页正文] example.com\nURL: https://example.com\n正文:\n这是正文内容。" * 40,
@@ -104,7 +104,7 @@ def test_web_page_default_summary_prefers_bullets_and_higher_budget() -> None:
 
     sys.modules["openai"] = SimpleNamespace(OpenAI=_FakeClient)
     try:
-        out = fast_path_entry.summarize_fast_material(
+        out = fast_common.summarize_fast_material(
             lane="web",
             message="这个网页讲了什么",
             material="[网页正文] example.com\nURL: https://example.com\n正文:\n这是正文内容。" * 40,

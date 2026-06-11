@@ -77,7 +77,7 @@ class AgnoMaterialBundle:
       "调用决策权在 middle agent，不在 service / api"。
 
     V7 第 2 轮新增（把第 1 轮"可入库纯文本"真接进现有 ingest 链）：
-    - `mcp_video_ingested`：本轮是否真把视频文本写进 SQLite FTS 知识库；
+    - `mcp_video_ingested`：本轮是否真把视频文本写进 PG 知识库；
     - `mcp_video_ingest_source_id`：实际入库 source_id（稳定形式 `video:<basename>`），
       也是后续问答阶段在命中结果上识别"这条命中来自视频入库链"的唯一锚点；
     - `mcp_video_ingest_chunks`：写入块数（含 fts boost header）；

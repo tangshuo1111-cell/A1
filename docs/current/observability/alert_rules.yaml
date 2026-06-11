@@ -1,0 +1,21 @@
+# Light Maqa in-process metrics alert rules (R21).
+# Evaluated by scripts/check_observability_health.py against /internal/metrics JSON.
+
+alerts:
+  - id: chat_sync_fail_ratio_high
+    description: 同步聊天失败占比过高
+    expr: chat_sync_fail / max(chat_sync_total, 1)
+    threshold: 0.25
+    severity: warning
+
+  - id: http_5xx_present
+    description: 出现 5xx HTTP 响应计数
+    expr: http_status_500 + http_status_502 + http_status_503
+    threshold: 1
+    severity: critical
+
+  - id: chat_async_backlog
+    description: 后台任务提交激增（观察项）
+    expr: chat_async_submitted_total
+    threshold: 1000
+    severity: info

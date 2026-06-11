@@ -96,7 +96,7 @@ def test_run_document_fast_path_demotes_on_ocr_required(
     enable_capability_fact_document,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from application.chat import fast_path_entry
+    from application.chat.executors.fast_lanes import document_fast_impl
     from services.capabilities.contracts import CapabilityAdvice, CapabilityFact
 
     fact = CapabilityFact(
@@ -118,7 +118,7 @@ def test_run_document_fast_path_demotes_on_ocr_required(
         lambda **_k: (_ for _ in ()).throw(AssertionError("extract must not run")),
     )
 
-    out = fast_path_entry.run_document_fast_path(
+    out = document_fast_impl.run_document_fast_path(
         message="总结这份 PDF",
         context_block=None,
         v13_text_content=None,

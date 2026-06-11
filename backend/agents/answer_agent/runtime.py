@@ -26,7 +26,9 @@ from typing import Any
 from agents._runtime import AgentPromptPack, AgentRunFrame, AgnoAgentRuntime
 from agents.main_agent import AgnoCollaborationPlan
 from agents.middle_agent import AgnoMaterialBundle
+from agents.ports import AnswerAgentPort
 from application.chat.budget_clock import BudgetClock
+from application.chat.chat_contracts import AnswerAgentResult, assert_agent_extra_safe
 from debug_trace import trace
 
 from .answer_bundle_extra import (
@@ -131,7 +133,7 @@ def pan_huida_agno(
     return outcome.result
 
 
-class AnswerAgent:
+class AnswerAgent(AnswerAgentPort):
     """唯一 Final Answer Agent（独立实体，自有 `AnswerAgentRuntime`）。
 
     主入口（仅这两口）：
@@ -282,11 +284,15 @@ class AnswerAgent:
         plan: AgnoCollaborationPlan,
         bundle: AgnoMaterialBundle,
         clock: BudgetClock,
-    ) -> tuple[str, HuidaPan]:
+    ) -> AnswerAgentResult:
         hp = self.pan(plan, bundle)
         v11_failure = detect_v11_video_url_failure(bundle, plan)
         if v11_failure is not None:
-            return v11_failure, hp
+            return AnswerAgentResult(
+                answer_text=v11_failure,
+                huida_pan=hp,
+                agent_extra=self.collab_extra(plan, bundle),
+            )
 
         answer_mode = getattr(plan, "answer_mode", "direct") or "direct"
 
@@ -297,7 +303,11 @@ class AnswerAgent:
                 bundle=bundle,
                 current_round=max(list(getattr(bundle, "used_rounds", []) or [0])),
             )
-            return str(review.get("final_answer", "")).strip(), hp
+            return AnswerAgentResult(
+                answer_text=str(review.get("final_answer", "")).strip(),
+                huida_pan=hp,
+                agent_extra=self.collab_extra(plan, bundle),
+            )
 
         if answer_mode == "direct":
             hint = huida_to_executor_hint(
@@ -314,7 +324,11 @@ class AnswerAgent:
                 web_search_block=None,
                 executor_hint=hint,
             )
-            return text, hp
+            return AnswerAgentResult(
+                answer_text=text,
+                huida_pan=hp,
+                agent_extra=self.collab_extra(plan, bundle),
+            )
 
         if answer_mode == "commit_result":
             if bundle.commit_results:
@@ -326,22 +340,40 @@ class AnswerAgent:
                         r.get("title") or r.get("source_id", "未知") for r in _ok_list
                     )
                     _chunks = sum(r.get("chunks", 0) for r in _ok_list)
-                    return (
-                        f"已将资料「{_titles}」保存到知识库（共 {_chunks} 段）。\n\n"
-                        "以后可以直接问我关于这些资料的问题，我会从知识库中检索作答。"
-                    ), hp
+                    return AnswerAgentResult(
+                        answer_text=(
+                            f"已将资料「{_titles}」保存到知识库（共 {_chunks} 段）。\n\n"
+                            "以后可以直接问我关于这些资料的问题，我会从知识库中检索作答。"
+                        ),
+                        huida_pan=hp,
+                        agent_extra=self.collab_extra(plan, bundle),
+                    )
                 if _fail_list:
                     _err = _fail_list[0].get("error_code") or "未知错误"
-                    return f"保存资料时失败（原因：{_err}），请稍后重试。", hp
-            return (
-                "本轮未产生可确认的入库结果（commit_results 为空）。"
-                "请确认已先准备资料并选择保存。", hp)
+                    return AnswerAgentResult(
+                        answer_text=f"保存资料时失败（原因：{_err}），请稍后重试。",
+                        huida_pan=hp,
+                        agent_extra=self.collab_extra(plan, bundle),
+                    )
+            return AnswerAgentResult(
+                answer_text=(
+                    "本轮未产生可确认的入库结果（commit_results 为空）。"
+                    "请确认已先准备资料并选择保存。"
+                ),
+                huida_pan=hp,
+                agent_extra=self.collab_extra(plan, bundle),
+            )
 
         _ms = getattr(bundle, "material_sufficiency", "") or ""
         if _ms in ("no_match", "insufficient") and answer_mode == "conservative":
-            return (
-                "抱歉，当前知识库中未找到相关内容，无法为您提供准确答案。"
-                "您可以先将相关资料保存到知识库，再重新提问。", hp)
+            return AnswerAgentResult(
+                answer_text=(
+                    "抱歉，当前知识库中未找到相关内容，无法为您提供准确答案。"
+                    "您可以先将相关资料保存到知识库，再重新提问。"
+                ),
+                huida_pan=hp,
+                agent_extra=self.collab_extra(plan, bundle),
+            )
 
         # legacy-only 说明：
         # `bundle.knowledge_block` 不再是默认主证据主路径；当前只允许：
@@ -373,14 +405,23 @@ class AnswerAgent:
             elif (bundle.web_block or "").strip():
                 kb_for_answer = None
             else:
-                return (
-                    "当前未从知识库检索到可用片段，也未获得可用的外部网页证据，"
-                    "无法基于材料作答。请补充资料或调整提问。", hp)
+                return AnswerAgentResult(
+                    answer_text=(
+                        "当前未从知识库检索到可用片段，也未获得可用的外部网页证据，"
+                        "无法基于材料作答。请补充资料或调整提问。"
+                    ),
+                    huida_pan=hp,
+                    agent_extra=self.collab_extra(plan, bundle),
+                )
         elif answer_mode == "temporary_material":
             if bundle.temporary_materials:
                 kb_for_answer = "\n\n---\n\n".join(bundle.temporary_materials)
             else:
-                return ("本轮没有可用的待保存临时材料（temporary_materials 为空）。", hp)
+                return AnswerAgentResult(
+                    answer_text="本轮没有可用的待保存临时材料（temporary_materials 为空）。",
+                    huida_pan=hp,
+                    agent_extra=self.collab_extra(plan, bundle),
+                )
         else:
             kb_for_answer = None
 
@@ -399,13 +440,24 @@ class AnswerAgent:
             web_search_block=bundle.web_block,
             executor_hint=hint,
         )
-        return text, hp
+        return AnswerAgentResult(
+            answer_text=text,
+            huida_pan=hp,
+            agent_extra=self.collab_extra(plan, bundle),
+        )
+
+    def collab_extra(
+        self,
+        plan: AgnoCollaborationPlan,
+        bundle: AgnoMaterialBundle,
+    ) -> dict:
+        return assert_agent_extra_safe(xiezuo_extra_for_service(plan, bundle))
 
     def xiezuo_extra(
         self,
         plan: AgnoCollaborationPlan,
         bundle: AgnoMaterialBundle,
     ) -> dict:
-        return xiezuo_extra_for_service(plan, bundle)
+        return self.collab_extra(plan, bundle)
 
     respond = huida

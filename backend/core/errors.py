@@ -32,6 +32,7 @@ class AppError(Exception):
     message: str
     category: ErrorCategory = ErrorCategory.INTERNAL
     details: dict[str, Any] = field(default_factory=dict)
+    http_status: int | None = None
 
     def to_log_dict(self) -> dict[str, Any]:
         return {
@@ -73,6 +74,12 @@ def error_layer_for_category(cat: ErrorCategory) -> str:
     if cat == ErrorCategory.WORKFLOW:
         return "workflow"
     return "unknown"
+
+
+def http_status_for_error(exc: AppError) -> int:
+    if exc.http_status is not None:
+        return exc.http_status
+    return http_status_for_category(exc.category)
 
 
 def http_status_for_category(cat: ErrorCategory) -> int:

@@ -81,7 +81,11 @@ def turn_facts_from_chat_result(
     """Build TurnFacts from a legacy ChatTurnResult-shaped dict (pre-gate)."""
     extra = dict(result.get("extra") or {})
     answer_type = str(result.get("answer_type") or "")
-    raw_pending = str(pending_kind_signal_from_extra(extra) or PendingKind.NONE.value).strip()
+    raw_pending = str(
+        pending_kind_signal_from_extra(extra)
+        or extra.get("pending_kind")
+        or PendingKind.NONE.value
+    ).strip()
     try:
         pending_kind = PendingKind(raw_pending)
     except ValueError:
@@ -118,6 +122,8 @@ def turn_facts_from_chat_result(
         legacy_canon == "pending"
         and answer_type in {"fast_pending", "async_pending"}
     )
+    if async_pending and pending_kind == PendingKind.NONE:
+        pending_kind = PendingKind.PROCESSING_PENDING
 
     hard_failure = legacy_canon == "failed" and answer_type != "commit_executed"
 

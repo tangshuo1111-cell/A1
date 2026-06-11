@@ -146,7 +146,7 @@ def test_run_chat_turn_arbitrator_demotes_async_when_budget_low(
     monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_BUDGET_CLOCK_V2", True)
     monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_INGRESS_ROUTER_V2", True)
     monkeypatch.setattr(
-        "application.chat.run_chat_turn.resolve_lane_decision",
+        "application.ingress.resolve_lane_decision",
         lambda **_kwargs: LaneDecision(
             lane="video",
             mode="async",
@@ -156,7 +156,7 @@ def test_run_chat_turn_arbitrator_demotes_async_when_budget_low(
         ),
     )
     monkeypatch.setattr(
-        "application.chat.run_chat_turn._build_async_pending_result",
+        "application.chat.executors.async_path.build_pending.build_async_pending_result",
         lambda **_kwargs: {
             "ok": True,
             "answer": "queued",
@@ -172,7 +172,7 @@ def test_run_chat_turn_arbitrator_demotes_async_when_budget_low(
         },
     )
     monkeypatch.setattr(
-        "application.chat.run_chat_turn.BudgetClock.start",
+        "application.chat.budget_clock.BudgetClock.start",
         lambda *_a, **_k: _clock_with_remaining_ms(15_000),
     )
 

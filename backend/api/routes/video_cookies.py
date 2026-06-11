@@ -54,10 +54,18 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, UploadFile
 from fastapi import File as _File
 
+from api.api_errors import raise_validation
 from api.deps import verify_admin_optional
+from api.schemas_http import (
+    VideoCookiesDeleteResponse,
+    VideoCookiesFileStatus,
+    VideoCookiesMergeInfo,
+    VideoCookiesStatusResponse,
+    VideoCookiesUploadResponse,
+)
 from config.settings import settings
 
 logger = logging.getLogger("light_maqa")
@@ -169,8 +177,7 @@ def _file_status(path: Path) -> dict:
     }
 
 
-@router.get("/video_cookies/status", dependencies=[Depends(verify_admin_optional)])
-def video_cookies_status() -> dict:
+def _video_cookies_status_payload() -> VideoCookiesStatusResponse:
     """返回 cookies 当前状态，给前端 ``VideoCookiesGuide`` 组件渲染。
 
     返回字段（**全部稳定**，前端类型可对齐）：
@@ -191,27 +198,26 @@ def video_cookies_status() -> dict:
         source = "none"
 
     managed = _cookies_storage_path()
-    return {
-        "source": source,
-        "effective_path": value if kind == "file" else None,
-        "managed_path": str(managed),
-        "managed_file": _file_status(managed),
-        "whitelist_domains": sorted(settings.video_url_domain_set()),
-        "upload_max_bytes": _MAX_UPLOAD_BYTES,
-    }
+    file_status = _file_status(managed)
+    return VideoCookiesStatusResponse(
+        ok=True,
+        source=source,
+        effective_path=value if kind == "file" else None,
+        managed_path=str(managed),
+        managed_file=VideoCookiesFileStatus.model_validate(file_status),
+        whitelist_domains=sorted(settings.video_url_domain_set()),
+        upload_max_bytes=_MAX_UPLOAD_BYTES,
+    )
+
+
+@router.get("/video_cookies/status", dependencies=[Depends(verify_admin_optional)], response_model=VideoCookiesStatusResponse)
+def video_cookies_status() -> VideoCookiesStatusResponse:
+    return _video_cookies_status_payload()
 
 
 # ---------------------------------------------------------------------------
 # 上传
 # ---------------------------------------------------------------------------
-class _UploadError(HTTPException):
-    def __init__(self, code: str, message: str, status: int = 400) -> None:
-        super().__init__(
-            status_code=status,
-            detail={"code": code, "message": message},
-        )
-
-
 def _line_domain(line: str) -> str:
     """抽 Netscape cookie 行的首列 domain，统一去前缀点 + 小写；非 cookie 行返回 ""。"""
     m = _COOKIE_LINE_RE.match(line.rstrip("\r\n"))
@@ -275,7 +281,7 @@ def _merge_cookies_by_domain(
     return merged, sorted(kept_old_domains), sorted(replaced_domains)
 
 
-def _validate_and_persist(content: bytes, *, filename_hint: str = "") -> dict:
+def _validate_and_persist(content: bytes, *, filename_hint: str = "") -> VideoCookiesUploadResponse:
     """共享校验 + 落盘 + runtime 热更新逻辑，路由层只做协议适配。
 
     V11 R5 B：上传不再覆盖磁盘已有 cookies；按 domain 合并：
@@ -283,13 +289,13 @@ def _validate_and_persist(content: bytes, *, filename_hint: str = "") -> dict:
     - 旧文件里独有的 domain → 保留（B 站 + 抖音 + YouTube 共存）
     """
     if not content:
-        raise _UploadError("EMPTY_FILE", "上传内容为空，请确认你导出的 cookies.txt 不是空文件。")
+        raise_validation("EMPTY_FILE", "上传内容为空，请确认你导出的 cookies.txt 不是空文件。")
     if len(content) > _MAX_UPLOAD_BYTES:
-        raise _UploadError(
+        raise_validation(
             "TOO_LARGE",
             f"文件超过 {_MAX_UPLOAD_BYTES // 1024} KB 上限。正常 cookies.txt 远小于这个值，"
             "请确认上传的不是错误文件。",
-            status=413,
+            http_status=413,
         )
     # errors="ignore" 下 bytes→str 不抛解码异常，无需 try/except
     text = content.decode("utf-8", errors="ignore")
@@ -298,7 +304,7 @@ def _validate_and_persist(content: bytes, *, filename_hint: str = "") -> dict:
     has_header = bool(_NETSCAPE_HEADER_RE.search(text))
     parsed = _parse_cookies_text(text)
     if parsed.line_count == 0:
-        raise _UploadError(
+        raise_validation(
             "NOT_COOKIES_TXT",
             "文件不像 Netscape 格式的 cookies.txt：没有解析出任何 cookie 行。"
             f"{' 且文件首部缺少 # Netscape HTTP Cookie File 头。' if not has_header else ''}",
@@ -307,7 +313,7 @@ def _validate_and_persist(content: bytes, *, filename_hint: str = "") -> dict:
     wl = settings.video_url_domain_set()
     matched = [d for d in parsed.domains if _matches_any_whitelist(d, wl)]
     if not matched:
-        raise _UploadError(
+        raise_validation(
             "NO_WHITELIST_DOMAIN",
             "上传的 cookies 里没有任何视频站点 cookie："
             f"已识别 {len(parsed.domains)} 个域，但都不在白名单里。"
@@ -356,24 +362,27 @@ def _validate_and_persist(content: bytes, *, filename_hint: str = "") -> dict:
         filename_hint,
     )
 
-    return {
-        "ok": True,
-        "managed_path": str(target),
-        "size_bytes": len(merged_bytes),
-        "matched_whitelist_domains": final_matched,
-        "all_domains": sorted(final_parsed.domains),
-        "hot_reloaded": True,
-        # V11 R5 B 新增：让前端展示"合并结果"
-        "merge": {
-            "new_domains": sorted(parsed.domains),
-            "kept_old_domains": kept_old_domains,
-            "replaced_domains": replaced_domains,
-        },
-    }
+    return VideoCookiesUploadResponse(
+        ok=True,
+        managed_path=str(target),
+        size_bytes=len(merged_bytes),
+        matched_whitelist_domains=final_matched,
+        all_domains=sorted(final_parsed.domains),
+        hot_reloaded=True,
+        merge=VideoCookiesMergeInfo(
+            new_domains=sorted(parsed.domains),
+            kept_old_domains=kept_old_domains,
+            replaced_domains=replaced_domains,
+        ),
+    )
 
 
-@router.post("/video_cookies/upload", dependencies=[Depends(verify_admin_optional)])
-async def upload_video_cookies(file: UploadFile = _File(...)) -> dict:  # noqa: B008
+@router.post(
+    "/video_cookies/upload",
+    dependencies=[Depends(verify_admin_optional)],
+    response_model=VideoCookiesUploadResponse,
+)
+async def upload_video_cookies(file: UploadFile = _File(...)) -> VideoCookiesUploadResponse:  # noqa: B008
     """multipart 上传 cookies.txt。
 
     成功返回：
@@ -393,8 +402,12 @@ async def upload_video_cookies(file: UploadFile = _File(...)) -> dict:  # noqa: 
 # ---------------------------------------------------------------------------
 # 清除
 # ---------------------------------------------------------------------------
-@router.delete("/video_cookies", dependencies=[Depends(verify_admin_optional)])
-def delete_video_cookies() -> dict:
+@router.delete(
+    "/video_cookies",
+    dependencies=[Depends(verify_admin_optional)],
+    response_model=VideoCookiesDeleteResponse,
+)
+def delete_video_cookies() -> VideoCookiesDeleteResponse:
     """删除托管的 cookies 文件 + 把 runtime ``video_cookies_file`` 清空。
 
     幂等：文件不存在时也返回 ok=True，方便前端多次点"清除"不报错。
@@ -422,4 +435,4 @@ def delete_video_cookies() -> dict:
         settings.video_cookies_file = ""  # type: ignore[misc]
 
     logger.info("v11r3 cookies cleared removed=%s path=%s", removed, target)
-    return {"ok": True, "removed": removed, "managed_path": str(target)}
+    return VideoCookiesDeleteResponse(ok=True, removed=removed, managed_path=str(target))

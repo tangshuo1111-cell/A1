@@ -1,0 +1,10 @@
+{
+  "backend/application/chat/run_chat_turn.py": {
+    "lines": 60,
+    "top_level_functions": 1,
+    "public_top_level_functions": 1,
+    "all_functions": 1,
+    "sum_cyclomatic_complexity": 1,
+    "max_cyclomatic_complexity": 1
+  }
+}

@@ -6,7 +6,14 @@ vi.mock("./client", () => ({
 }));
 
 import * as client from "./client";
-import { DEFAULT_CHAT_PATH, fetchHealth, postChat } from "./api";
+import {
+  DEFAULT_CHAT_PATH,
+  deleteVideoCookies,
+  fetchHealth,
+  fetchVideoCookiesStatus,
+  postChat,
+  uploadVideoCookies,
+} from "./api";
 
 describe("api", () => {
   beforeEach(() => {
@@ -54,5 +61,28 @@ describe("api", () => {
     expect(bodyObj).toEqual({ message: "x", session_id: null });
     expect("use_knowledge" in bodyObj).toBe(false);
     expect("confirm_long_web_video_asr" in bodyObj).toBe(false);
+  });
+
+  it("fetchVideoCookiesStatus reads status endpoint", async () => {
+    vi.mocked(client.jsonFetch).mockResolvedValueOnce({ ok: true } as never);
+    await fetchVideoCookiesStatus();
+    expect(client.jsonFetch).toHaveBeenCalledWith("/config/video_cookies/status", { method: "GET" });
+  });
+
+  it("uploadVideoCookies posts multipart form data", async () => {
+    vi.mocked(client.multipartFetch).mockResolvedValueOnce({ ok: true } as never);
+    const file = new File(["cookie-body"], "cookies.txt", { type: "text/plain" });
+    await uploadVideoCookies(file);
+    expect(client.multipartFetch).toHaveBeenCalledTimes(1);
+    expect(client.multipartFetch).toHaveBeenCalledWith(
+      "/config/video_cookies/upload",
+      expect.any(FormData),
+    );
+  });
+
+  it("deleteVideoCookies calls delete endpoint", async () => {
+    vi.mocked(client.jsonFetch).mockResolvedValueOnce({ ok: true, removed: true } as never);
+    await deleteVideoCookies();
+    expect(client.jsonFetch).toHaveBeenCalledWith("/config/video_cookies", { method: "DELETE" });
   });
 });

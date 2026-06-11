@@ -5,7 +5,7 @@ from unittest.mock import MagicMock
 
 from agents.middle_agent.schema import AgnoMaterialBundle, CailiaoPan
 from application.chat.chat_contracts import QualityGateResult
-from application.chat.complex_path_entry import FeedbackGatherContext, run_feedback_round_execution
+from application.chat.executors.complex.complex_path_impl import FeedbackGatherContext, run_feedback_round_execution
 from application.chat.pending_kind import PendingKind
 from config import feature_flags
 
@@ -51,10 +51,12 @@ def test_feedback_execution_skipped_when_gate_does_not_request_refine():
 
 def test_feedback_execution_can_refresh_kb_bundle_from_shared_prep(monkeypatch):
     monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_THREE_AGENT_AUTONOMY", True)
-    monkeypatch.setattr("application.chat.complex_path_entry.three_agent_autonomy_active", lambda: True)
-    monkeypatch.setattr("application.chat.complex_path_entry.autonomy_stop_reason_with_clock", lambda *a, **k: "")
     monkeypatch.setattr(
-        "application.chat.complex_path_entry.evaluate_feedback_request",
+        "application.chat.autonomy_loop.autonomy_stop_reason_with_clock",
+        lambda *a, **k: "",
+    )
+    monkeypatch.setattr(
+        "application.chat.executors.complex.complex_feedback_gate.evaluate_feedback_gate",
         lambda **_kwargs: {"allowed": True, "allowed_fallback_steps": [{"step_id": "default_web_round1", "tool_name": "fetch_web"}]},
     )
 
@@ -126,15 +128,42 @@ def test_feedback_execution_can_refresh_kb_bundle_from_shared_prep(monkeypatch):
 
 def test_feedback_execution_synthesizes_web_when_material_insufficient(monkeypatch):
     monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_THREE_AGENT_AUTONOMY", True)
-    monkeypatch.setattr("application.chat.complex_path_entry.three_agent_autonomy_active", lambda: True)
-    monkeypatch.setattr("application.chat.complex_path_entry.autonomy_stop_reason_with_clock", lambda *a, **k: "")
     monkeypatch.setattr(
-        "application.chat.complex_path_entry.evaluate_feedback_request",
+        "application.chat.autonomy_loop.autonomy_stop_reason_with_clock",
+        lambda *a, **k: "",
+    )
+    monkeypatch.setattr(
+        "application.chat.executors.complex.complex_feedback_gate.evaluate_feedback_gate",
         lambda **_kwargs: {"allowed": True, "allowed_fallback_steps": [{"step_id": "default_web_round1", "tool_name": "fetch_web"}]},
     )
     monkeypatch.setattr(
-        "application.chat.complex_path_entry.agno_web_service.fetch_web_evidence_block",
-        lambda message, max_results=3: "[Web检索] hybrid retrieval summary",
+        "application.chat.executors.complex.complex_feedback_web_fetch.run_web_feedback_fetch",
+        lambda **_kwargs: (
+            AgnoMaterialBundle(
+                knowledge_block=None,
+                web_block="[Web检索] hybrid retrieval summary",
+                trace=[],
+                knowledge_adequate=False,
+                material_still_insufficient=False,
+                web_judgment_reason="feedback_round_1_fetch_web",
+                kb_evidence_tier="none",
+                insufficiency_signal="still_empty_after_gather",
+                cailiao_pan=CailiaoPan(
+                    gou=False,
+                    kb_qiangdu=0.0,
+                    bukong_xinhao="que",
+                    laiyuan_zhu="wu",
+                    use_kb=True,
+                    use_web=False,
+                    que_shenme="web_yinzheng",
+                    xia_yi_bu="bu_wang",
+                ),
+                material_sufficiency="sufficient",
+                bundle_id="b3",
+                final_answer_based_on_round="round_1",
+            ),
+            True,
+        ),
     )
 
     plan = MagicMock()

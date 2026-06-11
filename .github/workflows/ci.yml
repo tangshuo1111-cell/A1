@@ -73,6 +73,33 @@ jobs:
       - name: Ruff lint
         run: python -m ruff check . --select E,F,I,W,BLE,B,UP,SIM --ignore E501
 
+      - name: Ruff format (governance scripts)
+        run: python -m ruff format --check scripts/check_*.py
+
+      - name: Round 0–13 guards (frozen modules + boundaries + field owners)
+        run: |
+          python scripts/check_frozen_chat_modules.py
+          python scripts/check_import_boundaries.py
+          python scripts/check_forbidden_legacy_imports.py
+          python scripts/check_module_size.py
+          python scripts/check_compat_field_writes.py
+          python scripts/check_field_owner_writes.py
+          python scripts/check_compat_shims.py
+          python scripts/check_direct_getenv.py
+          python scripts/strip_stale_terms.py
+          python scripts/check_legacy_entry_imports.py
+          python scripts/check_readme_paths.py
+          python scripts/check_history_context_imports.py
+          python scripts/check_pending_store_imports.py
+          python scripts/check_compat_consumption.py
+          python scripts/check_no_pipeline_facade.py
+          python scripts/check_fast_lane_boundaries.py
+          python scripts/audit_test_patch_depth.py
+          python scripts/audit_migration_ledgers.py
+          python scripts/check_non_chat_module_size.py
+          python scripts/check_observability_health.py
+          python scripts/audit_legacy_entry_symbols.py
+
       - name: Mypy (core/config/storage)
         run: python -m mypy
 
@@ -119,11 +146,14 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: npm ci + lint + unit tests
+      - name: npm ci + lint + unit tests + build + e2e
         run: |
           npm ci
           npm run lint
           npm run test
+          npm run build
+          npx playwright install chromium
+          npm run test:e2e
 
       - name: npm audit (--audit-level=high, informational — 不 npm audit fix)
         continue-on-error: true

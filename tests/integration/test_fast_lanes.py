@@ -95,7 +95,7 @@ def test_web_fast_lane_emits_trace(monkeypatch: pytest.MonkeyPatch) -> None:
         lambda *_a, **_k: "[Web检索] Fast lane 网页材料",
     )
     monkeypatch.setattr(
-        "application.chat.run_chat_turn.resolve_lane_decision",
+        "application.ingress.resolve_lane_decision",
         lambda **_kw: LaneDecision(
             lane="web",
             mode="fast",
@@ -127,7 +127,7 @@ def test_video_fast_lane_emits_trace(monkeypatch: pytest.MonkeyPatch) -> None:
         ),
     )
     monkeypatch.setattr(
-        "application.chat.run_chat_turn.resolve_lane_decision",
+        "application.ingress.resolve_lane_decision",
         lambda **_kw: LaneDecision(
             lane="video",
             mode="fast",
@@ -152,7 +152,7 @@ def test_long_video_escalates_out_of_fast_lane(monkeypatch: pytest.MonkeyPatch) 
 
     monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_APPROVAL_GATE_V1", False)
     monkeypatch.setattr(
-        "application.chat.async_entry.task_plane_service.enqueue_video_background_task",
+        "application.chat.executors.async_path.build_pending.task_plane_service.enqueue_video_background_task",
         lambda **_kw: ("task-p7-long", "memory"),
     )
     out = run_agno_chat_turn_impl(

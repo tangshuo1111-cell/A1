@@ -1,7 +1,8 @@
 source_path,target_path,action,phase,status,owner,done_when,remove_by_phase,notes
 backend/application/chat/run_chat_turn.py,原位,retain+shrink,P6,done,application,resolve_lane_decision + ingress_router_active 守护 fast path；legacy flag 可回滚旧主链,,上帝文件瘦身 + P6 路由接线
-backend/application/chat/fast_path_entry.py,backend/application/chat/fast_path_entry.py,new,P7,done,application,五类 fast path + FAST_CAPABILITY_WHITELIST + cross_lane_violation 审计；test_lane_capability_whitelist 全绿,,fast lane 真实入口与白名单
-backend/application/chat/complex_path_entry.py,backend/application/chat/complex_path_entry.py,new,P5,done,application,tests/migration/test_route_target_table.py + tests/migration/test_autonomy_loop_contract.py 通过且 complex lane 已作为默认复杂入口运行,,complex 编排入口
+backend/application/chat/fast_path_entry.py,backend/application/chat/executors/fast_lanes/fast_path_impl.py,retired,C6,retired,application,Cleanup C6 shell deleted; canonical fast lane impl + fast_delivery,,fast lane 执行体已迁入 executors/
+backend/application/chat/complex_path_entry.py,backend/application/chat/executors/complex/complex_path_impl.py,retired,C6,retired,application,Cleanup C6 shell deleted; canonical complex_path_impl,,complex 执行体已迁入 executors/complex/
+backend/application/chat/async_entry.py,backend/application/chat/executors/async_path/build_pending.py,retired,C6,retired,application,Cleanup C6 shell deleted; canonical build_pending,,async pending 构建已迁入 executors/async_path/
 backend/application/chat/autonomy_loop.py,backend/application/chat/autonomy_loop.py,new,P8,done,application,three_agent_autonomy_active 守护 + test_autonomy_loop_contract + test_budget_circuit + test_three_agent_autonomy_flags 全绿,,自治闭环协议与熔断
 backend/config/budget_policy.py,backend/config/budget_policy.py,new,P8,done,config,MAX_AUTONOMY_ROUNDS 与预算默认值已接入 complex loop guard,,自治 budget 常量
 backend/application/chat/response_assembly.py,backend/application/chat/response_assembly.py,new,P5,done,application,收容响应组装子函数,,响应组装

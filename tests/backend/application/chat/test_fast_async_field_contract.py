@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from unittest.mock import patch
 
-from application.chat.async_entry import build_async_pending_result
-from application.chat.fast_path_entry import build_fast_result, should_demote_fast_to_async
+from application.chat.executors.async_path.build_pending import build_async_pending_result
+from application.chat.executors.fast_delivery import build_fast_result, should_demote_fast_to_async
 from application.chat.pending_kind import PendingKind
 from services.capabilities.contracts import CapabilityAdvice
 
@@ -49,7 +49,7 @@ def test_build_fast_result_plain_fast_has_no_task_id() -> None:
 
 def test_async_entry_sets_processing_pending_kind() -> None:
     with patch(
-        "application.chat.async_entry.task_plane_service.enqueue_video_background_task",
+        "application.chat.executors.async_path.build_pending.task_plane_service.enqueue_video_background_task",
         return_value=("task-async-001", "pg"),
     ):
         result = build_async_pending_result(

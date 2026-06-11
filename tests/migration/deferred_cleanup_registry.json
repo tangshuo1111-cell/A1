@@ -1,0 +1,28 @@
+{
+  "items": [
+    {
+      "id": "module_size_turn_orchestrator",
+      "target": "backend/application/chat/turn_orchestrator.py",
+      "retire_by_round": "post-R20",
+      "note": "Baseline 71; coordinator only, no further split required unless ingress grows"
+    },
+    {
+      "id": "module_size_complex_executor",
+      "target": "backend/application/chat/executors/complex_executor.py",
+      "retire_by_round": "post-R20",
+      "note": "Baseline 36; thin shell after R2 split"
+    },
+    {
+      "id": "module_size_fast_executor",
+      "target": "backend/application/chat/executors/fast_executor.py",
+      "retire_by_round": "post-R20",
+      "note": "Baseline 29; lane/general/delivery submodules hold logic"
+    },
+    {
+      "id": "module_size_fast_executor_general_attempts",
+      "target": "backend/application/chat/executors/fast_executor_general_attempts.py",
+      "retire_by_round": "post-R22",
+      "note": "R22 split into common/weather/canned/llm; barrel re-export only"
+    }
+  ]
+}

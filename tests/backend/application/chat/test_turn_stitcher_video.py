@@ -47,7 +47,7 @@ def test_turn_stitcher_video_continues_without_reprobe(
         _probe,
     )
     monkeypatch.setattr(
-        "application.chat.run_chat_turn.resolve_lane_decision",
+        "application.ingress.resolve_lane_decision",
         lambda **_kwargs: LaneDecision(
             lane="video",
             mode="fast",
@@ -57,11 +57,11 @@ def test_turn_stitcher_video_continues_without_reprobe(
         ),
     )
     monkeypatch.setattr(
-        "application.chat.run_chat_turn._build_extra",
+        "application.chat.response_assembly.build_extra",
         lambda *_a, **_k: {"lane": "video", "primary_path": "complex"},
     )
     monkeypatch.setattr(
-        "application.chat.run_chat_turn._can_use_direct_fast_path",
+        "application.chat.executors.fast_executor_general.can_use_direct_fast_path",
         lambda *_a, **_k: False,
     )
 

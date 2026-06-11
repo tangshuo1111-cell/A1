@@ -2,9 +2,23 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+# Public task status values returned by GET /tasks/* (see docs/current/contracts/enums.md).
+TaskPublicStatus = Literal[
+    "queued",
+    "running",
+    "partial",
+    "succeeded",
+    "failed",
+    "expired",
+    "cancelled",
+    "pending",
+    "timeout",
+    "resumed",
+]
 
 
 class ChatRequest(BaseModel):
@@ -47,7 +61,6 @@ class ChatResponse(BaseModel):
     primary_path: str | None = None
     evidence_state: str | None = None
     extra: dict[str, Any] | None = None
-    # 排查用（与 core.pipeline_debug 一致；成功响应 HTTP 200 也可能 pipeline_ok=false）
     pipeline_ok: bool | None = None
     debug_stage: str | None = None
     error_layer: str | None = None
@@ -55,7 +68,7 @@ class ChatResponse(BaseModel):
     pipeline_hint_zh: str | None = None
     workflow_elapsed_ms: int | None = Field(
         None,
-        description="本轮 LangGraph 端到端耗时（毫秒），用于区分慢与错",
+        description="本轮 chat turn 端到端耗时（毫秒），用于区分慢与错",
     )
     interaction_mode_zh: str | None = Field(
         None,
@@ -77,16 +90,25 @@ class IngestResponse(BaseModel):
     chunks_written: int = 0
 
 
+class ApiErrorDetail(BaseModel):
+    code: str
+    message: str
+    category: str = ""
+    error_layer: str = "api"
+    debug_stage: str = "api"
+
+
 class ErrorResponse(BaseModel):
     ok: bool = False
-    error: dict[str, str]
+    error: ApiErrorDetail
+    request_id: str | None = None
 
 
 class TaskStatusResponse(BaseModel):
     ok: bool = True
     task_id: str
     status: str
-    raw_status: str
+    raw_status: str = ""
     task_type: str = ""
     source_type: str = ""
     stage: str = ""
@@ -106,9 +128,83 @@ class TaskStatusResponse(BaseModel):
     result_ttl_seconds: int = 0
     expires_at: str | None = None
     result_ready: bool = False
+    pending_kind: str | None = None
+    payload_version: int = 1
+    queue_backend: str = ""
+    retry_count: int = 0
+    task_enqueue_to_finish_ms: int = 0
+    result_status: str = ""
+    diagnostics: dict[str, Any] | None = None
 
 
 class TaskResultResponse(TaskStatusResponse):
     ready: bool = False
     result: dict[str, Any] | None = None
-    error: dict[str, str] | None = None
+    error: dict[str, Any] | None = None
+
+
+class SessionTurnSummary(BaseModel):
+    task_id: str | None = None
+    user_query: str = ""
+    task_status: str | None = None
+    answer_type: str | None = None
+
+
+class SessionSummaryResponse(BaseModel):
+    ok: bool = True
+    session_id: str
+    turn_count: int
+    recent: list[SessionTurnSummary]
+
+
+class VideoCookiesFileStatus(BaseModel):
+    exists: bool = False
+    size_bytes: int = 0
+    modified_iso: str | None = None
+    domains: list[str] = Field(default_factory=list)
+    matched_whitelist_domains: list[str] = Field(default_factory=list)
+
+
+class VideoCookiesStatusResponse(BaseModel):
+    ok: bool = True
+    source: str
+    effective_path: str | None = None
+    managed_path: str
+    managed_file: VideoCookiesFileStatus
+    whitelist_domains: list[str]
+    upload_max_bytes: int
+
+
+class VideoCookiesMergeInfo(BaseModel):
+    new_domains: list[str] = Field(default_factory=list)
+    kept_old_domains: list[str] = Field(default_factory=list)
+    replaced_domains: list[str] = Field(default_factory=list)
+
+
+class VideoCookiesUploadResponse(BaseModel):
+    ok: bool = True
+    managed_path: str
+    size_bytes: int
+    matched_whitelist_domains: list[str]
+    all_domains: list[str]
+    hot_reloaded: bool = True
+    merge: VideoCookiesMergeInfo
+
+
+class VideoCookiesDeleteResponse(BaseModel):
+    ok: bool = True
+    removed: bool
+    managed_path: str
+
+
+class WebVideoMetadataRequest(BaseModel):
+    url: str = Field(..., min_length=12, max_length=4000, description="白名单内的视频页 URL（ASCII）")
+
+
+class WebVideoMetadataResponse(BaseModel):
+    """Probe success payload; extra probe fields are allowed."""
+
+    model_config = ConfigDict(extra="allow")
+
+    ok: bool = True
+    latency_ms: int | None = None

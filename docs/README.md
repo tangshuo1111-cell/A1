@@ -1,5 +1,7 @@
 # Docs
 
+> **历史文档只读**：`docs/history/` 仅供追溯；运行事实与主链口径以代码与 `backend/application/chat/README.md` 为准。
+
 当前 `docs/` 只保留四类内容：
 
 - `docs/current/`：当前仍需要保留的运行事实、环境说明、验收表、契约、基线与迁移台账

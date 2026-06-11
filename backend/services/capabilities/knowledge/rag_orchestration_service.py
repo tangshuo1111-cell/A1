@@ -106,7 +106,7 @@ def fetch_knowledge_chunks(
             trace_info.get("no_match"),
             trace_info.get("low_confidence"),
         )
-        return chunks
+        return list(chunks)
     except Exception as e:  # noqa: BLE001
         logger.warning("agno_rag_service fetch_knowledge_chunks failed: %s", e)
         return []

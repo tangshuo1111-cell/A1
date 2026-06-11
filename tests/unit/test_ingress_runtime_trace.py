@@ -84,7 +84,7 @@ def test_run_chat_turn_emits_ingress_router_trace(
     expected_lane: str,
 ) -> None:
     monkeypatch.setattr(
-        "application.chat.run_chat_turn._build_extra",
+        "application.chat.response_assembly.build_extra",
         lambda *a, **k: {"lane": "agno_basic", "primary_path": "agno_basic"},
     )
     # 视频快路径会真实抓取（yt_dlp）；本用例只验证路由 trace，stub 掉以免触网（CI 无外网）。

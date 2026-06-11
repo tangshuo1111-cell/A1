@@ -11,7 +11,6 @@ answer_agent 内部 LLM 执行器（V6 第 6 轮把执行能力正式吸收进 a
 from __future__ import annotations
 
 import logging
-import os
 from functools import lru_cache
 from typing import Any
 
@@ -29,7 +28,7 @@ _ANSWER_LLM_METRICS_KEY = "answer_llm_metrics"
 
 
 def _fake_llm_enabled() -> bool:
-    return os.getenv("LIGHT_MAQA_FAKE_LLM", "").strip().lower() in {"1", "true", "yes", "on"}
+    return bool(settings.fake_llm_enabled)
 
 
 def _require_llm_key() -> None:

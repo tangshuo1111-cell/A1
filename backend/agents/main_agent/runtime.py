@@ -24,8 +24,10 @@ V10 fallback 规则见 `main_fallback_rules.py`。
 from __future__ import annotations
 
 from agents._runtime import AgentPromptPack, AgentRunFrame, AgnoAgentRuntime
-from agents.history_context import SessionHistorySnapshot
+from agents.shared.history_context import SessionHistorySnapshot
+from agents.ports import MainAgentPort
 from application.chat.budget_clock import BudgetClock
+from application.chat.chat_contracts import MainAgentResult
 from debug_trace import trace
 from entry.task_dispatcher import dispatch_task
 from llm.router import classify_intent_with_llm  # noqa: F401 — 测试 monkeypatch 锚点
@@ -38,44 +40,7 @@ from .main_fallback_rules import (
 from .main_invoke_flow import run_main_invoke_executor
 from .main_judgment_mixin import MainJudgmentPhaseMixin
 from .prompt import JIESHE, PROMPT_MOBAN, SHUCHU_GESHI, ZHIDAO
-from .rule_router import _routing_brief, decide
 from .schema import AgnoCollaborationPlan, MainXiezuoPan
-
-
-def decide_for_agno_chat(
-    message: str,
-    *,
-    session_id: str | None,
-    http_use_knowledge: bool,
-    context_snippet: str = "",
-) -> MainDecision:
-    """
-    [DEPRECATED—兼容兜底] 旧规则路由生成 `MainDecision`。
-
-    第 9 轮起，`MainAgentRuntime.invoke_executor` 主路径 **不再调用** 本函数；
-    `MainDecision` 的核心字段由 `MainAgentRuntime.panduan_main_decision(...)` 自产，
-    `router_source="main_agent_runtime"`。
-
-    本函数仍保留：仅供旧外部代码 / 旧测试在不持有 `MainAgent` 实体时拿一个
-    "规则口径"的 `MainDecision`（`router_source="rules"`）做兼容回填。
-    """
-    task = dispatch_task(message, session_id=session_id)
-    if (context_snippet or "").strip():
-        task = task.model_copy(update={"context_snippet": context_snippet.strip()})
-    d = decide(task)
-    if http_use_knowledge:
-        d2 = d.model_copy(update={"need_rag": True, "answer_channel": "kb"})
-        explain = (
-            (d.routing_explain or "").strip()
-            + "；HTTP 参数 use_knowledge=true：强制进入样例知识检索。"
-        ).strip("；")
-        d = d2.model_copy(
-            update={
-                "routing_brief": _routing_brief(d2),
-                "routing_explain": explain,
-            },
-        )
-    return d
 
 
 MAIN_PROMPT_PACK: AgentPromptPack = AgentPromptPack(
@@ -198,7 +163,7 @@ def build_agno_collaboration_plan(
     return outcome.result
 
 
-class MainAgent:
+class MainAgent(MainAgentPort):
     """协作总判断 Agent（独立实体，自有 `MainAgentRuntime`）。
 
     六条主权边界（写死为约束）：
@@ -242,7 +207,7 @@ class MainAgent:
         v13_title: str | None = None,
         v13_text_content: str | None = None,
         clock: BudgetClock,
-    ) -> AgnoCollaborationPlan:
+    ) -> MainAgentResult:
         """单一主入口：经自有 `MainAgentRuntime` 执行链产出协作主判断对象。"""
         outcome = self.runtime.run(
             message=message,
@@ -266,6 +231,6 @@ class MainAgent:
             f"allow_web={plan.xiezuo_pan.allow_web} "
             f"force_skip={plan.force_skip_evidence}"
         )
-        return plan
+        return MainAgentResult(plan=plan)
 
     plan = pan

@@ -1,5 +1,7 @@
 import type { NextRequest } from "next/server";
 
+import { copyAllowedProxyRequestHeaders } from "@/lib/proxyAllowedHeaders";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -16,15 +18,7 @@ function buildTargetUrl(path: string[], request: NextRequest): string {
 }
 
 function copyRequestHeaders(request: NextRequest): Headers {
-  const headers = new Headers();
-  request.headers.forEach((value, key) => {
-    const lower = key.toLowerCase();
-    if (lower === "host" || lower === "content-length") {
-      return;
-    }
-    headers.set(key, value);
-  });
-  return headers;
+  return copyAllowedProxyRequestHeaders(request.headers);
 }
 
 function copyResponseHeaders(source: Headers): Headers {

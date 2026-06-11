@@ -37,7 +37,7 @@ def test_fast_lane_capability_whitelist(
             lambda *_a, **_k: "[Web检索] 这是一段网页摘要",
         )
     elif lane == "kb":
-        from application.chat.fast_path_entry import build_fast_result
+        from application.chat.executors.fast_delivery import build_fast_result
 
         def _force_kb_fast(**kwargs: object) -> tuple[object, str, dict]:
             ingress = kwargs["ingress"]
@@ -61,7 +61,7 @@ def test_fast_lane_capability_whitelist(
             return fast, "fast", dict(kwargs.get("timing") or {})
 
         monkeypatch.setattr(
-            "application.chat.run_chat_turn._maybe_return_lane_fast",
+            "application.chat.pipeline.fast_stage._maybe_return_lane_fast",
             _force_kb_fast,
         )
     elif lane == "video":
@@ -83,7 +83,7 @@ def test_fast_lane_capability_whitelist(
         from application.ingress.lane_decision_schema import LaneDecision
 
         monkeypatch.setattr(
-            "application.chat.run_chat_turn.resolve_lane_decision",
+            "application.ingress.resolve_lane_decision",
             lambda **_kw: LaneDecision(
                 lane="kb",
                 mode="fast",
@@ -93,10 +93,10 @@ def test_fast_lane_capability_whitelist(
             ),
         )
         monkeypatch.setattr(
-            "application.chat.run_chat_turn._arbitrate_turn_mode",
-            lambda **_kw: ("fast", "test", []),
+            "application.chat.pipeline.turn_helpers.arbitrate_turn_mode",
+            lambda **_kw: ("fast", "test", [], None),
         )
-        monkeypatch.setattr("application.chat.run_chat_turn.should_allow_fast", lambda **_kw: True)
+        monkeypatch.setattr("application.chat.fast_lane_gate.should_allow_fast", lambda **_kw: True)
 
     out = run_agno_chat_turn_impl(
         message,

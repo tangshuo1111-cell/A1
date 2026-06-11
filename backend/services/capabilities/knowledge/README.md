@@ -4,9 +4,11 @@ Unified orchestration entry for KB retrieve / rerank / grounding / pending schem
 
 MiddleAgent and application layers must import from this package only — not `rag.*`, `retrieval.*`, or `knowledge.*` directly.
 
+**Sole business retrieve answer:** `retrieve_service.retrieve_knowledge` (or `kb_pipeline` which delegates to it).
+
 | Module | Role |
 |---|---|
-| `retrieve_service.py` | `retrieve_knowledge`, legacy `search_kb` / `count_kb_chunks` |
+| `retrieve_service.py` | **canonical** `retrieve_knowledge`, `fetch_knowledge_chunks`, `search_kb`, `count_kb_chunks` |
 | `rerank_service.py` | score-based chunk reorder |
 | `grounding_service.py` | context block assembly + RAG marker cleanup |
 | `pending_service.py` | pending lifecycle types/constants |

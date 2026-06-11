@@ -68,7 +68,7 @@ def _bundle() -> AgnoMaterialBundle:
 
 def test_complex_chain_exposes_autonomy_loop_fields(monkeypatch) -> None:
     monkeypatch.setattr(
-        "application.chat.run_chat_turn.agno_web_service.fetch_web_evidence_block",
+        "services.capabilities.web.web_orchestration_service.fetch_web_evidence_block",
         lambda *_a, **_k: "[Web检索] 项目代号是 Atlas",
     )
     deps = ChatTurnDeps(

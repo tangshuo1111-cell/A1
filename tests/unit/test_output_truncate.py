@@ -31,7 +31,7 @@ def disable_fast_lane_shortcuts(monkeypatch: pytest.MonkeyPatch) -> None:
 def _enable_legacy_turn(monkeypatch: pytest.MonkeyPatch) -> None:
     disable_fast_lane_shortcuts(monkeypatch)
     monkeypatch.setattr(
-        "application.chat.run_chat_turn._run_feedback_round_execution",
+        "application.chat.executors.complex_executor_delivery.run_feedback_round_execution",
         lambda message, plan, bundle, deps, **kwargs: bundle,
     )
 
@@ -48,7 +48,7 @@ def test_run_agno_chat_turn_impl_truncates_answer(monkeypatch: pytest.MonkeyPatc
     monkeypatch.setenv("MAX_OUTPUT_CHARS", "80")
     _reload_cost_rule()
     monkeypatch.setattr(
-        "application.chat.run_chat_turn._build_extra",
+        "application.chat.response_assembly.build_extra",
         lambda *a, **k: {"lane": "direct", "primary_path": "test"},
     )
 
@@ -115,7 +115,7 @@ def test_truncation_disabled_when_under_limit(monkeypatch: pytest.MonkeyPatch) -
     monkeypatch.setenv("MAX_OUTPUT_CHARS", "5000")
     _reload_cost_rule()
     monkeypatch.setattr(
-        "application.chat.run_chat_turn._build_extra",
+        "application.chat.response_assembly.build_extra",
         lambda *a, **k: {"lane": "direct", "primary_path": "test"},
     )
     from application.chat.run_chat_turn import ChatTurnDeps, run_agno_chat_turn_impl
@@ -179,7 +179,7 @@ def test_truncation_disabled_when_under_limit(monkeypatch: pytest.MonkeyPatch) -
 def test_run_agno_chat_turn_impl_exposes_sla_budget_fields(monkeypatch: pytest.MonkeyPatch) -> None:
     _enable_legacy_turn(monkeypatch)
     monkeypatch.setattr(
-        "application.chat.run_chat_turn._build_extra",
+        "application.chat.response_assembly.build_extra",
         lambda *a, **k: {"lane": "direct", "primary_path": "test"},
     )
     from agents.main_agent.schema import AgnoCollaborationPlan, MainXiezuoPan
@@ -295,24 +295,19 @@ def test_run_agno_chat_turn_impl_fast_path_exposes_sla_budget_fields() -> None:
 
 def test_run_agno_chat_turn_impl_short_circuits_when_deadline_exhausted(monkeypatch: pytest.MonkeyPatch) -> None:
     _enable_legacy_turn(monkeypatch)
-    monkeypatch.setattr("application.chat.run_chat_turn.SLA_BUDGET_MS", 20000)
+    monkeypatch.setattr("application.chat.budget_clock.SLA_BUDGET_MS", 20000)
     monkeypatch.setattr(
-        "application.chat.run_chat_turn._build_extra",
+        "application.chat.response_assembly.build_extra",
         lambda *a, **k: {"lane": "default", "primary_path": "deadline-test"},
     )
-    import application.chat.budget_clock as budget_clock_mod
-    import application.chat.run_chat_turn as run_chat_turn_mod
     from agents.main_agent.schema import AgnoCollaborationPlan, MainXiezuoPan
     from application.chat.run_chat_turn import ChatTurnDeps, run_agno_chat_turn_impl
     from schemas import MainDecision
 
-    fake_now = [0.0]
-
-    def _fake_perf_counter() -> float:
-        return fake_now[0]
-
-    monkeypatch.setattr(budget_clock_mod.time, "perf_counter", _fake_perf_counter)
-    monkeypatch.setattr(run_chat_turn_mod.time, "perf_counter", _fake_perf_counter)
+    monkeypatch.setattr(
+        "application.chat.executors.complex_executor_answer_stage._remaining_ms",
+        lambda **_kwargs: 800,
+    )
 
     plan = AgnoCollaborationPlan(
         decision=MainDecision(task_id="deadline-t1", task_status="routed"),
@@ -360,11 +355,7 @@ def test_run_agno_chat_turn_impl_short_circuits_when_deadline_exhausted(monkeypa
     bundle.answer_limitations = []
     middle = MagicMock()
 
-    def _slow_middle(*args: object, **kwargs: object) -> object:
-        fake_now[0] += 19.2
-        return bundle
-
-    middle.caipan.side_effect = _slow_middle
+    middle.caipan.return_value = bundle
     deps = ChatTurnDeps(
         histories={},
         session_prev_video={},

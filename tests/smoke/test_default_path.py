@@ -22,7 +22,7 @@ from tests._fixtures.v16_doc_factory import (
 from tests._support.bootstrap import bootstrap_historical_test
 from tests._support.pg_fixtures import pg_required_marks
 
-from rag.pending_store import PendingStore
+from services.pending_store import create_default_pending_store
 from services.capabilities.knowledge.pending_ingestion_service import (
     commit_pending,
     prepare_document_source,
@@ -46,11 +46,11 @@ def _pg_for_smoke(pg_settings: None) -> None:  # noqa: ARG001
     """Smoke commit→retrieve 需要真实 PostgreSQL，避免 fake PG 污染后续 RAG 集成测。"""
 
 
-def _smoke(file_path, session_id: str, store: PendingStore | None = None):
+def _smoke(file_path, session_id: str, store=None):
     """
     执行 prepare → commit，返回 (item, commit_result)。
     """
-    _store = store or PendingStore()
+    _store = store or create_default_pending_store()
     ext = Path(file_path).suffix.lower()
     if ext in (".docx", ".xlsx", ".xlsm", ".pdf"):
         item = prepare_document_source(str(file_path), session_id=session_id, store=_store)

@@ -32,6 +32,8 @@ class SafeRule:
         "cookie",
         "authorization",
         "token",
+        "password",
+        "x_admin_key",
     )
 
     # 错误返回：不暴露以下内容给客户端

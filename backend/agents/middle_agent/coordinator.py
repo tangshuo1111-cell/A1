@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from typing import Any
 
-from agents.history_context import PrevVideoRef
+from agents.shared.history_context import PrevVideoRef
 from agents.main_agent import AgnoCollaborationPlan
 from application.chat.budget_allocator import WorkerSpec, allocate_parallel_budgets
 from application.chat.budget_clock import BudgetClock, SkippedForBudget

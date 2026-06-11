@@ -12,10 +12,12 @@ logger = logging.getLogger("light_maqa")
 
 _started_lock = threading.Lock()
 _started = False
+_stop_event = threading.Event()
+_threads: list[threading.Thread] = []
 
 
 def _worker_loop(worker_index: int) -> None:
-    while True:
+    while not _stop_event.is_set():
         message = dequeue_async_task(timeout_sec=1.0)
         if message is None:
             continue
@@ -38,6 +40,7 @@ def ensure_task_plane_workers_started() -> None:
     with _started_lock:
         if _started:
             return
+        _stop_event.clear()
         workers = max(1, int(getattr(settings, "v16_video_background_workers", 2) or 2))
         for idx in range(workers):
             thread = threading.Thread(
@@ -47,10 +50,16 @@ def ensure_task_plane_workers_started() -> None:
                 name=f"task-plane-worker-{idx}",
             )
             thread.start()
+            _threads.append(thread)
         _started = True
 
 
 def reset_task_plane_workers_for_tests() -> None:
     global _started
     with _started_lock:
+        _stop_event.set()
+        for thread in list(_threads):
+            if thread.is_alive():
+                thread.join(timeout=1.2)
+        _threads.clear()
         _started = False

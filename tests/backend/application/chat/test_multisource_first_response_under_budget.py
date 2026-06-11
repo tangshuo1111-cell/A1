@@ -10,7 +10,7 @@ import pytest
 from agents.main_agent.schema import AgnoCollaborationPlan, MainXiezuoPan
 from agents.middle_agent.schema import AgnoMaterialBundle, CailiaoPan
 from application.chat.budget_clock import SLA_BUDGET_MS, BudgetClock
-from application.chat.complex_path_entry import run_multisource_round0_answer
+from application.chat.executors.complex.complex_path_impl import run_multisource_round0_answer
 from application.chat.history_buffer import ChatTurnDeps
 from application.chat.pending_kind import PendingKind
 from application.chat.run_chat_turn import run_agno_chat_turn_impl

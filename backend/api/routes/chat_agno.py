@@ -15,8 +15,9 @@ import asyncio
 import functools
 from pathlib import Path
 
-from fastapi import APIRouter, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, File, Form, Request, UploadFile
 
+from api.api_errors import raise_validation
 from api.rate_limit import chat_rate_limit_string, limiter
 from api.schemas_http import ChatRequest, ChatResponse
 from services import agno_chat_service
@@ -108,13 +109,7 @@ async def post_chat_agno_upload(
     # 1) 文件名与扩展名校验（在读取内容前做，避免浪费）
     filename = (file.filename or "").strip()
     if not filename:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "code": "MISSING_FILENAME",
-                "message": "上传文件缺少文件名，请检查请求。",
-            },
-        )
+        raise_validation("MISSING_FILENAME", "上传文件缺少文件名，请检查请求。")
     ext = Path(filename).suffix.lower()
     if ext not in _SUPPORTED_EXTENSIONS:
         # 不支持的格式：仍走链路，让 prepare_file_source 返回 unsupported_format 状态
@@ -125,21 +120,13 @@ async def post_chat_agno_upload(
     # 2) 读取文件内容（限制大小）
     raw_bytes = await file.read(_MAX_FILE_BYTES + 1)
     if len(raw_bytes) > _MAX_FILE_BYTES:
-        raise HTTPException(
-            status_code=413,
-            detail={
-                "code": "FILE_TOO_LARGE",
-                "message": f"文件大小超过限制（最大 {_MAX_FILE_BYTES // 1024 // 1024} MB）。",
-            },
+        raise_validation(
+            "FILE_TOO_LARGE",
+            f"文件大小超过限制（最大 {_MAX_FILE_BYTES // 1024 // 1024} MB）。",
+            http_status=413,
         )
     if not raw_bytes:
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "code": "EMPTY_FILE",
-                "message": "上传的文件内容为空。",
-            },
-        )
+        raise_validation("EMPTY_FILE", "上传的文件内容为空。")
 
     # 3) UTF-8 / GBK 解码卸载到线程池（B-008）
     file_content: str | bytes = await asyncio.to_thread(_decode_upload_raw_bytes, raw_bytes)

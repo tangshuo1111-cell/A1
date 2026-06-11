@@ -343,7 +343,15 @@ def _kb_material() -> tuple[str, list[RetrievedChunk], list[str], dict[str, Any]
 def perf_mocks(*, sample_id: str) -> Iterator[None]:
     patches = [
         patch(
-            "application.chat.fast_path_entry.run_fast_llm_answer",
+            "application.chat.executors.fast_executor_general.run_fast_llm_answer",
+            lambda *a, **k: "基线探针 LLM 首答。",
+        ),
+        patch(
+            "application.chat.executors.fast_lanes.fast_llm.summarize_fast_material",
+            lambda *a, **k: "基线探针 LLM 首答。",
+        ),
+        patch(
+            "application.chat.executors.fast_lanes.fast_llm.run_fast_llm_answer",
             lambda *a, **k: "基线探针 LLM 首答。",
         ),
         patch(
@@ -382,7 +390,7 @@ def perf_mocks(*, sample_id: str) -> Iterator[None]:
             ),
         ),
         patch(
-            "application.chat.complex_path_entry.agno_web_service.fetch_web_evidence_block",
+            "services.capabilities.web.web_orchestration_service.fetch_web_evidence_block",
             lambda *_a, **_k: "[Web检索] 方案 B 具备更好的上线节奏。",
         ),
     ]

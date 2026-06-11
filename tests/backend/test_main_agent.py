@@ -82,7 +82,7 @@ def test_main_agent_v6_class_pan_is_self_owned_plan():
     from agents.main_agent import AgnoCollaborationPlan, MainAgent, MainXiezuoPan
 
     m = MainAgent()
-    plan = m.pan("你好", session_id=None, http_use_knowledge=False, clock=BudgetClock.start())
+    plan = m.pan("你好", session_id=None, http_use_knowledge=False, clock=BudgetClock.start()).plan
     assert isinstance(plan, AgnoCollaborationPlan)
     assert isinstance(plan.xiezuo_pan, MainXiezuoPan)
     # 直答场景：main 自己判断不需要证据 / 不允许 kb / 不允许 web
@@ -100,7 +100,7 @@ def test_main_agent_v6_class_kb_path_changes_pan():
     from agents.main_agent import MainAgent
 
     m = MainAgent()
-    plan = m.pan("项目代号是什么", session_id=None, http_use_knowledge=True, clock=BudgetClock.start())
+    plan = m.pan("项目代号是什么", session_id=None, http_use_knowledge=True, clock=BudgetClock.start()).plan
     assert plan.xiezuo_pan.allow_kb is True
     assert plan.xiezuo_pan.renwu_lei == "zhishu"
     assert plan.force_skip_evidence is False

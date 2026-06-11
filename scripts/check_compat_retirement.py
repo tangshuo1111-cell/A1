@@ -8,6 +8,7 @@ Exit codes:
     0  All due items are retired (or not yet due).
     1  One or more items are overdue and still not retired.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -82,9 +83,7 @@ def main() -> int:
             )
         return 1
 
-    print(
-        f"OK: {pending_count} pending item(s); none overdue for release {args.current_release}."
-    )
+    print(f"OK: {pending_count} pending item(s); none overdue for release {args.current_release}.")
     return 0
 
 

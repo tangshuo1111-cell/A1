@@ -16,7 +16,7 @@ from rag.pending_schema import (
     SourcePayload,
     derive_pending_kind,
 )
-from rag.pending_store import PendingStore, reset_for_tests
+from services.pending_store import create_default_pending_store, reset_pending_store_for_tests
 from schemas import MainDecision
 from services.capabilities.knowledge.pending_ingestion_service import commit_pending
 from services.capabilities.knowledge.pending_service import resolve_pending_kind
@@ -24,9 +24,9 @@ from services.capabilities.knowledge.pending_service import resolve_pending_kind
 
 @pytest.fixture(autouse=True)
 def _reset_pending_store() -> None:
-    reset_for_tests()
+    reset_pending_store_for_tests()
     yield
-    reset_for_tests()
+    reset_pending_store_for_tests()
 
 
 def test_derive_pending_kind_from_extract_status() -> None:
@@ -63,7 +63,7 @@ def test_pending_item_create_sets_pending_kind() -> None:
 
 
 def test_commit_pending_sets_committed_pending_kind(monkeypatch: pytest.MonkeyPatch) -> None:
-    store = PendingStore()
+    store = create_default_pending_store()
     item = PendingKnowledgeItem.create(
         session_id="sess-commit",
         payload=SourcePayload(

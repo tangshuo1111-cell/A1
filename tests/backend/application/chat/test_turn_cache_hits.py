@@ -67,7 +67,7 @@ def test_run_kb_fast_path_exposes_turn_cache_stats(
         return (_sample_chunks(), {"strategy": "auto", "hits": 1})
 
     monkeypatch.setattr(
-        "application.chat.run_chat_turn.resolve_lane_decision",
+        "application.ingress.resolve_lane_decision",
         lambda **_kwargs: LaneDecision(
             lane="kb",
             mode="fast",
@@ -77,7 +77,7 @@ def test_run_kb_fast_path_exposes_turn_cache_stats(
         ),
     )
     monkeypatch.setattr(
-        "application.chat.fast_path_entry.summarize_fast_material",
+        "application.chat.executors.fast_lanes.fast_llm.summarize_fast_material",
         lambda **_kwargs: "KB 快答",
     )
 

@@ -112,7 +112,7 @@ def test_main_plan_cache_single_pan_call(monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_MAIN_PLAN_CACHE", True)
     pan_calls: list[int] = []
     monkeypatch.setattr(
-        "application.chat.run_chat_turn._build_extra",
+        "application.chat.response_assembly.build_extra",
         lambda *a, **k: {"lane": "agno_basic", "primary_path": "agno_basic", "mode": "complex"},
     )
     out = run_agno_chat_turn_impl(
@@ -129,7 +129,7 @@ def test_legacy_double_pan_when_main_plan_cache_off(monkeypatch: pytest.MonkeyPa
     monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_MAIN_PLAN_CACHE", False)
     pan_calls: list[int] = []
     monkeypatch.setattr(
-        "application.chat.run_chat_turn._build_extra",
+        "application.chat.response_assembly.build_extra",
         lambda *a, **k: {"lane": "agno_basic", "primary_path": "agno_basic", "mode": "complex"},
     )
     run_agno_chat_turn_impl(

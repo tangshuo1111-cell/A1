@@ -13,7 +13,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from agents.history_context import PendingVideoText, PrevVideoRef, SessionHistorySnapshot
+from agents.shared.history_context import PendingVideoText, PrevVideoRef, SessionHistorySnapshot
 from agents.main_agent import AgnoCollaborationPlan
 from application.chat.budget_clock import BudgetClock
 from application.chat.chat_contracts import KbSufficiencyResult

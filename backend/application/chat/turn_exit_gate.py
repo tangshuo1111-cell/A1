@@ -283,30 +283,10 @@ def envelope_to_extra_fields(
     *,
     source_extra: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    source_extra = source_extra or {}
-    qg_pass = bool(envelope.quality_gate.get("pass", False))
-    is_complex = _is_complex_task(envelope, source_extra)
-    base_extra: dict[str, Any] = {
-        "mode": envelope.mode,
-        "executor_profile": envelope.executor_profile,
-        "router_lane": envelope.router_lane,
-        "primary_path": envelope.primary_path,
-        "task_status": envelope.task_status,
-        "material_sufficiency": envelope.material_sufficiency,
-        "quality_gate": dict(envelope.quality_gate),
-        "quality_gate.pass": qg_pass,
-        "quality_gate.need_second_round": envelope.quality_gate.get("need_second_round", False),
-        "quality_gate.need_more_material": envelope.quality_gate.get("need_more_material", False),
-        "quality_gate.reason_codes": list(envelope.quality_gate.get("reason_codes") or []),
-        "quality_gate_passed": qg_pass,
-        "insufficient_evidence": _insufficient_evidence(envelope),
-        "is_complex_task": is_complex,
-        "exit": dict(envelope.trace),
-    }
-    if envelope.pending_kind is not None:
-        base_extra["pending_kind"] = envelope.pending_kind
-    base_extra["failure_reason_code"] = _resolve_failure_reason_code(envelope, {**source_extra, **base_extra})
-    return base_extra
+    """Deprecated alias — use ``turn_response_builder.build_exit_extra_from_envelope``."""
+    from application.chat.turn_response_builder import build_exit_extra_from_envelope
+
+    return build_exit_extra_from_envelope(envelope, source_extra=source_extra)
 
 
 def _normalize_pending_kind(value: str | None) -> str | None:
@@ -411,15 +391,10 @@ def apply_turn_exit_to_chat_turn(
                 shadow.get("diff_fields"),
                 envelope.winner_rule,
             )
+        source_extra = dict(extra)
 
-    out = dict(result)
-    out["task_status"] = envelope.task_status
-    out["primary_path"] = envelope.primary_path
-    extra.update(envelope_to_extra_fields(envelope, source_extra=source_extra))
-    tms = _timing_total_ms(extra, result)
-    if tms is not None:
-        extra["timing_total_ms"] = tms
-    extra["answer_char_count"] = len(str(result.get("answer") or ""))
-    out["extra"] = extra
+    from application.chat.turn_response_builder import apply_exit_envelope
+
+    out = apply_exit_envelope(result, envelope, source_extra=source_extra)
     _record_product_metrics_snapshot(out, envelope, user_message=user_message)
     return out

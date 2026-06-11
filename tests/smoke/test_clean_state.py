@@ -34,16 +34,16 @@ def clean_agno_stack(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
 
     rag_store.init_schema()
 
-    from rag.pending_store import reset_for_tests
+    from services.pending_store import reset_pending_store_for_tests
 
-    reset_for_tests()
+    reset_pending_store_for_tests()
 
     from services import agno_chat_service
 
     disable_fast_lane_shortcuts(monkeypatch)
     agno_chat_service.clear_agno_session_history_for_tests()
     yield tmp_path
-    reset_for_tests()
+    reset_pending_store_for_tests()
     agno_chat_service.clear_agno_session_history_for_tests()
 
 

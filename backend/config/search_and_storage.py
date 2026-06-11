@@ -20,6 +20,10 @@ class SearchAndStorageSettings:
     database_url: str | None = field(
         default_factory=lambda: _env_opt_str("DATABASE_URL")
     )
+    # Round 7: chat session + pending persistence backend (memory | pg)
+    store_backend: str = field(
+        default_factory=lambda: (_env_str("STORE_BACKEND", "memory").lower() or "memory")
+    )
     knowledge_db_name: str = "knowledge.sqlite"
     conversation_db_name: str = "conversation.sqlite"
 

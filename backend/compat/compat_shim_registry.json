@@ -1,0 +1,53 @@
+{
+  "marker": "DEPRECATED_COMPAT_SHIM",
+  "core_modules": [
+    "compat/__init__.py"
+  ],
+  "surface_shims": [],
+  "shims": [
+    {
+      "module": "compat.decide_for_agno_chat",
+      "shim_path": "backend/compat/decide_for_agno_chat.py",
+      "canonical_target": "application.ingress + agents.main_agent.runtime",
+      "allowed_import_roots": [],
+      "forbid_in_production": true,
+      "forbid_in_new_tests": true,
+      "retire_by_round": "R19",
+      "owner": "chat-governance",
+      "status": "retired"
+    },
+    {
+      "module": "compat.rag_service",
+      "shim_path": "backend/compat/rag_service.py",
+      "canonical_target": "services.capabilities.knowledge.retrieve_service",
+      "allowed_import_roots": [],
+      "forbid_in_production": true,
+      "forbid_in_new_tests": true,
+      "retire_by_round": "R19",
+      "owner": "chat-governance",
+      "status": "retired"
+    },
+    {
+      "module": "knowledge.rag_service",
+      "shim_path": "backend/knowledge/rag_service.py",
+      "canonical_target": "services.capabilities.knowledge.retrieve_service",
+      "allowed_import_roots": [],
+      "forbid_in_production": true,
+      "forbid_in_new_tests": true,
+      "retire_by_round": "R19",
+      "owner": "chat-governance",
+      "status": "retired"
+    },
+    {
+      "module": "rag.pending_store",
+      "shim_path": "backend/rag/pending_store.py",
+      "canonical_target": "services.pending_store",
+      "allowed_import_roots": [],
+      "forbid_in_production": true,
+      "forbid_in_new_tests": true,
+      "retire_by_round": "R18",
+      "owner": "chat-governance",
+      "status": "retired"
+    }
+  ]
+}

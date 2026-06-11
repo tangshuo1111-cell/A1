@@ -70,11 +70,11 @@ def test_middle_agent_v6_class_caipan_is_self_owned_bundle():
     from agents.middle_agent import AgnoMaterialBundle, CailiaoPan, MiddleAgent
 
     m = MainAgent()
-    plan = m.pan("你好", session_id=None, http_use_knowledge=False, clock=BudgetClock.start())
+    plan = m.pan("你好", session_id=None, http_use_knowledge=False, clock=BudgetClock.start()).plan
     assert plan.xiezuo_pan.allow_kb is False  # 由 main 写入
 
     mid = MiddleAgent()
-    bundle = mid.caipan("你好", plan=plan, http_use_knowledge=False, clock=BudgetClock.start())
+    bundle = mid.caipan("你好", plan=plan, http_use_knowledge=False, clock=BudgetClock.start()).bundle
     assert isinstance(bundle, AgnoMaterialBundle)
     assert isinstance(bundle.cailiao_pan, CailiaoPan)
     # main 不允许拉知识 → middle 自己判定 ok / 直答，没有越权
@@ -105,7 +105,7 @@ def test_middle_agent_v6_class_signals_que_when_kb_and_web_empty(
         session_id=None,
         http_use_knowledge=True,
         clock=BudgetClock.start(),
-    )
+    ).plan
     assert plan.xiezuo_pan.allow_kb is True
 
     mid = MiddleAgent()
@@ -114,7 +114,7 @@ def test_middle_agent_v6_class_signals_que_when_kb_and_web_empty(
         plan=plan,
         http_use_knowledge=True,
         clock=BudgetClock.start(),
-    )
+    ).bundle
     cp = bundle.cailiao_pan
     assert cp.bukong_xinhao == "que"
     assert cp.que_shenme == "liangzhe"
@@ -199,7 +199,7 @@ def test_middle_gather_parallelizes_independent_retrieval_video_paths(monkeypatc
 
     m = MainAgent()
     clock = BudgetClock.start()
-    plan = m.pan("请根据知识回答并看这个视频 https://example.com/v", session_id=None, http_use_knowledge=True, clock=clock)
+    plan = m.pan("请根据知识回答并看这个视频 https://example.com/v", session_id=None, http_use_knowledge=True, clock=clock).plan
     mid = MiddleAgent()
 
     t0 = time.perf_counter()
@@ -208,7 +208,7 @@ def test_middle_gather_parallelizes_independent_retrieval_video_paths(monkeypatc
         plan=plan,
         http_use_knowledge=True,
         clock=clock,
-    )
+    ).bundle
     elapsed = time.perf_counter() - t0
 
     assert bundle.knowledge_block == "kb-block"
@@ -273,7 +273,7 @@ def test_middle_document_prepare_enters_parallel_coordination_without_duplicate_
 
     m = MainAgent()
     clock = BudgetClock.start()
-    plan = m.pan("请先看看这个文件 report.docx", session_id=None, http_use_knowledge=False, clock=clock)
+    plan = m.pan("请先看看这个文件 report.docx", session_id=None, http_use_knowledge=False, clock=clock).plan
     plan = replace(
         plan,
         v13_prepare_intent=V13PrepareIntent(
@@ -302,7 +302,7 @@ def test_middle_document_prepare_enters_parallel_coordination_without_duplicate_
         session_id="doc-early-1",
         v13_file_content=b"fake-docx-bytes",
         clock=clock,
-    )
+    ).bundle
 
     assert len(calls) == 1
     assert bundle.pending_item is not None
@@ -370,7 +370,7 @@ def test_middle_parallel_kb_gather_uses_explicit_shared_prep_across_worker_threa
 
     m = MainAgent()
     clock = BudgetClock.start()
-    plan = m.pan("请严格基于知识库分析当前系统问题", session_id=None, http_use_knowledge=True, clock=clock)
+    plan = m.pan("请严格基于知识库分析当前系统问题", session_id=None, http_use_knowledge=True, clock=clock).plan
     mid = MiddleAgent()
 
     bundle = mid.caipan(
@@ -379,7 +379,7 @@ def test_middle_parallel_kb_gather_uses_explicit_shared_prep_across_worker_threa
         shared_prep=shared_prep,
         http_use_knowledge=True,
         clock=clock,
-    )
+    ).bundle
 
     assert bundle.knowledge_block == "共享检索材料命中"
     assert len(bundle.retrieved_chunks) == 1
@@ -432,7 +432,7 @@ def test_middle_shared_snapshot_not_blocked_by_zero_kb_worker_budget(monkeypatch
 
     m = MainAgent()
     clock = BudgetClock.start()
-    plan = m.pan("请基于知识库说明当前问题", session_id=None, http_use_knowledge=True, clock=clock)
+    plan = m.pan("请基于知识库说明当前问题", session_id=None, http_use_knowledge=True, clock=clock).plan
     mid = MiddleAgent()
 
     bundle = mid.caipan(
@@ -441,7 +441,7 @@ def test_middle_shared_snapshot_not_blocked_by_zero_kb_worker_budget(monkeypatch
         shared_prep=shared_prep,
         http_use_knowledge=True,
         clock=clock,
-    )
+    ).bundle
 
     assert len(bundle.retrieved_chunks) == 1
     assert not any("tool=kb reason=parallel_budget_zero" in line for line in bundle.trace)
@@ -486,7 +486,7 @@ def test_web_video_main_path_prefers_tool_chain_and_preserves_task_refs(monkeypa
         session_id=None,
         http_use_knowledge=False,
         clock=BudgetClock.start(),
-    )
+    ).plan
     out = run_early_web_video_flow(
         video_url_decision="call_url_fetch_video",
         video_url_yitu={"has_video_url": True, "video_url": "https://example.com/v", "yitu_label": "video_url_yitu"},
@@ -540,7 +540,7 @@ def test_web_video_main_path_can_use_tool_chain_asr_success(monkeypatch):
         session_id=None,
         http_use_knowledge=False,
         clock=BudgetClock.start(),
-    )
+    ).plan
     out = run_early_web_video_flow(
         video_url_decision="call_url_fetch_video",
         video_url_yitu={"has_video_url": True, "video_url": "https://example.com/v", "yitu_label": "video_url_yitu"},

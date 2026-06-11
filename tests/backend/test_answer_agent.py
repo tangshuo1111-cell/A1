@@ -118,9 +118,9 @@ def test_answer_agent_v6_class_pan_and_huida_are_self_owned():
     from agents.middle_agent import MiddleAgent
 
     m = MainAgent()
-    plan = m.pan("你好", session_id=None, http_use_knowledge=False, clock=BudgetClock.start())
+    plan = m.pan("你好", session_id=None, http_use_knowledge=False, clock=BudgetClock.start()).plan
     mid = MiddleAgent()
-    bundle = mid.caipan("你好", plan=plan, http_use_knowledge=False, clock=BudgetClock.start())
+    bundle = mid.caipan("你好", plan=plan, http_use_knowledge=False, clock=BudgetClock.start()).bundle
 
     fake = _FakeZhixing()
     a = AnswerAgent(zhixing=fake)
@@ -171,9 +171,9 @@ def test_answer_agent_v6_class_kb_weak_triggers_baoshou(monkeypatch):
         lambda q, max_results=3: "",
     )
     m = MainAgent()
-    plan = m.pan("项目代号是什么？", session_id=None, http_use_knowledge=True, clock=BudgetClock.start())
+    plan = m.pan("项目代号是什么？", session_id=None, http_use_knowledge=True, clock=BudgetClock.start()).plan
     mid = MiddleAgent()
-    bundle = mid.caipan("项目代号是什么？", plan=plan, http_use_knowledge=True, clock=BudgetClock.start())
+    bundle = mid.caipan("项目代号是什么？", plan=plan, http_use_knowledge=True, clock=BudgetClock.start()).bundle
 
     fake = _FakeZhixing()
     a = AnswerAgent(zhixing=fake)
@@ -209,7 +209,7 @@ def test_knowledge_grounded_empty_chunks_uses_web_block():
         session_id=None,
         http_use_knowledge=True,
         clock=BudgetClock.start(),
-    )
+    ).plan
     plan = replace(plan, answer_mode="knowledge_grounded", needs_retrieval=True)
     mid = MiddleAgent()
     bundle = mid.caipan(
@@ -217,7 +217,7 @@ def test_knowledge_grounded_empty_chunks_uses_web_block():
         plan=plan,
         http_use_knowledge=True,
         clock=BudgetClock.start(),
-    )
+    ).bundle
     bundle = replace(
         bundle,
         retrieved_chunks=[],

@@ -8,11 +8,11 @@
 
 ```
 POST /chat/agno
-→ ingress（lane / mode / complex_candidate）
-→ approval_gate
-→ decision_arbitrator
-→ shared_material_prep
-→ fast / complex / async
+→ agno_chat_service（facade / monkeypatch 锚点）
+→ run_chat_turn（薄 facade）
+→ turn_orchestrator（唯一主链入口）
+→ ingress → approval_gate → decision_arbitrator → shared_material_prep
+→ FastExecutor / ComplexExecutor / AsyncExecutor
 → （complex 时）MainAgent → MiddleAgent → AnswerAgent
 → turn_exit_gate
 ```
@@ -45,7 +45,7 @@ POST /chat/agno
 
 - **API 层**：`backend/api/routes/chat_agno.py` → `POST /chat/agno`
 - **Service 层**：`backend/services/agno_chat_service.py`（monkeypatch 锚点）
-- **Implementation**：`backend/application/chat/run_chat_turn.py`（真正的编排逻辑）
+- **Implementation**：`backend/application/chat/turn_orchestrator.py`（`run_chat_turn.py` 仅为薄 facade）
 
 补充：
 - 统一公共出口：`backend/application/chat/turn_exit_gate.py`

@@ -9,6 +9,10 @@ CHAT_ROOT = BACKEND_ROOT / "application" / "chat"
 
 FINAL_WRITE_WHITELIST = {
     CHAT_ROOT / "turn_exit_gate.py",
+    CHAT_ROOT / "turn_response_builder.py",
+    CHAT_ROOT / "field_owners.py",
+    CHAT_ROOT / "response_builders" / "field_writer.py",
+    CHAT_ROOT / "response_builders" / "exit_extra_builder.py",
 }
 
 _GUARDED = frozenset({"task_status", "pending_kind", "primary_path"})

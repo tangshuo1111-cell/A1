@@ -18,6 +18,69 @@ from config import feature_flags
 from schemas import MainDecision
 
 ROUTE_TABLE = Path("docs/current/migration/route_target_table.csv")
+
+
+def _stub_main_plan() -> AgnoCollaborationPlan:
+    return AgnoCollaborationPlan(
+        decision=MainDecision(task_id="p10-stub", task_status="routed"),
+        force_skip_evidence=True,
+        web_supplement_mode="explicit_only",
+        answer_composition="default",
+        xiezuo_pan=MainXiezuoPan(
+            renwu_lei="zhijie",
+            zhengju_need=False,
+            allow_kb=False,
+            allow_web=False,
+            fengxian_yinzi=0.1,
+            celue_tag="stub",
+        ),
+        needs_retrieval=False,
+        retrieval_strategy="none",
+        answer_mode="direct",
+        tools_allowed=(),
+        max_rounds=1,
+        original_user_intent="stub",
+    )
+
+
+def _stub_material_bundle() -> AgnoMaterialBundle:
+    return AgnoMaterialBundle(
+        knowledge_block="",
+        web_block="",
+        trace=[],
+        knowledge_adequate=False,
+        material_still_insufficient=False,
+        web_judgment_reason="skip",
+        kb_evidence_tier="none",
+        insufficiency_signal="none",
+        cailiao_pan=CailiaoPan(
+            gou=False,
+            kb_qiangdu=0.0,
+            bukong_xinhao="ok",
+            laiyuan_zhu="wu",
+            use_kb=False,
+            use_web=False,
+            que_shenme="none",
+            xia_yi_bu="zhi_da",
+        ),
+    )
+
+
+def _fast_lane_stub_deps() -> ChatTurnDeps:
+    return ChatTurnDeps(
+        histories={},
+        session_prev_video={},
+        session_pending_video={},
+        lock=Lock(),
+        main_agent=SimpleNamespace(pan=lambda *a, **k: _stub_main_plan()),
+        middle_agent=SimpleNamespace(caipan=lambda *a, **k: _stub_material_bundle()),
+        answer_agent=SimpleNamespace(xiezuo_extra=lambda *_a, **_k: {}),
+        run_basic_qa=lambda *a, **k: "unused",
+        path_fingerprint=lambda *a, **k: "fp",
+        nodes_contract=lambda trace: {},
+    )
+
+
 LEGACY_STATUS = Path("docs/current/migration/legacy_paths_status.csv")
 BASELINE_SAMPLES = Path("docs/current/baselines/samples")
 
@@ -52,11 +115,21 @@ def test_p10_route_target_table_covers_all_baseline_samples() -> None:
     assert sample_ids <= route_ids
 
 
-def test_p10_legacy_paths_are_retired() -> None:
+def test_p10_legacy_paths_registry_coherent() -> None:
+    """Active rows are registered shims; retired rows must have a replacement."""
     with LEGACY_STATUS.open("r", encoding="utf-8-sig", newline="") as handle:
         rows = list(csv.DictReader(handle))
     assert rows
-    assert all(str(row["status"]).strip() == "retired" for row in rows)
+    for row in rows:
+        status = str(row["status"]).strip()
+        assert status in {"active", "retired"}, row["legacy_path"]
+        if status == "retired":
+            assert str(row.get("replacement_path", "")).strip(), row["legacy_path"]
+        else:
+            cls = str(row.get("class", "")).strip()
+            assert cls in {"A", "B", "C"}, row["legacy_path"]
+            if cls == "B":
+                assert str(row.get("retire_by", "")).strip(), row["legacy_path"]
 
 
 def _simple_complex_deps() -> ChatTurnDeps:
@@ -126,18 +199,7 @@ def test_web_read_request_stays_in_web_fast_lane(monkeypatch: pytest.MonkeyPatch
     out = run_agno_chat_turn_impl(
         "请阅读并总结这个网页 https://example.com/phase10-web",
         session_id="p10-web",
-        deps=ChatTurnDeps(
-            histories={},
-            session_prev_video={},
-            session_pending_video={},
-            lock=Lock(),
-            main_agent=SimpleNamespace(pan=lambda *a, **k: None),
-            middle_agent=SimpleNamespace(caipan=lambda *a, **k: None),
-            answer_agent=SimpleNamespace(),
-            run_basic_qa=lambda *a, **k: "unused",
-            path_fingerprint=lambda *a, **k: "fp",
-            nodes_contract=lambda trace: {},
-        ),
+        deps=_fast_lane_stub_deps(),
     )
     extra = out["extra"]
     assert extra["router_lane"] == "web"
@@ -148,7 +210,7 @@ def test_web_read_request_stays_in_web_fast_lane(monkeypatch: pytest.MonkeyPatch
 
 def test_kb_query_stays_in_kb_fast_lane(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
-        "application.chat.run_chat_turn.resolve_lane_decision",
+        "application.ingress.resolve_lane_decision",
         lambda **_k: LaneDecision(
             lane="kb",
             mode="fast",
@@ -158,7 +220,7 @@ def test_kb_query_stays_in_kb_fast_lane(monkeypatch: pytest.MonkeyPatch) -> None
         ),
     )
     monkeypatch.setattr(
-        "application.chat.run_chat_turn._run_kb_fast_path",
+        "application.chat.executors.fast_lanes.kb.run",
         lambda **_k: (
             "系统默认数据库要求 PostgreSQL。",
             {
@@ -173,25 +235,14 @@ def test_kb_query_stays_in_kb_fast_lane(monkeypatch: pytest.MonkeyPatch) -> None
         ),
     )
     monkeypatch.setattr(
-        "application.chat.run_chat_turn._finalize_fast_path_delivery",
+        "application.chat.executors.fast_executor_result.finalize_fast_path_delivery",
         lambda **kwargs: (True, "fast", kwargs["lane_extra"]),
     )
     out = run_agno_chat_turn_impl(
         "根据知识库说明一下当前系统的数据库要求",
         session_id="p10-kb",
         use_knowledge=True,
-        deps=ChatTurnDeps(
-            histories={},
-            session_prev_video={},
-            session_pending_video={},
-            lock=Lock(),
-            main_agent=SimpleNamespace(pan=lambda *a, **k: None),
-            middle_agent=SimpleNamespace(caipan=lambda *a, **k: None),
-            answer_agent=SimpleNamespace(),
-            run_basic_qa=lambda *a, **k: "unused",
-            path_fingerprint=lambda *a, **k: "fp",
-            nodes_contract=lambda trace: {},
-        ),
+        deps=_fast_lane_stub_deps(),
     )
     extra = out["extra"]
     assert extra["router_lane"] == "kb"

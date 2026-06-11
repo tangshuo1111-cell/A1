@@ -10,8 +10,8 @@ from application.chat.approval_gate_flow import (
     build_approval_blocked_turn_result,
     build_commit_executed_turn_result,
 )
-from application.chat.async_entry import assemble_async_pending_result
-from application.chat.fast_path_entry import build_fast_result
+from application.chat.executors.async_path.build_pending import assemble_async_pending_result
+from application.chat.executors.fast_delivery import build_fast_result
 from application.chat.pending_kind import PendingKind
 from config import feature_flags
 

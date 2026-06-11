@@ -236,6 +236,28 @@ def _migrate_schema() -> None:
         CREATE INDEX IF NOT EXISTS idx_turn_product_metrics_created
         ON turn_product_metrics (created_at);
         """,
+        """
+        CREATE TABLE IF NOT EXISTS agno_session_state (
+            session_key TEXT PRIMARY KEY,
+            history_json TEXT NOT NULL DEFAULT '[]',
+            prev_video_json TEXT,
+            pending_video_json TEXT,
+            updated_at TEXT NOT NULL
+        );
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS agno_pending_items (
+            pending_id TEXT PRIMARY KEY,
+            session_id TEXT NOT NULL,
+            payload_json TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+        """,
+        """
+        CREATE INDEX IF NOT EXISTS idx_agno_pending_session
+        ON agno_pending_items (session_id);
+        """,
     ]
     with pool.connection() as conn:
         with conn.cursor() as cur:

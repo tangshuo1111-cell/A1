@@ -28,13 +28,12 @@ from application.chat.budget_clock import BudgetClock
 from application.chat.run_chat_turn import ChatTurnDeps, run_agno_chat_turn_impl
 from schemas import ChatTurnResult
 from services.capabilities.web import web_orchestration_service as agno_web_service
-from services.session_store import default_store
+from services.session_store import get_session_store
 
 if TYPE_CHECKING:  # 仅类型注解用；service 不依赖这些 schema 的内部字段
     from schemas import MainDecision
 
 _MAX_PAIRS = 6
-_session_prev_video = default_store.session_prev_video  # 兼容旧测试与辅助脚本
 
 # ---------------------------------------------------------------------------
 # 三强实体单例：service 不再"代写"主判断对象，只持有三个 agent 实体并按链路串联。
@@ -117,13 +116,13 @@ def _gather_materials_v4(
         session_id=None,
         http_use_knowledge=use_knowledge,
         clock=clock,
-    )
+    ).plan
     bundle = _middle_agent_inst.caipan(
         message,
         plan=plan,
         http_use_knowledge=use_knowledge,
         clock=clock,
-    )
+    ).bundle
     return bundle.knowledge_block, bundle.web_block, bundle.trace
 
 
@@ -185,13 +184,16 @@ def run_agno_chat_turn(
     V16：confirm_long_web_video_asr —— 用户在长网页视频（超过免确认秒数）上已确认走 ASR，
     与 ``video.web_video_chat_context.web_video_long_asr_confirmed`` 对齐，供 Middle 拉流时读取。
 
-    V2a 治理：实现迁至 ``application.chat.run_chat_turn``；本符号仍为 monkeypatch / 路由锚点。
+    V2a 治理：实现迁至 ``application.chat.turn_orchestrator``；本符号仍为 service / 路由锚点。
     """
+    session_key = _history_key(session_id)
+    store = get_session_store()
+    store.ensure_session(session_key)
     deps = ChatTurnDeps(
-        histories=default_store.histories,
-        session_prev_video=default_store.session_prev_video,
-        session_pending_video=default_store.session_pending_video,
-        lock=default_store.lock,
+        histories=store.histories,
+        session_prev_video=store.session_prev_video,
+        session_pending_video=store.session_pending_video,
+        lock=store.lock,
         main_agent=_main_agent_inst,
         middle_agent=_middle_agent_inst,
         answer_agent=_answer_agent_inst,
@@ -218,6 +220,7 @@ def run_agno_chat_turn(
             deps=deps,
         )
     finally:
+        store.persist_session(session_key)
         web_video_long_asr_confirmed.reset(_wvac_tok)
 
 
@@ -227,7 +230,7 @@ def _history_key(session_id: str | None) -> str:
 
 
 def clear_agno_session_history_for_tests() -> None:
-    default_store.clear_all()
+    get_session_store().clear_all()
 
 
 def clear_agno_session_prev_video_for_tests(session_id: str | None) -> None:
@@ -239,5 +242,6 @@ def clear_agno_session_prev_video_for_tests(session_id: str | None) -> None:
     生产路径不会调这个函数。
     """
     key = _history_key(session_id)
-    with default_store.lock:
-        default_store.session_prev_video.pop(key, None)
+    store = get_session_store()
+    with store.lock:
+        store.session_prev_video.pop(key, None)

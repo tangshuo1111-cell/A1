@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import pytest
 
-from application.chat.async_entry import (
+from application.chat.executors.async_path.build_pending import (
     ASYNC_PENDING_EXTRA_FIELDS,
     ASYNC_PENDING_TOP_LEVEL_FIELDS,
     build_async_pending_result,
@@ -51,19 +51,19 @@ def _assert_async_contract(result: dict, *, lane: str, task_id: str) -> None:
         (
             "video",
             "https://www.bilibili.com/video/BVtest001",
-            "application.chat.async_entry.task_plane_service.enqueue_video_background_task",
+            "application.chat.executors.async_path.build_pending.task_plane_service.enqueue_video_background_task",
             "task-video-s7b",
         ),
         (
             "web",
             "请抓取 https://example.com/article",
-            "application.chat.async_entry.task_plane_service.enqueue_web_heavy_fetch_task",
+            "application.chat.executors.async_path.build_pending.task_plane_service.enqueue_web_heavy_fetch_task",
             "task-web-s7b",
         ),
         (
             "document",
             "请 OCR D:\\docs\\report.pdf",
-            "application.chat.async_entry.task_plane_service.enqueue_document_ocr_task",
+            "application.chat.executors.async_path.build_pending.task_plane_service.enqueue_document_ocr_task",
             "task-doc-s7b",
         ),
     ],
@@ -82,7 +82,7 @@ def test_async_entry_three_lanes_share_field_contract(
 
 def test_async_entry_reuses_existing_task_without_reenqueue() -> None:
     with patch(
-        "application.chat.async_entry.task_plane_service.enqueue_video_background_task",
+        "application.chat.executors.async_path.build_pending.task_plane_service.enqueue_video_background_task",
     ) as enqueue_mock:
         result = build_async_pending_result(
             message="https://example.com/v",
@@ -99,7 +99,7 @@ def test_async_entry_reuses_existing_task_without_reenqueue() -> None:
 def test_async_entry_passes_prefilled_fact_to_video_enqueue() -> None:
     fact = CapabilityFact(lane="video", probe_elapsed_ms=120, duration_sec=600.0)
     with patch(
-        "application.chat.async_entry.task_plane_service.enqueue_video_background_task",
+        "application.chat.executors.async_path.build_pending.task_plane_service.enqueue_video_background_task",
         return_value=("task-fact-s7b", "memory"),
     ) as enqueue_mock:
         build_async_pending_result(

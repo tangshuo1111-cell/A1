@@ -6,7 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from agents.history_context import PendingVideoText, PrevVideoRef
+from domain.session_types import PendingVideoText, PrevVideoRef
 from agents.main_agent.schema import AgnoCollaborationPlan, MainXiezuoPan
 from agents.middle_agent.schema import AgnoMaterialBundle, CailiaoPan
 from application.chat.fast_lane_gate import should_allow_fast
@@ -53,7 +53,7 @@ def test_run_chat_turn_skips_fast_when_session_pending_video(
         return "fast answer", {"lane": "video", "fast_path": "video_fast"}
 
     monkeypatch.setattr(
-        "application.chat.run_chat_turn.resolve_lane_decision",
+        "application.ingress.resolve_lane_decision",
         lambda **_kwargs: LaneDecision(
             lane="video",
             mode="fast",
@@ -62,9 +62,9 @@ def test_run_chat_turn_skips_fast_when_session_pending_video(
             router_decision_ms=2,
         ),
     )
-    monkeypatch.setattr("application.chat.run_chat_turn._run_video_fast_path", _video_fast)
+    monkeypatch.setattr("application.chat.executors.fast_lanes.video.run", _video_fast)
     monkeypatch.setattr(
-        "application.chat.run_chat_turn._build_extra",
+        "application.chat.response_assembly.build_extra",
         lambda *_a, **_k: {"lane": "video", "primary_path": "complex"},
     )
 
@@ -140,7 +140,7 @@ def test_run_chat_turn_skips_fast_when_prev_video_ref(
     monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_INGRESS_ROUTER_V2", True)
     monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_FAST_LANE_VIDEO", True)
     monkeypatch.setattr(
-        "application.chat.run_chat_turn.resolve_lane_decision",
+        "application.ingress.resolve_lane_decision",
         lambda **_kwargs: LaneDecision(
             lane="video",
             mode="fast",
@@ -150,11 +150,11 @@ def test_run_chat_turn_skips_fast_when_prev_video_ref(
         ),
     )
     monkeypatch.setattr(
-        "application.chat.run_chat_turn._run_video_fast_path",
+        "application.chat.executors.fast_lanes.video.run",
         lambda *_a, **_k: (_ for _ in ()).throw(AssertionError("fast must not run")),
     )
     monkeypatch.setattr(
-        "application.chat.run_chat_turn._build_extra",
+        "application.chat.response_assembly.build_extra",
         lambda *_a, **_k: {"lane": "video", "primary_path": "complex"},
     )
 

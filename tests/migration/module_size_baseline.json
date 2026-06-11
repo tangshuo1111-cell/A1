@@ -1,0 +1,173 @@
+{
+  "backend/application/chat/run_chat_turn.py": {
+    "lines": 32
+  },
+  "backend/application/chat/turn_orchestrator.py": {
+    "lines": 71
+  },
+  "backend/application/chat/turn_state_machine.py": {
+    "lines": 155
+  },
+  "backend/application/chat/turn_response_builder.py": {
+    "lines": 68
+  },
+  "backend/application/chat/response_builders/field_writer.py": {
+    "lines": 37
+  },
+  "backend/application/chat/response_builders/exit_extra_builder.py": {
+    "lines": 69
+  },
+  "backend/application/chat/executors/async_executor.py": {
+    "lines": 74
+  },
+  "backend/application/chat/executors/complex_executor.py": {
+    "lines": 36
+  },
+  "backend/application/chat/executors/complex_executor_delivery.py": {
+    "lines": 84
+  },
+  "backend/application/chat/executors/complex_executor_delivery_round0.py": {
+    "lines": 65
+  },
+  "backend/application/chat/executors/complex_executor_delivery_feedback.py": {
+    "lines": 131
+  },
+  "backend/application/chat/executors/complex_executor_exit_extra.py": {
+    "lines": 105
+  },
+  "backend/application/chat/executors/complex_executor_main_stage.py": {
+    "lines": 63
+  },
+  "backend/application/chat/executors/complex_executor_middle_stage.py": {
+    "lines": 62
+  },
+  "backend/application/chat/executors/complex_executor_answer_stage.py": {
+    "lines": 129
+  },
+  "backend/application/chat/executors/fast_executor.py": {
+    "lines": 29
+  },
+  "backend/application/chat/executors/fast_executor_delivery.py": {
+    "lines": 47
+  },
+  "backend/application/chat/executors/fast_executor_result.py": {
+    "lines": 133
+  },
+  "backend/application/chat/executors/fast_executor_general.py": {
+    "lines": 101
+  },
+  "backend/application/chat/executors/fast_executor_general_attempts.py": {
+    "lines": 12
+  },
+  "backend/application/chat/executors/fast_executor_general_attempt_common.py": {
+    "lines": 62
+  },
+  "backend/application/chat/executors/fast_executor_general_attempt_weather.py": {
+    "lines": 80
+  },
+  "backend/application/chat/executors/fast_executor_general_attempt_canned.py": {
+    "lines": 70
+  },
+  "backend/application/chat/executors/fast_executor_general_attempt_llm.py": {
+    "lines": 82
+  },
+  "backend/application/chat/executors/fast_executor_lane.py": {
+    "lines": 110
+  },
+  "backend/application/chat/executors/fast_lanes/dispatch.py": {
+    "lines": 44
+  },
+  "backend/application/chat/executors/fast_lanes/document.py": {
+    "lines": 30
+  },
+  "backend/application/chat/executors/fast_lanes/general.py": {
+    "lines": 23
+  },
+  "backend/application/chat/executors/fast_lanes/kb.py": {
+    "lines": 29
+  },
+  "backend/application/chat/executors/fast_lanes/video.py": {
+    "lines": 23
+  },
+  "backend/application/chat/executors/fast_lanes/web.py": {
+    "lines": 23
+  },
+  "backend/application/chat/executors/fast_lanes/fast_common.py": {
+    "lines": 47
+  },
+  "backend/application/chat/executors/fast_lanes/general_fast_impl.py": {
+    "lines": 31
+  },
+  "backend/application/chat/executors/fast_lanes/kb_fast_impl.py": {
+    "lines": 151
+  },
+  "backend/application/chat/executors/fast_lanes/web_fast_impl.py": {
+    "lines": 101
+  },
+  "backend/application/chat/executors/fast_lanes/document_fast_impl.py": {
+    "lines": 108
+  },
+  "backend/application/chat/executors/fast_lanes/video_fast_impl.py": {
+    "lines": 94
+  },
+  "backend/application/chat/pipeline/turn_pipeline.py": {
+    "lines": 31
+  },
+  "backend/application/chat/pipeline/session_stage.py": {
+    "lines": 65
+  },
+  "backend/application/chat/pipeline/ingress_stage.py": {
+    "lines": 98
+  },
+  "backend/application/chat/pipeline/fast_stage.py": {
+    "lines": 140
+  },
+  "backend/application/chat/pipeline/complex_stage.py": {
+    "lines": 40
+  },
+  "backend/application/chat/pipeline/complex_plan_stage.py": {
+    "lines": 26
+  },
+  "backend/application/chat/pipeline/complex_collect_stage.py": {
+    "lines": 27
+  },
+  "backend/application/chat/pipeline/complex_answer_stage.py": {
+    "lines": 38
+  },
+  "backend/application/chat/pipeline/complex_finalize_stage.py": {
+    "lines": 138
+  },
+  "backend/application/chat/pipeline/pipeline_state.py": {
+    "lines": 47
+  },
+  "backend/application/chat/executors/complex/complex_path_impl.py": {
+    "lines": 21
+  },
+  "backend/application/chat/executors/complex/complex_deadline.py": {
+    "lines": 25
+  },
+  "backend/application/chat/executors/complex/complex_multisource_impl.py": {
+    "lines": 103
+  },
+  "backend/application/chat/executors/complex/complex_feedback_impl.py": {
+    "lines": 173
+  },
+  "backend/application/chat/executors/complex/complex_feedback_paths.py": {
+    "lines": 118
+  },
+  "backend/application/chat/executors/complex/complex_feedback_trace.py": {
+    "lines": 32
+  },
+  "backend/application/chat/executors/complex/complex_feedback_gate.py": {
+    "lines": 97
+  },
+  "backend/application/chat/executors/complex/complex_feedback_refresh.py": {
+    "lines": 99
+  },
+  "backend/application/chat/executors/complex/complex_feedback_web_fetch.py": {
+    "lines": 93
+  },
+  "backend/application/chat/executors/complex/complex_feedback_synthesize.py": {
+    "lines": 65
+  }
+}

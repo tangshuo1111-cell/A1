@@ -8,6 +8,7 @@ Exit codes:
     0  All shims are within their lifetime.
     1  One or more shims are expired (current_phase >= planned_removal_phase).
 """
+
 from __future__ import annotations
 
 import argparse
@@ -83,8 +84,7 @@ def main() -> int:
 
     if expired:
         print(
-            f"\n[FAIL] {len(expired)} expired shim(s) found "
-            f"(current={args.current_phase}):\n",
+            f"\n[FAIL] {len(expired)} expired shim(s) found (current={args.current_phase}):\n",
             file=sys.stderr,
         )
         for row in expired:
@@ -100,9 +100,7 @@ def main() -> int:
         )
         return 1
 
-    print(
-        f"[OK] {len(shim_active)} active shim(s), none expired at {args.current_phase}."
-    )
+    print(f"[OK] {len(shim_active)} active shim(s), none expired at {args.current_phase}.")
     return 0
 
 

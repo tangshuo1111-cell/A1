@@ -1,6 +1,6 @@
 """证据归一化：失败文案 / MCP / RAG 头块不得进入用户证据列表。"""
 
-from agents.evidence_normalizer import normalize_evidence_lists, sanitize_evidence_text
+from agents.shared.evidence_normalizer import normalize_evidence_lists, sanitize_evidence_text
 from rag.ingest import _fts_boost_header
 
 

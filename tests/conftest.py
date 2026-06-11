@@ -94,14 +94,43 @@ def _fake_pg_unless_marked(request: pytest.FixtureRequest, monkeypatch: pytest.M
     Real-DB suites must use ``tests._support.pg_fixtures.pg_settings`` and ``pg_required_marks``.
     """
     from storage.pg_pool import reset_pg_pool_for_tests
+    from workers.entry.worker_bootstrap import reset_all_workers_for_tests
 
+    reset_all_workers_for_tests()
     reset_pg_pool_for_tests()
     if not request.node.get_closest_marker("pg"):
         from tests._support.fake_pg_pool import install_fake_pg_pool
 
         install_fake_pg_pool(monkeypatch)
     yield
+    reset_all_workers_for_tests()
     reset_pg_pool_for_tests()
+
+
+@pytest.fixture(autouse=True)
+def _block_real_ytdlp_network_in_default_tests(
+    request: pytest.FixtureRequest,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Fail fast if a default test leaks into the real yt-dlp network path.
+
+    Tests that intentionally exercise real external services must opt in via
+    ``@pytest.mark.real_external`` and are exempt from this guard.
+    """
+    if request.node.get_closest_marker("real_external"):
+        return
+
+    def _blocked_extract_info(url: str, *, ydl_opts: dict[str, object]):
+        del ydl_opts
+        raise AssertionError(
+            f"real yt-dlp network path is blocked in default tests: {url}. "
+            "Patch the canonical video boundary instead."
+        )
+
+    monkeypatch.setattr(
+        "video.url_fetch_ytdlp._yt_dlp_extract_info",
+        _blocked_extract_info,
+    )
 
 
 def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:

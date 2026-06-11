@@ -4,12 +4,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from application.chat.complexity_policy import has_multisource_intent
+from application.chat.domain.events import TurnEvent, fast_rejected_event
+from application.chat.domain.reason_codes import FAST_LANE_REJECTED
 from application.chat.pending_kind import PendingKind
 from application.ingress.lane_decision_schema import LaneDecision
 from config.feature_flags import is_enabled
 
 if TYPE_CHECKING:
-    from agents.history_context import PendingVideoText, PrevVideoRef
+    from domain.session_types import PendingVideoText, PrevVideoRef
 
 
 def resolve_fast_lane_session_pending(
@@ -45,3 +47,15 @@ def should_allow_fast(
 
 def fast_lane_gate_active() -> bool:
     return is_enabled("ENABLE_FAST_LANE_GATE")
+
+
+def build_fast_lane_event(
+    *,
+    session_pending: PendingKind,
+    ingress: LaneDecision,
+    message: str,
+) -> TurnEvent | None:
+    """Return ``FastRejected`` when fast lane must defer; otherwise None."""
+    if should_allow_fast(session_pending=session_pending, ingress=ingress, message=message):
+        return None
+    return fast_rejected_event(reason_codes=(FAST_LANE_REJECTED,))
