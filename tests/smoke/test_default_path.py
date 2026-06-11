@@ -22,12 +22,12 @@ from tests._fixtures.v16_doc_factory import (
 from tests._support.bootstrap import bootstrap_historical_test
 from tests._support.pg_fixtures import pg_required_marks
 
-from services.pending_store import create_default_pending_store
 from services.capabilities.knowledge.pending_ingestion_service import (
     commit_pending,
     prepare_document_source,
     prepare_file_source,
 )
+from services.pending_store import create_default_pending_store
 
 _CORE_DIR = bootstrap_historical_test(__file__)
 _CAP_DIR = _CORE_DIR

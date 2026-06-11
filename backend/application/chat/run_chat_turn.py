@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 from application.chat.budget_clock import SLA_BUDGET_MS, BudgetClock
-from application.chat.executors.async_path.build_pending import build_async_pending_result as _build_async_pending_result
+from application.chat.executors.async_path.build_pending import (
+    build_async_pending_result as _build_async_pending_result,
+)
 from application.chat.fast_lane_gate import should_allow_fast
 from application.chat.history_buffer import ChatTurnDeps
 from application.chat.response_assembly import build_extra as _build_extra

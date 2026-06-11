@@ -10,9 +10,9 @@ middle_agent 旧主链 `collect()` 路径所需逻辑（V6 第 6 轮迁入）。
 
 from __future__ import annotations
 
-from agents.shared.evidence_normalizer import normalize_evidence_lists
 from agents.middle_agent import collect_flow_eval as _cfe
 from agents.middle_agent import collect_flow_execute as _cfx
+from agents.shared.evidence_normalizer import normalize_evidence_lists
 from debug_trace import trace
 from observability import log_phase
 from schemas import CollectionTask, EvidencePack

@@ -9,7 +9,9 @@ from application.chat.executors.complex_executor_delivery_feedback import (
     run_complex_feedback_loop,
     run_feedback_round_execution,
 )
-from application.chat.executors.complex_executor_delivery_round0 import produce_complex_round0_answer
+from application.chat.executors.complex_executor_delivery_round0 import (
+    produce_complex_round0_answer,
+)
 from application.chat.history_buffer import ChatTurnDeps
 from domain.session_types import SessionHistorySnapshot
 

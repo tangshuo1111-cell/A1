@@ -8,7 +8,6 @@ reaching into implementation-only `*_impl.py` internals.
 from __future__ import annotations
 
 import ast
-import sys
 from pathlib import Path
 
 from utf8_console import configure_utf8_stdio

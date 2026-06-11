@@ -6,8 +6,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -33,8 +31,8 @@ def test_decide_for_agno_chat_moved_off_runtime() -> None:
 
 
 def test_main_agent_rule_router_still_decides() -> None:
-    from entry.task_dispatcher import dispatch_task
     from agents.main_agent.rule_router import decide
+    from entry.task_dispatcher import dispatch_task
 
     task = dispatch_task("你好", session_id="s1")
     decision = decide(task)

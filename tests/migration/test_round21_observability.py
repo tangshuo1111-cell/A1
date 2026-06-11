@@ -69,7 +69,11 @@ def test_record_metrics_trend_appends_jsonl(tmp_path: Path) -> None:
 
 
 def test_metrics_prometheus_text_format() -> None:
-    from observability import metrics_prometheus_text, metrics_record_chat_sync, reset_metrics_for_tests
+    from observability import (
+        metrics_prometheus_text,
+        metrics_record_chat_sync,
+        reset_metrics_for_tests,
+    )
 
     reset_metrics_for_tests()
     metrics_record_chat_sync(True)

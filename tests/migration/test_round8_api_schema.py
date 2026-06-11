@@ -5,8 +5,6 @@ from __future__ import annotations
 import ast
 from pathlib import Path
 
-import pytest
-
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 API_ROUTES = PROJECT_ROOT / "backend" / "api" / "routes"
 
@@ -15,11 +13,8 @@ def test_schemas_http_exports_round8_models() -> None:
     from api.schemas_http import (
         ApiErrorDetail,
         ErrorResponse,
-        SessionSummaryResponse,
-        TaskResultResponse,
         TaskStatusResponse,
         VideoCookiesStatusResponse,
-        VideoCookiesUploadResponse,
         WebVideoMetadataResponse,
     )
 

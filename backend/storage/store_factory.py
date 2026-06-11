@@ -57,11 +57,9 @@ def get_pending_store():
 def reset_stores_for_tests(*, clear_persistent: bool = True) -> None:
     """Clear singleton handles and optionally wipe underlying store state."""
     global _session_singleton, _pending_singleton
-    if _session_singleton is not None:
-        if clear_persistent:
-            _session_singleton.clear_all()
-    if _pending_singleton is not None:
-        if clear_persistent:
-            _pending_singleton.clear_all()
+    if _session_singleton is not None and clear_persistent:
+        _session_singleton.clear_all()
+    if _pending_singleton is not None and clear_persistent:
+        _pending_singleton.clear_all()
     _session_singleton = None
     _pending_singleton = None

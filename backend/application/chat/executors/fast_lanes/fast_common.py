@@ -2,6 +2,17 @@
 
 from __future__ import annotations
 
+from application.chat.executors.fast_lanes.fast_capability_policy import (
+    CROSS_LANE_GENERAL_CAPABILITIES,
+    FAST_CAPABILITY_WHITELIST,
+    cross_lane_violation_for_capabilities,
+)
+from application.chat.executors.fast_lanes.fast_llm import (
+    run_fast_llm_answer,
+    summarize_fast_material,
+)
+
+
 def _wants_full_web_text(message: str) -> bool:
     text = str(message or "").strip()
     if not text:
@@ -28,12 +39,6 @@ def _extract_page_body_from_material(material: str) -> str:
         body = body.split("\n\n[搜索补充]\n", 1)[0]
     return body.strip()
 
-from application.chat.executors.fast_lanes.fast_capability_policy import (
-    CROSS_LANE_GENERAL_CAPABILITIES,
-    FAST_CAPABILITY_WHITELIST,
-    cross_lane_violation_for_capabilities,
-)
-from application.chat.executors.fast_lanes.fast_llm import run_fast_llm_answer, summarize_fast_material
 
 __all__ = [
     "FAST_CAPABILITY_WHITELIST",

@@ -10,6 +10,7 @@ from application.chat.executors.fast_lanes import fast_llm
 from application.chat.exit_signals import set_pending_kind_signal
 from application.chat.pending_kind import PendingKind
 
+
 def run_video_fast_path(
     *,
     message: str,
@@ -18,7 +19,6 @@ def run_video_fast_path(
     clock,
 ) -> tuple[str, dict[str, Any]] | None:
     from application.chat.decision_arbitrator import arbitrate_mode
-    from application.chat.pending_kind import PendingKind
     from application.ingress.lane_decision_schema import LaneDecision
     from services.capabilities.video.early_video_support import video_tool_result_to_fetch_result
     from services.capabilities.video.video_contract_runtime import (

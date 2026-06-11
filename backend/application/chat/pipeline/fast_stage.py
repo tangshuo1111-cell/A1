@@ -9,6 +9,8 @@ from application.chat.budget_clock import format_ms as _format_ms
 from application.chat.executors.async_executor import AsyncExecutor
 from application.chat.executors.fast_executor import (
     maybe_return_general_fast as _maybe_return_general_fast,
+)
+from application.chat.executors.fast_executor import (
     maybe_return_lane_fast as _maybe_return_lane_fast,
 )
 from application.chat.pipeline.pipeline_state import TurnPipelineState

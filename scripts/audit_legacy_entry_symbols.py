@@ -41,9 +41,11 @@ def _public_defs(path: Path) -> list[str]:
     tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
     names: list[str] = []
     for node in tree.body:
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            if not node.name.startswith("_"):
-                names.append(node.name)
+        if (
+            isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+            and not node.name.startswith("_")
+        ):
+            names.append(node.name)
     return names
 
 

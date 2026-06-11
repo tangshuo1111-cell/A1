@@ -16,10 +16,10 @@ from rag.pending_schema import (
     SourcePayload,
     derive_pending_kind,
 )
-from services.pending_store import create_default_pending_store, reset_pending_store_for_tests
 from schemas import MainDecision
 from services.capabilities.knowledge.pending_ingestion_service import commit_pending
 from services.capabilities.knowledge.pending_service import resolve_pending_kind
+from services.pending_store import create_default_pending_store, reset_pending_store_for_tests
 
 
 @pytest.fixture(autouse=True)

@@ -6,11 +6,13 @@ import time
 from dataclasses import replace
 from typing import Any
 
-from domain.session_types import PrevVideoRef
+import application.chat.response_assembly as response_assembly
 from application.chat.budget_clock import format_ms as _format_ms
 from application.chat.complex_pending_mapping import complex_pending_kind_active
 from application.chat.executors.complex_executor import (
     build_complex_turn_result as _build_complex_turn_result,
+)
+from application.chat.executors.complex_executor import (
     finalize_complex_exit_extra as _finalize_complex_exit_extra,
 )
 from application.chat.exit_signals import primary_path_signal_from_extra
@@ -18,9 +20,9 @@ from application.chat.path_labels import resolve_complex_primary_path
 from application.chat.pending_kind import PendingKind
 from application.chat.pipeline.fast_stage import build_merge_turn_obs, finalize_turn_cache
 from application.chat.pipeline.pipeline_state import TurnPipelineState
-import application.chat.response_assembly as response_assembly
 from application.chat.turn_exit_gate import apply_turn_exit_to_chat_turn
 from application.chat.turn_facts import build_complex_turn_facts, quality_gate_from_extra
+from domain.session_types import PrevVideoRef
 from schemas import ChatTurnResult
 
 

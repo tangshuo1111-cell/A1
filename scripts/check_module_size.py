@@ -80,7 +80,11 @@ def _line_count(py_file: Path) -> int:
 
 
 def _code_line_count(py_file: Path) -> int:
-    return sum(1 for line in py_file.read_text(encoding="utf-8", errors="replace").splitlines() if line.strip())
+    return sum(
+        1
+        for line in py_file.read_text(encoding="utf-8", errors="replace").splitlines()
+        if line.strip()
+    )
 
 
 def main() -> int:

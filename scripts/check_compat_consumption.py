@@ -38,11 +38,19 @@ def _import_hits(path: Path, modules: set[str]) -> set[str]:
         elif isinstance(node, ast.ImportFrom) and node.module:
             if node.module in modules:
                 hits.add(node.module)
-        elif isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
-            if node.func.attr == "import_module" and node.args:
-                first = node.args[0]
-                if isinstance(first, ast.Constant) and isinstance(first.value, str) and first.value in modules:
-                    hits.add(first.value)
+        elif (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "import_module"
+            and node.args
+        ):
+            first = node.args[0]
+            if (
+                isinstance(first, ast.Constant)
+                and isinstance(first.value, str)
+                and first.value in modules
+            ):
+                hits.add(first.value)
     return hits
 
 
@@ -62,9 +70,13 @@ def main() -> int:
         status = str(item.get("status") or "").strip().lower()
         if status == "retired":
             if shim_path.is_file():
-                failures.append(f"retired shim still present for {module}: {shim_path.relative_to(ROOT)}")
+                failures.append(
+                    f"retired shim still present for {module}: {shim_path.relative_to(ROOT)}"
+                )
             if baseline.get(module):
-                failures.append(f"retired shim still has baseline consumers for {module}: {baseline[module]}")
+                failures.append(
+                    f"retired shim still has baseline consumers for {module}: {baseline[module]}"
+                )
             continue
         if not shim_path.is_file():
             failures.append(f"missing shim file for {module}: {shim_path.relative_to(ROOT)}")

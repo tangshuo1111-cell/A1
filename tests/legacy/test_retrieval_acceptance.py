@@ -279,8 +279,8 @@ def test_v14_used_context_agno_turn_default_path(
 
     rs.init_schema()
 
-    from services.pending_store import reset_pending_store_for_tests as _rst
     from services import agno_chat_service
+    from services.pending_store import reset_pending_store_for_tests as _rst
 
     _rst()
     agno_chat_service.clear_agno_session_history_for_tests()

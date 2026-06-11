@@ -221,16 +221,19 @@ def _check_file(
                             f"{module_name!r} imports from {imported_mod!r}  "
                             f"[{rule.description}]"
                         )
-                if rule.check_storage_knowledge_store and imported_mod == "storage":
-                    if STORAGE_KNOWLEDGE_STORE_SYMBOL in imported_names:
-                        sym = f"storage.{STORAGE_KNOWLEDGE_STORE_SYMBOL}"
-                        if _is_exception(module_name, sym, exceptions):
-                            continue
-                        violations.append(
-                            f"  {py_file.relative_to(ROOT)}:{node.lineno}  "
-                            f"{module_name!r} imports {sym!r}  "
-                            f"[{rule.description}]"
-                        )
+                if (
+                    rule.check_storage_knowledge_store
+                    and imported_mod == "storage"
+                    and STORAGE_KNOWLEDGE_STORE_SYMBOL in imported_names
+                ):
+                    sym = f"storage.{STORAGE_KNOWLEDGE_STORE_SYMBOL}"
+                    if _is_exception(module_name, sym, exceptions):
+                        continue
+                    violations.append(
+                        f"  {py_file.relative_to(ROOT)}:{node.lineno}  "
+                        f"{module_name!r} imports {sym!r}  "
+                        f"[{rule.description}]"
+                    )
     return violations
 
 

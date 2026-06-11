@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import ast
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -41,6 +40,8 @@ def test_facade_delegates_to_orchestrator() -> None:
     from application.chat.run_chat_turn import TurnOrchestrator, run_agno_chat_turn_impl
     from application.chat.turn_orchestrator import (
         TurnOrchestrator as Orch2,
+    )
+    from application.chat.turn_orchestrator import (
         run_agno_chat_turn_impl as impl2,
     )
 

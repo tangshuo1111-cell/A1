@@ -84,7 +84,9 @@ def main() -> int:
             print(f"  {v}", file=sys.stderr)
         return 1
 
-    print("[OK] production code avoids deprecated history_context shims (canonical: domain.session_types).")
+    print(
+        "[OK] production code avoids deprecated history_context shims (canonical: domain.session_types)."
+    )
     return 0
 
 

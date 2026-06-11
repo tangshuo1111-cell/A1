@@ -30,9 +30,12 @@ def _imports(path: Path) -> list[tuple[int, str]]:
             for alias in node.names:
                 if alias.name in FORBIDDEN or alias.name.startswith("rag.pending_store."):
                     hits.append((node.lineno, alias.name))
-        elif isinstance(node, ast.ImportFrom) and node.module:
-            if node.module in FORBIDDEN or node.module.startswith("rag.pending_store."):
-                hits.append((node.lineno, node.module))
+        elif (
+            isinstance(node, ast.ImportFrom)
+            and node.module
+            and (node.module in FORBIDDEN or node.module.startswith("rag.pending_store."))
+        ):
+            hits.append((node.lineno, node.module))
     return hits
 
 

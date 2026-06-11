@@ -7,6 +7,7 @@ from typing import Any
 from application.chat.exit_signals import set_pending_kind_signal
 from application.chat.pending_kind import PendingKind
 
+
 def run_document_fast_path(
     *,
     message: str,
@@ -17,7 +18,6 @@ def run_document_fast_path(
     clock,
 ) -> tuple[str, dict[str, Any]] | None:
     from application.chat.decision_arbitrator import arbitrate_mode
-    from application.chat.pending_kind import PendingKind
     from application.ingress.lane_decision_schema import LaneDecision
     from services.capabilities.document import parse_service, summarize_service
 

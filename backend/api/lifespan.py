@@ -16,9 +16,9 @@ from fastapi import FastAPI
 @asynccontextmanager
 async def app_lifespan(_app: FastAPI) -> AsyncIterator[None]:
     from config.settings import log_runtime_bootstrap, settings
+    from config.validate_startup import validate_startup_config
     from core.structured_logger import setup_structured_logging
     from retrieval.semantic_retriever import warmup_semantic_runtime
-    from config.validate_startup import validate_startup_config
     from storage.pg_pool import close_pg_pool, get_pool, validate_database_url
 
     lvl = getattr(logging, settings.log_level, logging.INFO)

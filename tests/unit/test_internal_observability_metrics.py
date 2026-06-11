@@ -6,7 +6,6 @@ from fastapi.testclient import TestClient
 
 from api.main import app
 from observability import (
-    metrics_prometheus_text,
     metrics_record_chat_async_submitted,
     metrics_record_chat_sync,
     metrics_record_graph_node,

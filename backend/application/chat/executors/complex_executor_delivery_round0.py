@@ -5,7 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 from application.chat.budget_clock import BudgetClock
-from application.chat.executors.complex.complex_multisource_impl import run_multisource_round0_answer
+from application.chat.executors.complex.complex_multisource_impl import (
+    run_multisource_round0_answer,
+)
 from application.chat.history_buffer import ChatTurnDeps
 from domain.session_types import SessionHistorySnapshot
 

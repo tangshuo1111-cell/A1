@@ -1,9 +1,9 @@
 """task_job_store 与 runtime DB 最小读写。"""
 
 from psycopg_pool import PoolClosed
+from tests._support.pg_fixtures import pg_required_marks
 
 from storage import task_job_store
-from tests._support.pg_fixtures import pg_required_marks
 
 
 @pg_required_marks()[0]

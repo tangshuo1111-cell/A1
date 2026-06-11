@@ -16,6 +16,7 @@ Exit codes:
     0  No forbidden production imports.
     1  Violations found.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -80,9 +81,7 @@ def _imports_in_file(path: Path) -> list[tuple[int, str]]:
                     hits.append((node.lineno, mod))
         elif isinstance(node, ast.ImportFrom) and node.module:
             mod = node.module
-            if mod in FORBIDDEN_MODULES or any(
-                mod.startswith(f"{m}.") for m in FORBIDDEN_MODULES
-            ):
+            if mod in FORBIDDEN_MODULES or any(mod.startswith(f"{m}.") for m in FORBIDDEN_MODULES):
                 hits.append((node.lineno, mod))
     return hits
 

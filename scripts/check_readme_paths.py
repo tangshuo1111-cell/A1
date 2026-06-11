@@ -10,6 +10,7 @@ Exit codes:
     0  All referenced paths exist (or are directory prefixes with children).
     1  One or more dead references found.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -38,9 +39,7 @@ RETIRED_PATH_FRAGMENTS = (
     "async_entry.py",
 )
 
-PATH_PATTERN = re.compile(
-    r"`((?:backend|application)/[a-zA-Z0-9_./\-]+)`"
-)
+PATH_PATTERN = re.compile(r"`((?:backend|application)/[a-zA-Z0-9_./\-]+)`")
 
 
 def _resolve_ref(ref: str) -> Path:

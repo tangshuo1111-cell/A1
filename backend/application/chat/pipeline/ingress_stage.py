@@ -2,15 +2,18 @@
 
 from __future__ import annotations
 
+import application.chat.shared_material_prep as shared_material_prep
+import application.ingress as ingress_mod
 from application.chat.decision_arbitrator import resolve_session_pending_kind
 from application.chat.domain.decision import TurnDecision
 from application.chat.domain.events import ingress_classified_event
 from application.chat.domain.reason_codes import canonical_code
 from application.chat.domain.runtime_state import TurnRuntimeState
 from application.chat.pipeline.pipeline_state import TurnPipelineState
-from application.chat.pipeline.turn_helpers import arbitrate_turn_mode, maybe_return_approval_or_commit
-import application.chat.shared_material_prep as shared_material_prep
-import application.ingress as ingress_mod
+from application.chat.pipeline.turn_helpers import (
+    arbitrate_turn_mode,
+    maybe_return_approval_or_commit,
+)
 from application.chat.turn_cache import current_turn_cache, reset_turn_cache
 from application.chat.turn_state_machine import TurnStateBundle, apply_event
 from config.feature_flags import shared_retrieval_active

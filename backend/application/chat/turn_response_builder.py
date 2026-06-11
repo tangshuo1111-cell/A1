@@ -5,17 +5,27 @@ from __future__ import annotations
 from typing import Any
 
 from application.chat.chat_contracts import TurnExitEnvelope
-from application.chat.response_builders.base_builder import build_chat_turn_result
-from application.chat.response_builders.compat_builder import merge_compat_fields
+from application.chat.response_builders.base_builder import build_chat_turn_result  # noqa: F401
+from application.chat.response_builders.compat_builder import merge_compat_fields  # noqa: F401
 from application.chat.response_builders.exit_extra_builder import (
     apply_exit_envelope as _apply_exit_envelope,
+)
+from application.chat.response_builders.exit_extra_builder import (
     build_exit_extra_from_envelope as _build_exit_extra_from_envelope,
 )
 from application.chat.response_builders.field_writer import (
     apply_answer_fields as _apply_answer_fields,
+)
+from application.chat.response_builders.field_writer import (
     apply_decision_fields as _apply_decision_fields,
+)
+from application.chat.response_builders.field_writer import (
     apply_material_fields as _apply_material_fields,
+)
+from application.chat.response_builders.field_writer import (
     apply_task_fields as _apply_task_fields,
+)
+from application.chat.response_builders.field_writer import (
     apply_timing_fields as _apply_timing_fields,
 )
 

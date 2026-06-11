@@ -2,18 +2,9 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from application.chat.executors.fast_lanes import fast_llm
-from application.chat.executors.general_fast_rules import can_use_direct_fast_path
-from application.chat.executors.general_fast_terms import (
-    LOCAL_TERM_EXPLAINS,
-    try_canned_fast_answer,
-)
-from application.chat.executors.general_fast_weather import (
-    WEATHER_CITY_MAP,
-    try_fast_weather_answer,
-    weather_city_from_message,
-    weather_desc,
-)
 
 
 def run_general_fast_path(

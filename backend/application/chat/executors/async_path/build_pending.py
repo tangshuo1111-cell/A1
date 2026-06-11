@@ -4,17 +4,16 @@ import re
 import time
 from typing import Any
 
+from application.chat.budget_clock import SLA_BUDGET_MS, format_ms
 from application.chat.exit_signals import EXIT_SIGNAL_PRIMARY_PATH
+from application.chat.pending_kind import PendingKind
+from application.chat.turn_exit_extra import build_common_exit_extra
 from application.chat.turn_exit_gate import apply_turn_exit_to_chat_turn
-from application.chat.turn_response_builder import build_chat_turn_result
 from application.chat.turn_facts import TurnFacts
+from application.chat.turn_response_builder import build_chat_turn_result
 from schemas import ChatTurnResult
 from services.capabilities.contracts import CapabilityFact
 from services.execution import task_plane_service
-
-from application.chat.budget_clock import SLA_BUDGET_MS, format_ms
-from application.chat.pending_kind import PendingKind
-from application.chat.turn_exit_extra import build_common_exit_extra
 
 _ASYNC_LANE_ANSWERS: dict[str, str] = {
     "video": "这个请求已进入视频后台处理通道，我先不阻塞首响应。",

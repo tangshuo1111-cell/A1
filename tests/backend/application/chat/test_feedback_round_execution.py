@@ -5,7 +5,10 @@ from unittest.mock import MagicMock
 
 from agents.middle_agent.schema import AgnoMaterialBundle, CailiaoPan
 from application.chat.chat_contracts import QualityGateResult
-from application.chat.executors.complex.complex_path_impl import FeedbackGatherContext, run_feedback_round_execution
+from application.chat.executors.complex.complex_path_impl import (
+    FeedbackGatherContext,
+    run_feedback_round_execution,
+)
 from application.chat.pending_kind import PendingKind
 from config import feature_flags
 

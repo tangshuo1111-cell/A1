@@ -5,10 +5,14 @@ from __future__ import annotations
 from typing import Any
 
 from application.chat import autonomy_loop
-from application.chat.complex_pending_mapping import attach_complex_pending_context, complex_pending_kind_active
-from application.chat.executors.complex.complex_deadline import FeedbackGatherContext
+from application.chat.complex_pending_mapping import (
+    attach_complex_pending_context,
+    complex_pending_kind_active,
+)
 from application.chat.executors.complex import complex_feedback_gate as feedback_gate_mod
 from application.chat.executors.complex import complex_feedback_refresh as feedback_refresh_mod
+from application.chat.executors.complex import complex_feedback_web_fetch as feedback_web_fetch_mod
+from application.chat.executors.complex.complex_deadline import FeedbackGatherContext
 from application.chat.executors.complex.complex_feedback_paths import (
     complete_feedback_round,
     maybe_stop_for_budget,
@@ -16,12 +20,11 @@ from application.chat.executors.complex.complex_feedback_paths import (
     reject_missing_feedback_request,
     reject_tool_failure,
 )
-from application.chat.executors.complex.complex_feedback_trace import trace_feedback_round
 from application.chat.executors.complex.complex_feedback_synthesize import (
     synthesize_multisource_feedback_request,
     synthesize_web_feedback_request,
 )
-from application.chat.executors.complex import complex_feedback_web_fetch as feedback_web_fetch_mod
+from application.chat.executors.complex.complex_feedback_trace import trace_feedback_round
 from application.chat.pending_kind import PendingKind
 from config.feature_flags import three_agent_autonomy_active
 from services.capabilities.web import web_orchestration_service as agno_web_service

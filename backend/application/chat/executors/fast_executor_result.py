@@ -12,6 +12,8 @@ from application.chat.budget_clock import format_ms as _format_ms
 from application.chat.executors.async_path.build_pending import build_async_pending_result
 from application.chat.executors.fast_delivery import (
     build_fast_result as _build_fast_result,
+)
+from application.chat.executors.fast_delivery import (
     should_demote_fast_to_async as _should_demote_fast_to_async,
 )
 from application.chat.executors.fast_executor_delivery import finalize_fast_path_delivery

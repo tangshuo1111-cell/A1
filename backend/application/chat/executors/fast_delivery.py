@@ -7,7 +7,9 @@ import uuid
 from typing import Any
 
 from application.chat.budget_clock import SLA_BUDGET_MS
-from application.chat.executors.fast_lanes.fast_capability_policy import cross_lane_violation_for_capabilities
+from application.chat.executors.fast_lanes.fast_capability_policy import (
+    cross_lane_violation_for_capabilities,
+)
 from application.chat.exit_signals import (
     EXIT_SIGNAL_PRIMARY_PATH,
     pending_kind_signal_from_extra,

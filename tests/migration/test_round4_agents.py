@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import ast
-import subprocess
-import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -28,19 +26,24 @@ def test_agents_do_not_import_fastapi() -> None:
 
 
 def test_agent_extra_rejects_forbidden_keys() -> None:
-    from application.chat.chat_contracts import assert_agent_extra_safe
     import pytest
+
+    from application.chat.chat_contracts import assert_agent_extra_safe
 
     with pytest.raises(ValueError, match="task_id"):
         assert_agent_extra_safe({"task_id": "x", "v6_main_pan_renwu": "zhijie"})
 
 
 def test_main_middle_answer_return_result_types() -> None:
-    from application.chat.budget_clock import BudgetClock
-    from application.chat.chat_contracts import AnswerAgentResult, MainAgentResult, MiddleAgentResult
     from agents.answer_agent import AnswerAgent
     from agents.main_agent import MainAgent
     from agents.middle_agent import MiddleAgent
+    from application.chat.budget_clock import BudgetClock
+    from application.chat.chat_contracts import (
+        AnswerAgentResult,
+        MainAgentResult,
+        MiddleAgentResult,
+    )
 
     clock = BudgetClock.start()
     main = MainAgent().pan("你好", session_id=None, http_use_knowledge=False, clock=clock)

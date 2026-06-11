@@ -10,6 +10,8 @@ from application.chat.executors.complex_executor_delivery import (
 )
 from application.chat.executors.complex_executor_exit_extra import (
     build_complex_turn_result as _build_complex_turn_result,
+)
+from application.chat.executors.complex_executor_exit_extra import (
     finalize_complex_exit_extra as _finalize_complex_exit_extra,
 )
 from application.chat.executors.complex_executor_main_stage import (

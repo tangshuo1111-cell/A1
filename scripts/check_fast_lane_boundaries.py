@@ -46,10 +46,7 @@ def _imports(path: Path) -> list[tuple[int, str]]:
 
 
 def _is_forbidden(mod: str) -> bool:
-    for prefix in FORBIDDEN_PREFIXES:
-        if mod == prefix or mod.startswith(prefix + "."):
-            return True
-    return False
+    return any(mod == prefix or mod.startswith(prefix + ".") for prefix in FORBIDDEN_PREFIXES)
 
 
 def main() -> int:

@@ -8,7 +8,9 @@ from collections.abc import Callable
 from typing import Any
 
 from application.chat.budget_clock import format_ms as _format_ms
-from application.chat.executors.fast_delivery import build_fast_trace_extra as _build_fast_trace_extra
+from application.chat.executors.fast_delivery import (
+    build_fast_trace_extra as _build_fast_trace_extra,
+)
 from application.chat.executors.fast_executor_general_attempt_common import (
     finish_general_fast_attempt,
 )

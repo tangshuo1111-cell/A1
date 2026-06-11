@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from typing import Any
-
-from dataclasses import dataclass
 
 from application.chat.domain.decision import TurnDecision
 from application.chat.domain.events import TurnEvent

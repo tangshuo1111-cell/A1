@@ -11,10 +11,10 @@ from application.chat.executors.fast_executor_general_attempts import (
     attempt_direct_llm_fast,
     attempt_weather_fast,
 )
+from application.chat.executors.fast_lanes.fast_llm import run_fast_llm_answer
 from application.chat.executors.general_fast_rules import can_use_direct_fast_path
 from application.chat.executors.general_fast_terms import try_canned_fast_answer
 from application.chat.executors.general_fast_weather import try_fast_weather_answer
-from application.chat.executors.fast_lanes.fast_llm import run_fast_llm_answer
 from application.chat.history_buffer import ChatTurnDeps
 from application.chat.turn_state_machine import TurnStateBundle
 

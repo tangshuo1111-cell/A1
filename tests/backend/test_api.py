@@ -104,7 +104,7 @@ def test_chat_agno_upload_passes_decoded_file_to_service(monkeypatch) -> None:
         r = client.post(
             "/chat/agno/upload",
             data={"message": "请帮我解析", "session_id": "upload-ok", "use_knowledge": "true"},
-            files={"file": ("demo.txt", "hello upload".encode("utf-8"), "text/plain")},
+            files={"file": ("demo.txt", b"hello upload", "text/plain")},
         )
         assert r.status_code == 200
         body = r.json()

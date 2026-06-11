@@ -6,7 +6,6 @@ from types import SimpleNamespace
 
 import pytest
 
-from domain.session_types import PendingVideoText, PrevVideoRef
 from agents.main_agent.schema import AgnoCollaborationPlan, MainXiezuoPan
 from agents.middle_agent.schema import AgnoMaterialBundle, CailiaoPan
 from application.chat.fast_lane_gate import should_allow_fast
@@ -14,6 +13,7 @@ from application.chat.history_buffer import ChatTurnDeps
 from application.chat.pending_kind import PendingKind
 from application.chat.run_chat_turn import run_agno_chat_turn_impl
 from application.ingress.lane_decision_schema import LaneDecision
+from domain.session_types import PendingVideoText, PrevVideoRef
 from schemas import MainDecision
 
 

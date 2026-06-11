@@ -24,12 +24,11 @@ V10 fallback 规则见 `main_fallback_rules.py`。
 from __future__ import annotations
 
 from agents._runtime import AgentPromptPack, AgentRunFrame, AgnoAgentRuntime
-from agents.shared.history_context import SessionHistorySnapshot
 from agents.ports import MainAgentPort
+from agents.shared.history_context import SessionHistorySnapshot
 from application.chat.budget_clock import BudgetClock
 from application.chat.chat_contracts import MainAgentResult
 from debug_trace import trace
-from entry.task_dispatcher import dispatch_task
 from llm.router import classify_intent_with_llm  # noqa: F401 — 测试 monkeypatch 锚点
 from schemas import MainDecision
 
@@ -41,7 +40,6 @@ from .main_invoke_flow import run_main_invoke_executor
 from .main_judgment_mixin import MainJudgmentPhaseMixin
 from .prompt import JIESHE, PROMPT_MOBAN, SHUCHU_GESHI, ZHIDAO
 from .schema import AgnoCollaborationPlan, MainXiezuoPan
-
 
 MAIN_PROMPT_PACK: AgentPromptPack = AgentPromptPack(
     jieshe=JIESHE,

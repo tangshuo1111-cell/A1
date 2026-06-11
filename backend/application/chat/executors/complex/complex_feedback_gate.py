@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import is_dataclass, replace
-from typing import Any, Callable
+from typing import Any
 
 from services.execution.feedback_gate import evaluate_feedback_request
 

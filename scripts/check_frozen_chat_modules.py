@@ -26,7 +26,6 @@ import ast
 import json
 import sys
 from pathlib import Path
-from typing import Any
 
 from utf8_console import configure_utf8_stdio
 

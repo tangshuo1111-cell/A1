@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from application.chat.budget_clock import SLA_BUDGET_MS, BudgetClock
-from application.chat.history_buffer import ChatTurnDeps
 from application.chat.domain.context import TurnContext
+from application.chat.history_buffer import ChatTurnDeps
 from application.chat.pipeline.complex_stage import run_complex_stage
 from application.chat.pipeline.fast_stage import run_fast_stage
 from application.chat.pipeline.ingress_stage import run_ingress_stage

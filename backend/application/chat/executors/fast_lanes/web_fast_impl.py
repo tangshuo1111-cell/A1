@@ -6,10 +6,10 @@ import re
 from typing import Any
 from urllib.parse import urlparse
 
-from application.chat.executors.fast_lanes import fast_common
-from application.chat.executors.fast_lanes import fast_llm
+from application.chat.executors.fast_lanes import fast_common, fast_llm
 from application.chat.exit_signals import set_pending_kind_signal
 from application.chat.pending_kind import PendingKind
+
 
 def run_web_fast_path(
     *,
@@ -18,7 +18,6 @@ def run_web_fast_path(
     clock,
 ) -> tuple[str, dict[str, Any]] | None:
     from application.chat.decision_arbitrator import arbitrate_mode
-    from application.chat.pending_kind import PendingKind
     from application.ingress.lane_decision_schema import LaneDecision
     from services.capabilities.web import web_orchestration_service as agno_web_service
 

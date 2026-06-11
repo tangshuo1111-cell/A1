@@ -26,9 +26,7 @@ def _is_sensitive_field(name: str) -> bool:
         token = field.lower().replace("-", "_")
         if lower == token or lower.endswith(f"_{token}") or token in lower:
             return True
-    if lower.startswith("secret"):
-        return True
-    return False
+    return lower.startswith("secret")
 
 
 def redact_log_message(message: str) -> str:

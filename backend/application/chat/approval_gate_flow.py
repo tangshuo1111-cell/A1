@@ -22,8 +22,8 @@ from application.chat.exit_signals import (
 from application.chat.material_flow import material_trace_for_extra
 from application.chat.turn_exit_extra import build_common_exit_extra
 from application.chat.turn_exit_gate import apply_turn_exit_to_chat_turn
-from application.chat.turn_response_builder import build_chat_turn_result
 from application.chat.turn_facts import TurnFacts
+from application.chat.turn_response_builder import build_chat_turn_result
 from application.ingress.request_classifier import classify_request
 from config.feature_flags import approval_gate_active
 
@@ -197,7 +197,10 @@ def build_commit_executed_turn_result(
             "commit_chunk_count": int(getattr(commit_result, "chunk_count", 0) or 0),
         }
     )
-    from application.chat.material_lifecycle import committed_material_from_result, trace_fields_for_state
+    from application.chat.material_lifecycle import (
+        committed_material_from_result,
+        trace_fields_for_state,
+    )
 
     committed = committed_material_from_result(commit_result, session_id=session_id or "")
     commit_trace = trace_fields_for_state(

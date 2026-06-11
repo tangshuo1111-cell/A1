@@ -10,9 +10,9 @@ from application.chat.chat_contracts import (
     AnswerAgentResult,
     MainAgentResult,
     MiddleAgentResult,
+    coerce_answer_agent_result,
     coerce_main_agent_result,
     coerce_middle_agent_result,
-    coerce_answer_agent_result,
 )
 from domain.session_types import SessionHistorySnapshot
 

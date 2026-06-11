@@ -10,8 +10,8 @@ from dataclasses import dataclass
 from typing import Any
 
 from agents._runtime import AgentRunFrame
-from agents.shared.history_context import SessionHistorySnapshot
 from agents.multisource import build_analysis_job, build_tool_audit_job, extract_url_sources
+from agents.shared.history_context import SessionHistorySnapshot
 from application.chat.complexity_policy import (
     evaluate_complex_candidate,
     is_analysis_request,

@@ -5,7 +5,10 @@ from typing import Any
 
 from agents.main_agent import MainAgent
 from application.chat.budget_clock import BudgetClock
-from application.chat.complexity_policy import STRONG_COMPLEX_REASON_CODES, evaluate_complex_candidate
+from application.chat.complexity_policy import (
+    STRONG_COMPLEX_REASON_CODES,
+    evaluate_complex_candidate,
+)
 from config.feature_flags import is_enabled
 from config.router_policy import ROUTER_POLICY
 

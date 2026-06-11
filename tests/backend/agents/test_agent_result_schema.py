@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from application.chat.chat_contracts import AGENT_FORBIDDEN_EXTRA_KEYS, assert_agent_extra_safe
 from agents.answer_agent.runtime import AnswerAgent
 from agents.main_agent import MainAgent
 from agents.middle_agent import MiddleAgent
 from application.chat.budget_clock import BudgetClock
+from application.chat.chat_contracts import AGENT_FORBIDDEN_EXTRA_KEYS, assert_agent_extra_safe
 
 
 def test_collab_extra_has_no_forbidden_turn_fields() -> None:
