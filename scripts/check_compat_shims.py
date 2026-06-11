@@ -33,7 +33,7 @@ def main() -> int:
     violations: list[str] = []
 
     for rel in required_compat_modules + required_shim_surfaces:
-        path = backend / rel.replace("/", "\\") if False else backend / Path(rel)
+        path = backend / Path(rel.replace("\\", "/"))
         if not path.is_file():
             violations.append(f"missing shim file: {rel}")
             continue

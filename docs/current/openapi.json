@@ -137,9 +137,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Get Task Tasks  Task Id  Get"
+                  "$ref": "#/components/schemas/TaskStatusResponse"
                 }
               }
             }
@@ -181,9 +179,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Get Task Result Tasks  Task Id  Result Get"
+                  "$ref": "#/components/schemas/TaskResultResponse"
                 }
               }
             }
@@ -225,9 +221,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "type": "object",
-                  "title": "Response Post Web Video Metadata Video Metadata Post"
+                  "$ref": "#/components/schemas/WebVideoMetadataResponse"
                 }
               }
             }
@@ -452,9 +446,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Get Session Summary Sessions  Session Id  Get"
+                  "$ref": "#/components/schemas/SessionSummaryResponse"
                 }
               }
             }
@@ -478,7 +470,6 @@
           "admin"
         ],
         "summary": "Video Cookies Status",
-        "description": "返回 cookies 当前状态，给前端 ``VideoCookiesGuide`` 组件渲染。\n\n返回字段（**全部稳定**，前端类型可对齐）：\n- ``source``: ``\"browser:<name>\"`` / ``\"file\"`` / ``\"none\"``\n              —— 即 ``settings.video_cookies_choice()`` 的结论\n- ``effective_path``: ``str | None`` —— 当前实际生效的文件路径（仅 source=file 时有）\n- ``managed_path``:   ``str``        —— 前端\"上传\"接口会写入的固定路径\n- ``managed_file``:   ``dict``       —— 上面这个文件的状态（exists/size/modified/domains）\n- ``whitelist_domains``: ``list[str]`` —— 当前白名单（前端展示\"我可以为这些站上传\"）\n- ``upload_max_bytes``: ``int``      —— 大小上限（前端预校验）",
         "operationId": "video_cookies_status_config_video_cookies_status_get",
         "parameters": [
           {
@@ -504,9 +495,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Video Cookies Status Config Video Cookies Status Get"
+                  "$ref": "#/components/schemas/VideoCookiesStatusResponse"
                 }
               }
             }
@@ -566,9 +555,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Upload Video Cookies Config Video Cookies Upload Post"
+                  "$ref": "#/components/schemas/VideoCookiesUploadResponse"
                 }
               }
             }
@@ -618,9 +605,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true,
-                  "title": "Response Delete Video Cookies Config Video Cookies Delete"
+                  "$ref": "#/components/schemas/VideoCookiesDeleteResponse"
                 }
               }
             }
@@ -672,6 +657,55 @@
                   "type": "object",
                   "additionalProperties": true,
                   "title": "Response Get Metrics Internal Metrics Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/metrics/prometheus": {
+      "get": {
+        "tags": [
+          "internal"
+        ],
+        "summary": "Get Metrics Prometheus",
+        "operationId": "get_metrics_prometheus_internal_metrics_prometheus_get",
+        "parameters": [
+          {
+            "name": "X-Admin-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Admin-Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
                 }
               }
             }
@@ -1048,7 +1082,7 @@
               }
             ],
             "title": "Workflow Elapsed Ms",
-            "description": "本轮 LangGraph 端到端耗时（毫秒），用于区分慢与错"
+            "description": "本轮 chat turn 端到端耗时（毫秒），用于区分慢与错"
           },
           "interaction_mode_zh": {
             "anyOf": [
@@ -1151,6 +1185,536 @@
         "type": "object",
         "title": "SamplesResponse"
       },
+      "SessionSummaryResponse": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "default": true
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "turn_count": {
+            "type": "integer",
+            "title": "Turn Count"
+          },
+          "recent": {
+            "items": {
+              "$ref": "#/components/schemas/SessionTurnSummary"
+            },
+            "type": "array",
+            "title": "Recent"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "turn_count",
+          "recent"
+        ],
+        "title": "SessionSummaryResponse"
+      },
+      "SessionTurnSummary": {
+        "properties": {
+          "task_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Id"
+          },
+          "user_query": {
+            "type": "string",
+            "title": "User Query",
+            "default": ""
+          },
+          "task_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Status"
+          },
+          "answer_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer Type"
+          }
+        },
+        "type": "object",
+        "title": "SessionTurnSummary"
+      },
+      "TaskResultResponse": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "default": true
+          },
+          "task_id": {
+            "type": "string",
+            "title": "Task Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "raw_status": {
+            "type": "string",
+            "title": "Raw Status",
+            "default": ""
+          },
+          "task_type": {
+            "type": "string",
+            "title": "Task Type",
+            "default": ""
+          },
+          "source_type": {
+            "type": "string",
+            "title": "Source Type",
+            "default": ""
+          },
+          "stage": {
+            "type": "string",
+            "title": "Stage",
+            "default": ""
+          },
+          "progress": {
+            "type": "number",
+            "title": "Progress",
+            "default": 0.0
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "duration_ms": {
+            "type": "number",
+            "title": "Duration Ms",
+            "default": 0.0
+          },
+          "error_code": {
+            "type": "string",
+            "title": "Error Code",
+            "default": ""
+          },
+          "failure_reason": {
+            "type": "string",
+            "title": "Failure Reason",
+            "default": ""
+          },
+          "next_action_hint": {
+            "type": "string",
+            "title": "Next Action Hint",
+            "default": ""
+          },
+          "result_pending_id": {
+            "type": "string",
+            "title": "Result Pending Id",
+            "default": ""
+          },
+          "result_source_id": {
+            "type": "string",
+            "title": "Result Source Id",
+            "default": ""
+          },
+          "result_ttl_seconds": {
+            "type": "integer",
+            "title": "Result Ttl Seconds",
+            "default": 0
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "result_ready": {
+            "type": "boolean",
+            "title": "Result Ready",
+            "default": false
+          },
+          "pending_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pending Kind"
+          },
+          "payload_version": {
+            "type": "integer",
+            "title": "Payload Version",
+            "default": 1
+          },
+          "queue_backend": {
+            "type": "string",
+            "title": "Queue Backend",
+            "default": ""
+          },
+          "retry_count": {
+            "type": "integer",
+            "title": "Retry Count",
+            "default": 0
+          },
+          "task_enqueue_to_finish_ms": {
+            "type": "integer",
+            "title": "Task Enqueue To Finish Ms",
+            "default": 0
+          },
+          "result_status": {
+            "type": "string",
+            "title": "Result Status",
+            "default": ""
+          },
+          "diagnostics": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Diagnostics"
+          },
+          "ready": {
+            "type": "boolean",
+            "title": "Ready",
+            "default": false
+          },
+          "result": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_id",
+          "status"
+        ],
+        "title": "TaskResultResponse"
+      },
+      "TaskStatusResponse": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "default": true
+          },
+          "task_id": {
+            "type": "string",
+            "title": "Task Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "raw_status": {
+            "type": "string",
+            "title": "Raw Status",
+            "default": ""
+          },
+          "task_type": {
+            "type": "string",
+            "title": "Task Type",
+            "default": ""
+          },
+          "source_type": {
+            "type": "string",
+            "title": "Source Type",
+            "default": ""
+          },
+          "stage": {
+            "type": "string",
+            "title": "Stage",
+            "default": ""
+          },
+          "progress": {
+            "type": "number",
+            "title": "Progress",
+            "default": 0.0
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "duration_ms": {
+            "type": "number",
+            "title": "Duration Ms",
+            "default": 0.0
+          },
+          "error_code": {
+            "type": "string",
+            "title": "Error Code",
+            "default": ""
+          },
+          "failure_reason": {
+            "type": "string",
+            "title": "Failure Reason",
+            "default": ""
+          },
+          "next_action_hint": {
+            "type": "string",
+            "title": "Next Action Hint",
+            "default": ""
+          },
+          "result_pending_id": {
+            "type": "string",
+            "title": "Result Pending Id",
+            "default": ""
+          },
+          "result_source_id": {
+            "type": "string",
+            "title": "Result Source Id",
+            "default": ""
+          },
+          "result_ttl_seconds": {
+            "type": "integer",
+            "title": "Result Ttl Seconds",
+            "default": 0
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "result_ready": {
+            "type": "boolean",
+            "title": "Result Ready",
+            "default": false
+          },
+          "pending_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pending Kind"
+          },
+          "payload_version": {
+            "type": "integer",
+            "title": "Payload Version",
+            "default": 1
+          },
+          "queue_backend": {
+            "type": "string",
+            "title": "Queue Backend",
+            "default": ""
+          },
+          "retry_count": {
+            "type": "integer",
+            "title": "Retry Count",
+            "default": 0
+          },
+          "task_enqueue_to_finish_ms": {
+            "type": "integer",
+            "title": "Task Enqueue To Finish Ms",
+            "default": 0
+          },
+          "result_status": {
+            "type": "string",
+            "title": "Result Status",
+            "default": ""
+          },
+          "diagnostics": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Diagnostics"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_id",
+          "status"
+        ],
+        "title": "TaskStatusResponse"
+      },
       "ValidationError": {
         "properties": {
           "loc": {
@@ -1191,6 +1755,196 @@
         ],
         "title": "ValidationError"
       },
+      "VideoCookiesDeleteResponse": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "default": true
+          },
+          "removed": {
+            "type": "boolean",
+            "title": "Removed"
+          },
+          "managed_path": {
+            "type": "string",
+            "title": "Managed Path"
+          }
+        },
+        "type": "object",
+        "required": [
+          "removed",
+          "managed_path"
+        ],
+        "title": "VideoCookiesDeleteResponse"
+      },
+      "VideoCookiesFileStatus": {
+        "properties": {
+          "exists": {
+            "type": "boolean",
+            "title": "Exists",
+            "default": false
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes",
+            "default": 0
+          },
+          "modified_iso": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modified Iso"
+          },
+          "domains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Domains"
+          },
+          "matched_whitelist_domains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Matched Whitelist Domains"
+          }
+        },
+        "type": "object",
+        "title": "VideoCookiesFileStatus"
+      },
+      "VideoCookiesMergeInfo": {
+        "properties": {
+          "new_domains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "New Domains"
+          },
+          "kept_old_domains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Kept Old Domains"
+          },
+          "replaced_domains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Replaced Domains"
+          }
+        },
+        "type": "object",
+        "title": "VideoCookiesMergeInfo"
+      },
+      "VideoCookiesStatusResponse": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "default": true
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "effective_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Path"
+          },
+          "managed_path": {
+            "type": "string",
+            "title": "Managed Path"
+          },
+          "managed_file": {
+            "$ref": "#/components/schemas/VideoCookiesFileStatus"
+          },
+          "whitelist_domains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Whitelist Domains"
+          },
+          "upload_max_bytes": {
+            "type": "integer",
+            "title": "Upload Max Bytes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "managed_path",
+          "managed_file",
+          "whitelist_domains",
+          "upload_max_bytes"
+        ],
+        "title": "VideoCookiesStatusResponse"
+      },
+      "VideoCookiesUploadResponse": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "default": true
+          },
+          "managed_path": {
+            "type": "string",
+            "title": "Managed Path"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "matched_whitelist_domains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Matched Whitelist Domains"
+          },
+          "all_domains": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "All Domains"
+          },
+          "hot_reloaded": {
+            "type": "boolean",
+            "title": "Hot Reloaded",
+            "default": true
+          },
+          "merge": {
+            "$ref": "#/components/schemas/VideoCookiesMergeInfo"
+          }
+        },
+        "type": "object",
+        "required": [
+          "managed_path",
+          "size_bytes",
+          "matched_whitelist_domains",
+          "all_domains",
+          "merge"
+        ],
+        "title": "VideoCookiesUploadResponse"
+      },
       "WebVideoMetadataRequest": {
         "properties": {
           "url": {
@@ -1206,6 +1960,30 @@
           "url"
         ],
         "title": "WebVideoMetadataRequest"
+      },
+      "WebVideoMetadataResponse": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "default": true
+          },
+          "latency_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latency Ms"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "WebVideoMetadataResponse",
+        "description": "Probe success payload; extra probe fields are allowed."
       }
     }
   }

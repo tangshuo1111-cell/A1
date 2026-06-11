@@ -86,7 +86,7 @@ def main() -> int:
     failures: list[str] = []
 
     for rel, limits in sorted(baseline.items()):
-        py_file = ROOT / rel.replace("/", "\\") if "\\" not in rel else ROOT / rel
+        py_file = ROOT / rel.replace("\\", "/")
         if not py_file.is_file():
             failures.append(f"{rel}: file missing")
             continue
