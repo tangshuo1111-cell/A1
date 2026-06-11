@@ -21,7 +21,8 @@ class _FakeAgent:
 
 def test_knowledge_grounded_prompt_includes_compact_output_rules(monkeypatch) -> None:
     # 本用例需走真实 _build_agent 路径以捕获 prompt，必须关掉 FAKE_LLM 短路。
-    monkeypatch.delenv("LIGHT_MAQA_FAKE_LLM", raising=False)
+    # 收口后 _fake_llm_enabled() 读 settings 单例（不再实时读 env），故 patch 配置项。
+    monkeypatch.setattr(llm_exec.settings, "fake_llm_enabled", False)
     fake = _FakeAgent()
     monkeypatch.setattr(llm_exec, "_build_agent", lambda: fake)
     token = bind_turn_cache(TurnCache(request_id="t"))

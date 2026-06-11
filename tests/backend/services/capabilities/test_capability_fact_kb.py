@@ -83,7 +83,7 @@ def test_run_kb_fast_path_returns_none_when_no_hits(
     enable_capability_fact_kb,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from application.chat.executors.fast_lanes import kb_fast_impl
+    from application.chat.executors.fast_lanes import fast_llm, kb_fast_impl
 
     with patch.object(
         kb_pipeline,
@@ -103,8 +103,9 @@ def test_run_kb_fast_path_returns_none_when_no_hits(
             {},
         ),
     ):
+        # kb_fast_impl 经 `fast_llm.summarize_fast_material(...)` 调用总结；patch 真实调用点。
         monkeypatch.setattr(
-            kb_fast_impl,
+            fast_llm,
             "summarize_fast_material",
             lambda **_k: (_ for _ in ()).throw(AssertionError("summarize must not run")),
         )
