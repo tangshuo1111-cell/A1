@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify README/AGENTS docs do not reference missing backend paths (Round 0+).
+"""Verify README/AGENTS docs do not reference missing backend paths.
 
 Scans markdown for backtick-quoted paths under backend/ and application/chat/.
 

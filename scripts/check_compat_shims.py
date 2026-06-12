@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify compat shim modules carry DEPRECATED_COMPAT_SHIM marker (Round 10).
+"""Verify compat shim modules carry DEPRECATED_COMPAT_SHIM marker.
 
 Usage:
     python scripts/check_compat_shims.py [--backend-root backend]

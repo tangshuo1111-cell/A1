@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audit migration ledger CSVs for retired-path consistency (Round 11).
+"""Audit migration ledger CSVs for retired-path consistency.
 
 Checks:
   - docs/current/migration/legacy_paths_status.csv has required columns

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scan backend/ for canonical field writes outside owner modules (Round 9).
+"""Scan backend/ for canonical field writes outside owner modules.
 
 Usage:
     python scripts/check_field_owner_writes.py [--backend-root backend]

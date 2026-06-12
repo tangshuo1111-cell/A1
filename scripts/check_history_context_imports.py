@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Block production imports of deprecated ``agents.history_context`` shim (Round 4+).
+"""Block production imports of deprecated ``agents.history_context`` shim.
 
 Canonical: ``domain.session_types`` (agents layer may use ``agents.shared.history_context`` re-export).
 

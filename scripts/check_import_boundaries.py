@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Enforce import boundary rules for the target architecture.
 
-Rules (Round 0+):
+Rules:
   backend.agents.*       must NOT import rag/retrieval/knowledge/storage.knowledge_store
   backend.application.*  must NOT import rag/retrieval/knowledge/storage.knowledge_store
                          must NOT import backend.workers.*, backend.tasks.queue.*

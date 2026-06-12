@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fast lane import boundary guard (Round 9).
+"""Fast lane import boundary guard.
 
 ``executors/fast_lanes`` must not pull complex executor internals or agent entities.
 

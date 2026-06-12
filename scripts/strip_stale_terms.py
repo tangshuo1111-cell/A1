@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Detect (and optionally fix) stale architecture terms in scoped backend paths (Round 14).
+"""Detect (and optionally fix) stale architecture terms in scoped backend paths.
 
 Replacements (comments / docstrings only when --apply):
   LangGraph          -> turn pipeline

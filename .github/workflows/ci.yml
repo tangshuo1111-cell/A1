@@ -76,7 +76,7 @@ jobs:
       - name: Ruff format (governance scripts)
         run: python -m ruff format --check scripts/check_*.py
 
-      - name: Round 0–13 guards (frozen modules + boundaries + field owners)
+      - name: Architecture guards (frozen modules + boundaries + field owners)
         run: |
           python scripts/check_frozen_chat_modules.py
           python scripts/check_import_boundaries.py

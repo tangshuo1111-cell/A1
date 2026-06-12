@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Freeze legacy chat entry modules — metrics must not grow (Round 0 guard).
+"""Freeze legacy chat entry modules — metrics must not grow.
 
 Baseline: tests/migration/frozen_chat_modules_baseline.json
 
@@ -108,7 +108,7 @@ def main() -> int:
             print(f"  {item}", file=sys.stderr)
         print(
             "\nFrozen modules are legacy entry points. New work belongs in "
-            "turn_orchestrator.py and executors/ (Round 1+).",
+            "turn_orchestrator.py and executors/.",
             file=sys.stderr,
         )
         return 1

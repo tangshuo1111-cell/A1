@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One-shot governance status report (Round 11).
+"""One-shot governance status report.
 
 Runs watched guard scripts and prints module line counts from baseline.
 

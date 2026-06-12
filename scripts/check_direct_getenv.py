@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Block os.getenv in business layers — config must go through settings (Round 11).
+"""Block os.getenv in business layers — config must go through settings.
 
 Scans backend/agents and backend/application for direct os.getenv / os.environ.get.
 

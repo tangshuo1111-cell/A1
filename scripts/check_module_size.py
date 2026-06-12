@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Module line-count guard (Round 13) — prevent growth on watched chat modules.
+"""Module line-count guard — prevent growth on watched chat modules.
 
 Baseline: tests/migration/module_size_baseline.json (current snapshot; must not grow)
-Targets: aspirational limits from the 15-round plan (informational until R15 convergence)
+Targets: aspirational limits from deferred_cleanup_registry (informational until backlog retires)
 
 Usage:
     python scripts/check_module_size.py [--baseline PATH] [--strict-targets]
@@ -27,7 +27,7 @@ configure_utf8_stdio()
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_BASELINE = ROOT / "tests" / "migration" / "module_size_baseline.json"
 
-# Aspirational end-state limits (Round 13 plan); files above these warn until R15.
+# Aspirational end-state limits; warn until deferred_cleanup_registry retires backlog.
 TARGET_LIMITS: dict[str, int] = {
     "backend/application/chat/run_chat_turn.py": 60,
     "backend/application/chat/turn_orchestrator.py": 90,
