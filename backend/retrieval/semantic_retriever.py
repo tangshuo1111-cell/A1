@@ -7,7 +7,7 @@ PG-only since 2026-05-09，注释中的 SQLite/FTS5 表述为历史遗留。
 输入 FTS 候选行（含 rowid、text、score_fts）与 embedding_store 向量表；
 输出按 hybrid/semantic 模式重排。
 
-V14 R2 更新：
+更新：
 - alpha 参数化（默认 0.45，可由调用方传入）
 - 明确 combined_score 公式：
     mode=semantic : combined_score = score_semantic（不含 FTS 权重）
@@ -15,7 +15,7 @@ V14 R2 更新：
                     其中 alpha=0.45（FTS 关键词权重），(1-alpha)=0.55（语义权重）
                     注意：score_fts_normalized = max(0, min(1, score_fts)) 是归一化到 0-1 的 FTS 分
     mode=keyword  : combined_score = score_fts_normalized（score_semantic=0）
-- 输出新增 score_keyword / score_semantic 字段（对应 RetrievedChunk V14 R2 字段）
+- 输出新增 score_keyword / score_semantic 字段（对应 RetrievedChunk 字段）
 
 分数可比性边界说明：
 - 同一策略内（如两条都是 hybrid 结果）combined_score 可比较
@@ -23,7 +23,7 @@ V14 R2 更新：
 - FTS BM25 分数为负值（SQLite bm25() 特性），score_fts_normalized 做 max(0, min(1, abs(score_fts)/max_abs)) 归一
 - 旧数据无向量（方案 C）：score_semantic = 0，combined_score 在 hybrid 模式退化为 alpha * score_fts_normalized
 
-与 knowledge_store.search、LangGraph collect（经 middle→RAG）间接协作；
+与 knowledge_store.search、middle_agent collect（经 middle→RAG）间接协作；
 answer_agent 仍只读 Evidence 文本。
 """
 
@@ -35,7 +35,7 @@ from typing import Any
 
 logger = logging.getLogger("light_maqa")
 
-# V14 R2：hybrid combined_score 公式权重（FTS vs semantic）
+# hybrid combined_score 公式权重（FTS vs semantic）
 HYBRID_ALPHA: float = 0.45  # FTS 权重；semantic 权重 = 1 - HYBRID_ALPHA = 0.55
 
 
@@ -67,7 +67,7 @@ def rank_by_semantic(
 ) -> list[dict[str, Any]]:
     """对 FTS 候选行做语义/混合重排。
 
-    combined_score 公式（V14 R2 明确）：
+    combined_score 公式（明确）：
     - mode=semantic : combined_score = score_semantic
     - mode=hybrid   : combined_score = alpha * score_fts_n + (1-alpha) * score_semantic
                       alpha=0.45（FTS 关键词权重），1-alpha=0.55（语义向量权重）
@@ -133,7 +133,7 @@ def rank_by_semantic(
         # FTS 归一化：BM25 为负值，取绝对值再 max 归一化
         fts_n = max(0.0, min(1.0, abs(fts_raw) / max_fts_abs))
 
-        # combined_score 公式（V14 R2 明确）
+        # combined_score 公式（明确）
         if mode == "semantic":
             combined = sem_v
         elif mode == "hybrid":
@@ -142,9 +142,9 @@ def rank_by_semantic(
             combined = fts_n
 
         row = dict(r)
-        row["score_keyword"] = fts_n          # FTS 归一化分（V14 R2）
-        row["score_semantic"] = sem_v          # ST 余弦（V14 R2）
-        row["combined_score"] = combined       # 最终排序分（V14 R2）
+        row["score_keyword"] = fts_n          # FTS 归一化分
+        row["score_semantic"] = sem_v          # ST 余弦
+        row["combined_score"] = combined       # 最终排序分
         row["score_hybrid"] = combined         # 旧字段兼容
         row["retrieval_mode"] = f"{mode}_st"
         out.append(row)

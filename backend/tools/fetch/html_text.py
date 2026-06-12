@@ -2,7 +2,7 @@
 网页 HTML 正文抽取（tools / fetch 子层）。
 
 优先 BeautifulSoup 去噪；失败则退化为空白折叠。
-供 tools.tools.fetch_url 与 HTTP 工具复用，不向 LangGraph 直接暴露。
+供 tools.tools.fetch_url 与 HTTP 工具复用，不向编排层直接暴露。
 """
 
 from __future__ import annotations

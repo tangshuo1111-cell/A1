@@ -1,4 +1,4 @@
-"""V16 R2 web tools package.
+"""Web tools package.
 
 Importing this package registers all web MCP-compatible adapters.
 """

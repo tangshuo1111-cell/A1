@@ -1,9 +1,9 @@
 """
-V11 R3：视频 URL 链 cookies 文件的前端管理接口（协议层）。
+视频 URL 链 cookies 文件的前端管理接口（协议层）。
 
 为什么有这一组接口
 ------------------
-V11 R2 已经把 yt-dlp 的 cookies 注入做完了：
+yt-dlp 的 cookies 注入已实现：
 - ``VIDEO_COOKIES_FROM_BROWSER`` 直接从浏览器 cookies 库读，最方便；
 - 但 Win11 的 App-Bound Encryption / DPAPI 限制让本地浏览器路径**经常**失败
   （edge 报 DPAPI 解密失败、chrome 报 cookies 数据库被锁），实测两个主流
@@ -229,7 +229,7 @@ def _line_domain(line: str) -> str:
 def _merge_cookies_by_domain(
     *, existing_text: str, new_text: str, new_domains: frozenset[str]
 ) -> tuple[str, list[str], list[str]]:
-    """V11 R5 B：按 domain 合并新旧 cookies.txt。
+    """按 domain 合并新旧 cookies.txt。
 
     规则：
     - 新文件中出现的 domain → 完全用新行（包含所有该 domain 的 cookie）
@@ -284,7 +284,7 @@ def _merge_cookies_by_domain(
 def _validate_and_persist(content: bytes, *, filename_hint: str = "") -> VideoCookiesUploadResponse:
     """共享校验 + 落盘 + runtime 热更新逻辑，路由层只做协议适配。
 
-    V11 R5 B：上传不再覆盖磁盘已有 cookies；按 domain 合并：
+    上传不再覆盖磁盘已有 cookies；按 domain 合并：
     - 新上传中出现的 domain → 用新行（刷新登录态）
     - 旧文件里独有的 domain → 保留（B 站 + 抖音 + YouTube 共存）
     """
@@ -321,7 +321,7 @@ def _validate_and_persist(content: bytes, *, filename_hint: str = "") -> VideoCo
             "请确认你导出的是 bilibili.com / youtube.com 等视频站的 cookies。",
         )
 
-    # V11 R5 B：合并而不是覆盖
+    # 合并而不是覆盖
     target = _cookies_storage_path()
     existing_text = ""
     if target.exists() and target.is_file():

@@ -1,4 +1,4 @@
-"""Fast executor result assembly and async demotion (Round 1)."""
+"""Fast executor result assembly and async demotion."""
 
 from __future__ import annotations
 

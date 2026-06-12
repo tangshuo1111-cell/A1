@@ -1,4 +1,4 @@
-"""Agent port contracts — orchestration calls agents only through these shapes (Round 4)."""
+"""Agent port contracts — orchestration calls agents only through these shapes."""
 
 from __future__ import annotations
 

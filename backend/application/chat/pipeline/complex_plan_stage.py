@@ -1,4 +1,4 @@
-"""Complex pipeline — Main/plan stage (Round 7)."""
+"""Complex pipeline — Main/plan stage."""
 
 from __future__ import annotations
 

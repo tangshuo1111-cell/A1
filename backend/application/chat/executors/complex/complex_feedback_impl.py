@@ -1,4 +1,4 @@
-"""Complex feedback round execution after quality_gate (Round 18 thin coordinator)."""
+"""Complex feedback round execution after quality_gate (thin coordinator)."""
 
 from __future__ import annotations
 

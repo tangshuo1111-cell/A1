@@ -12,9 +12,9 @@
 - 脚本：`scripts/check_non_chat_module_size.py`
 - 首批：`storage/store_factory`、session stores、`workers/entry/*`、`tasks/orchestration/*`
 
-## 仍属 draining 的 compat（非零债，有计划）
+## compat 退役状态（已清零）
 
-R19 draining shim 已物理删除；`backend/compat/compat_shim_registry.json` 仅登记 retired 记录，canonical 见 `retrieve_service` / `main_agent.rule_router`。
+draining shim 已全部物理删除；`backend/compat/compat_shim_registry.json` 仅登记 retired 记录，canonical 见 `retrieve_service` / `main_agent.rule_router`。
 
 ## 观测（R21）
 

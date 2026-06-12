@@ -1,4 +1,4 @@
-"""Store backend startup contract (Round 7)."""
+"""Store backend startup contract."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Complex executor profile — Main -> Middle -> Answer (Round 2)."""
+"""Complex executor profile — Main -> Middle -> Answer."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""V16 R4-E：轻量后台任务包装（守护线程），主流程可先返回 task_id。"""
+"""轻量后台任务包装（守护线程），主流程可先返回 task_id。"""
 
 from __future__ import annotations
 

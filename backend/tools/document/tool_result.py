@@ -1,5 +1,5 @@
 """
-V16 R1：统一文档工具结果结构（MCP-compatible Adapter 标准）。
+统一文档工具结果结构（MCP-compatible Adapter 标准）。
 
 DocumentToolResult 是所有文档工具（parse_text / parse_docx / parse_excel / parse_pdf
 等）的唯一输出格式。

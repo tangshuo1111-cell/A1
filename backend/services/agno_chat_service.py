@@ -1,7 +1,7 @@
 """
-V1：Agno 基础问答 service（与旧同步/异步对话服务模块隔离）。
+Agno 基础问答 service（monkeypatch 锚点 / facade）。
 
-V6 第 5 轮：本模块只剩 **胶水 / 承接 / 协调** 三件事——
+本模块只做 **胶水 / 承接 / 协调** 三件事——
 
 - 接 HTTP 请求
 - 管 session / history
@@ -11,10 +11,8 @@ V6 第 5 轮：本模块只剩 **胶水 / 承接 / 协调** 三件事——
 主判断 **全部** 由三强 agent 实体在自身主入口里产出；
 本模块 **不得** 再做协作方向、材料充分性、最终回答策略的任何主判断。
 
-V6 第 6 轮：service 只 import 三强**实体类**，不再 deep-import 各自的 prompt 常量 /
-内部 helper / 内部判断函数；schema dataclass 仅在类型注解层出现（透传容器）。
-
-禁止：import 旧对话服务模块、workflow、LangGraph。
+约束：只 import 三强**实体类**，不 deep-import 各自的 prompt 常量 / 内部 helper /
+内部判断函数；schema dataclass 仅在类型注解层出现（透传容器）。
 """
 
 from __future__ import annotations
@@ -37,7 +35,7 @@ _MAX_PAIRS = 6
 
 # ---------------------------------------------------------------------------
 # 三强实体单例：service 不再"代写"主判断对象，只持有三个 agent 实体并按链路串联。
-# 它们都是 V6 第 5 轮收成的 **可单独实例化** 的 agent 类。
+# 它们都是 **可单独实例化** 的 agent 类。
 # ---------------------------------------------------------------------------
 _main_agent_inst: MainAgent = MainAgent()
 _middle_agent_inst: MiddleAgent = MiddleAgent()
@@ -140,7 +138,7 @@ def run_basic_qa(
 ) -> str:
     """胶水承接：把已就位的 plan / bundle 直接交给 `AnswerAgent.huida` 主入口。
 
-    V6 第 5 轮：本函数 **不再做任何决策**，只把对象转交给 answer 实体。
+    本函数 **不再做任何决策**，只把对象转交给 answer 实体。
     保留它的目的仅是兼容已有单测里的 `monkeypatch.setattr(services.agno_chat_service, "run_basic_qa", ...)`。
     """
     if main_decision is None or collaboration_plan is None or material_bundle is None:
@@ -176,15 +174,14 @@ def run_agno_chat_turn(
     - 材料够不够 / 缺什么 / 下一步建议 → MiddleAgent 自己决定
     - 怎么对用户说 / answer 视角标签 / extra 字段 → AnswerAgent 自己决定
 
-    V13 R2 新增参数：
+    可选参数：
     - v13_file_content: 前端上传的文件内容（bytes 或 str），触发文件 prepare 链路
     - v13_text_content: 直接文本内容（prepare_text 场景，可能不同于 message）
     - v13_title: 文本标题（可选）
+    - confirm_long_web_video_asr: 用户在长网页视频（超过免确认秒数）上已确认走 ASR，
+      与 ``video.web_video_chat_context.web_video_long_asr_confirmed`` 对齐，供 Middle 拉流时读取。
 
-    V16：confirm_long_web_video_asr —— 用户在长网页视频（超过免确认秒数）上已确认走 ASR，
-    与 ``video.web_video_chat_context.web_video_long_asr_confirmed`` 对齐，供 Middle 拉流时读取。
-
-    V2a 治理：实现迁至 ``application.chat.turn_orchestrator``；本符号仍为 service / 路由锚点。
+    实现迁至 ``application.chat.turn_orchestrator``；本符号仍为 service / 路由锚点。
     """
     session_key = _history_key(session_id)
     store = get_session_store()
@@ -234,7 +231,7 @@ def clear_agno_session_history_for_tests() -> None:
 
 
 def clear_agno_session_prev_video_for_tests(session_id: str | None) -> None:
-    """V8 第 2 轮：仅清掉某个 session 的 V7 视频锚点，**保留** _histories 原文。
+    """仅清掉某个 session 的视频锚点，**保留** _histories 原文（测试用）。
 
     用途（仅给"关键词碰撞强对照"测试用）：
     在同一会话里制造"前文原文还在 + 结构化锚点已无"的状态，验证系统不会

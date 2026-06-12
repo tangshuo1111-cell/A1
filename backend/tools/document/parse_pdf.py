@@ -1,5 +1,5 @@
 """
-V16 R1：PDF 文档工具（MCP-compatible Adapter）。
+PDF 文档工具（MCP-compatible Adapter）。
 
 技术路线（按技术方案 CSV 第 7 行 + Q3 拍板）：
   - PyMuPDF (fitz) 主解析：提取文本、页码、块信息

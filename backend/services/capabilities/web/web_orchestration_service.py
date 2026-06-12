@@ -1,5 +1,5 @@
 """
-V3：最小网页搜索 + 静态网页文本入库接线（挂在 V1/V2 Agno 主链上，不经旧 workflow）。
+最小网页搜索 + 静态网页文本入库接线（挂在 Agno 主链上）。
 
 - **主链摘要块**：`fetch_web_evidence_block` 在已配置 **V16** `V16_WEB_SEARCH_PROVIDER` /
   `V16_SEARCH_PROVIDER` 时走 `tools.search` 注册的 `web_search`（Tavily / generic_http 等）；

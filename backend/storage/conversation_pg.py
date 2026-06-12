@@ -86,7 +86,7 @@ def get_turn_by_task_id(task_id: str) -> dict[str, str] | None:
     pool = get_pool()
     with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
         cur.execute(
-            """
+                """
                 SELECT task_id, session_id, user_query, answer, created_at,
                        task_status, answer_type, has_insufficient_info_notice, channels_used,
                        router_source, user_visible_status
@@ -94,7 +94,7 @@ def get_turn_by_task_id(task_id: str) -> dict[str, str] | None:
                 WHERE task_id = %s
                 ORDER BY id DESC
                 LIMIT 1;
-                """,
+            """,
             (task_id,),
         )
         row = cur.fetchone()
@@ -109,14 +109,14 @@ def load_recent_for_session(session_id: str, limit: int = 20) -> list[dict[str, 
     pool = get_pool()
     with pool.connection() as conn, conn.cursor(row_factory=dict_row) as cur:
         cur.execute(
-            """
+                """
                 SELECT task_id, user_query, answer, created_at, task_status, answer_type,
                        user_visible_status
                 FROM turns
                 WHERE session_id = %s
                 ORDER BY id DESC
                 LIMIT %s;
-                """,
+            """,
             (session_id, limit),
         )
         rows = cur.fetchall()

@@ -1,4 +1,4 @@
-"""Mutable runtime state shared across turn pipeline stages (Round 3)."""
+"""Mutable runtime state shared across turn pipeline stages."""
 
 from __future__ import annotations
 

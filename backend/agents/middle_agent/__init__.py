@@ -1,7 +1,7 @@
 """
 middle_agent 包：材料裁判 Agent 的 runtime 资产入口。
 
-结构（V6 第 6 轮 runtime 化）：
+结构：
 - `prompt.py` ：角色配置 / 系统指令 / 输出格式
 - `schema.py` ：判断对象（CailiaoPan / AgnoMaterialBundle）
 - `runtime.py`：MiddleAgent 实体类 + V6 材料裁判主入口（caipan / gather_agno_materials …）
@@ -50,4 +50,4 @@ __all__ = [
     "SHUCHU_GESHI",
     "v13_pending_flow",
 ]
-
+

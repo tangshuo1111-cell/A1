@@ -4,7 +4,7 @@
 1. V10 主路由 fallback（第 3 道意图兜底，上限 6 条）
 2. V13 prepare/commit fallback（高置信硬规则，上限 5 条）
 
-边界不变量见 ``rule_router.py`` 与本文头部说明（V12 R2 定义）。
+边界不变量见 ``rule_router.py`` 与本文头部说明。
 """
 
 from __future__ import annotations
@@ -94,14 +94,14 @@ def _asks_project_kb_question(clean: str) -> bool:
     return has_anchor and has_kb_word
 
 
-# V10 R1：四种主意图
+# 四种主意图
 _VALID_INTENTS: frozenset[str] = frozenset(
     {"zhijie_yitu", "zhishu_yitu", "waibu_yitu", "hunhe_yitu"}
 )
 
 
 def _v10_fallback_intent_from_high_confidence_rules(message: str) -> tuple[str, str]:
-    """V10 R1 极少量高置信兜底（fallback 第 3 道）。
+    """极少量高置信兜底（fallback 第 3 道）。
 
     返回 (intent, hit_rule_short_name)。default 一律保守 zhijie_yitu。
     """
@@ -185,7 +185,7 @@ def v13_fallback_prepare_file(message: str) -> tuple[bool, str]:
     return False, ""
 
 
-# V13 R3：视频来源高置信 fallback
+# 视频来源高置信 fallback
 _V13_LOCAL_VIDEO_EXT_RE = re.compile(r"\b\w+\.mp4\b", re.IGNORECASE)
 _V13_PATH_STOP_CHARS = frozenset(
     " \t\r\n\u3000" "\"'`" "<>|" ",;!?"

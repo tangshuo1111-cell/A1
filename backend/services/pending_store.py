@@ -1,4 +1,4 @@
-"""Pending store facade aligned with session_store (Round 12)."""
+"""Pending store facade aligned with session_store."""
 
 from __future__ import annotations
 

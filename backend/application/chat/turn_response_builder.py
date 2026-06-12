@@ -1,4 +1,4 @@
-"""Single writer for ChatTurnResult top-level HTTP fields (Round 4; field owners R9)."""
+"""Single writer for ChatTurnResult top-level HTTP fields (see field_owners.py)."""
 
 from __future__ import annotations
 

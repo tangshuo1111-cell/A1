@@ -1,4 +1,4 @@
-"""General-lane fast path — thin coordinator (Round 1 + R20 split)."""
+"""General-lane fast path — thin coordinator ."""
 
 from __future__ import annotations
 

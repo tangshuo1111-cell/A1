@@ -1,6 +1,6 @@
 # Autonomy Loop Protocol (AutonomyLoopEvent Schema)
 
-> **Authority**: §15.4.2 of 平台图+三强自治核心架构迁移执行计划.md  
+> **Authority**: §15.4.2 of docs/history/current/平台图+三强自治核心架构迁移执行计划.md  
 > **Version**: 1  
 > **Implementation**: `backend/application/chat/autonomy_loop.py`
 

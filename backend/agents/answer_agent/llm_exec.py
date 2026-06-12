@@ -1,5 +1,5 @@
 """
-answer_agent 内部 LLM 执行器（V6 第 6 轮把执行能力正式吸收进 answer 自己的房间）。
+answer_agent 内部 LLM 执行器。
 
 明确边界：
 - 本文件 **不是** 独立 agent，只是 AnswerAgent 的内部组件。

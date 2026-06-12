@@ -73,7 +73,7 @@ class TaskInput(BaseModel):
     created_at: datetime = Field(..., description="任务创建时间")
     context_snippet: str = Field(
         default="",
-        description="V2：workflow 注入的短期会话上下文（非用户直输）",
+        description="主链注入的短期会话上下文（非用户直输）",
     )
 
 
@@ -96,7 +96,7 @@ class MainDecision(BaseModel):
         default="pending",
         description="任务状态标记，如 pending / routed / error",
     )
-    # V2/V3：主判断扩展（保持字段名稳定、含义直白）
+    # 主判断扩展（保持字段名稳定、含义直白）
     primary_goal: str = Field(default="", description="用户主目标一句话")
     is_compound: bool = Field(default=False, description="是否复合/多问合一")
     middle_collect_priority: str = Field(
@@ -209,15 +209,15 @@ class EvidencePack(BaseModel):
     need_more_info: bool = Field(False, description="是否建议继续补资料")
     coverage_score: float = Field(
         default=0.0,
-        description="V3：0~1 粗粒度自评（字数/条数/渠道覆盖）",
+        description="0~1 粗粒度自评（字数/条数/渠道覆盖）",
     )
     gap_notes: list[str] = Field(
         default_factory=list,
-        description="V3：具体缺口要点列表",
+        description="具体缺口要点列表",
     )
     next_channel_suggestion: str = Field(
         default="",
-        description="V3：建议下一步优先补的渠道（短文本）",
+        description="建议下一步优先补的渠道（短文本）",
     )
     refine_attempted: bool = Field(
         default=False,
@@ -283,7 +283,7 @@ class AnswerResult(BaseModel):
     task_status: str = Field(default="done", description="收口状态，如 done / failed / partial")
     user_visible_status: str = Field(
         default="",
-        description="V4：给用户看的短状态说明（可选）",
+        description="给用户看的短状态说明（可选）",
     )
     channels_used: list[str] = Field(
         default_factory=list,

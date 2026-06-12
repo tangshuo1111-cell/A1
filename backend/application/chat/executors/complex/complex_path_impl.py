@@ -1,4 +1,4 @@
-"""Complex path — round0 answer then quality_gate; feedback round is execution-only (Round 2)."""
+"""Complex path — round0 answer then quality_gate; feedback round is execution-only."""
 
 from __future__ import annotations
 

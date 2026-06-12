@@ -1,4 +1,4 @@
-"""V16 R4-C / R5-C：ASR 工具错误码。"""
+"""ASR 工具错误码。"""
 
 ASR_NOT_CONFIGURED = "asr_not_configured"
 EXTERNAL_PROCESSING_DISABLED = "external_processing_disabled"
@@ -12,7 +12,7 @@ ASR_EMPTY_RESULT = "asr_empty_result"
 ASR_INVALID_RESPONSE = "asr_invalid_response"
 ASR_DEPENDENCY_MISSING = "asr_dependency_missing"
 ASR_MODEL_MISSING = "asr_model_missing"
-# V16-R5C：15-120min 中段必须人工确认，未确认拒绝外部 API 调用
+# 15–120min 中段须 user_confirmed，否则拒绝外部 API
 ASR_REQUIRES_USER_CONFIRMATION = "asr_requires_user_confirmation"
-# V16-R5C：长音频/视频异步任务路径（CreateRecTask + DescribeTaskStatus）尚未实现
+# 腾讯云 CreateRecTask 异步路径尚未实现
 ASR_ASYNC_NOT_IMPLEMENTED = "asr_async_not_implemented"

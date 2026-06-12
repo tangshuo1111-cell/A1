@@ -1,4 +1,4 @@
-"""Complex executor AnswerAgent stage (Round 2)."""
+"""Complex executor AnswerAgent stage."""
 
 from __future__ import annotations
 

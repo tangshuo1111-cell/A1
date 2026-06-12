@@ -1,5 +1,5 @@
 """
-V16 R4-C：ASR provider（generic HTTP multipart + 可选本地 whisper / faster-whisper）。
+ASR provider（generic HTTP multipart + 可选本地 whisper / faster-whisper）。
 """
 
 from __future__ import annotations

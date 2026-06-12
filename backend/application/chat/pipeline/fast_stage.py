@@ -1,4 +1,4 @@
-"""Pipeline stage 3 — async and fast profile attempts (Round 3)."""
+"""Pipeline stage 3 — async and fast profile attempts."""
 
 from __future__ import annotations
 

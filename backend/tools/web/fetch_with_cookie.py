@@ -1,4 +1,4 @@
-"""V16 R2 cookie-authorized web fetch; R4-E JSON cookie、域/重定向/脱敏增强。"""
+"""Cookie-authorized web fetch; JSON cookie、域/重定向/脱敏增强。"""
 
 from __future__ import annotations
 

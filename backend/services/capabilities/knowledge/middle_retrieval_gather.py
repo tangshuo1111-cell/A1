@@ -1,8 +1,7 @@
 """Knowledge capability bridge for Middle gather retrieval.
 
 Owns KB retrieval gather so agent-layer code does not import retrieval helpers
-that themselves depend on knowledge/retrieval internals.
-"""
+that themselves depend on knowledge/retrieval internals."""
 
 from __future__ import annotations
 

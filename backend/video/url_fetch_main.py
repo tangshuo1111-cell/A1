@@ -38,7 +38,7 @@ def fetch_video_text(
     extract_info: Any = None,
     transcribe: Any = None,
 ) -> FetchVideoResult:
-    """V11 R1 主链：URL → 文本。
+    """主链：URL → 文本。
 
     流程（任何一步失败都返回 FetchVideoResult.failure）：
         0. 域名白名单校验

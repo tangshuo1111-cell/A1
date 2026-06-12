@@ -1,4 +1,4 @@
-"""In-process session store — default for dev/tests (Round 7)."""
+"""In-process session store — default for dev/tests."""
 
 from __future__ import annotations
 

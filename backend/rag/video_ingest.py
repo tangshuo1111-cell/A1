@@ -1,27 +1,26 @@
 """
-V7 第 2 轮：把 V7 第 1 轮的"业务型 MCP tool（video_to_text）产物"接进现有 ingest / 知识库链。
+把业务型 MCP tool（video_to_text）的产物接进现有 ingest / 知识库链。
 
 设计边界（最小 / 不平行造系统）：
 - **复用** `rag.ingest.ingest_text` —— 不新建"视频专属知识库"，不新建第二套检索。
-- **不**让业务型 MCP tool 自己吞下入库（保持 V7 第 1 轮 tool 边界：tool 只产文本）。
+- **不**让业务型 MCP tool 自己吞下入库（tool 边界：tool 只产文本）。
 - 对 source_id 做最小规范化：`video:<basename>`——
   * 与 sample.md 等历史 source_id 显式分流，便于后续问答阶段从命中结果上立刻分辨"来源是视频"；
-  * basename 而不是绝对路径，因为 SQLite FTS5 unicode61 分词器对反斜杠 / 长路径不友好，
-    而绝对路径仍然由 `rag.ingest._fts_boost_header` 写进 `[doc_path]` 段，retrieval 端不丢。
-- 失败结构化返回 `{ok, source_id, chunks, error}`，**不**抛异常给 middle runtime
-  （第 1 轮 MCP 调用层已经实践过这条结构化失败收口规则）。
+  * 用 basename 让 source_id 简洁稳定，绝对路径仍由 `rag.ingest._fts_boost_header`
+    写进 `[doc_path]` 段，retrieval 端不丢。
+- 失败结构化返回 `{ok, source_id, chunks, error}`，**不**抛异常给 middle runtime。
 
-明确**不做**（与第 2 轮总边界一致）：
+明确**不做**：
 - 不做平行知识库；
 - 不做向量重排扩展；
 - 不做多视频源；
 - 不做 chunk 策略升级；
 - 不做"自动归档 / 去重 / 标签 / 热度"等任何治理特性。
 
-支持边界（再次显式声明，防止误读为"完整视频能力"）：
+支持边界（防止误读为"完整视频能力"）：
 - 当前唯一支持：本地 .mp4 容器内 mov_text / tx3g 字幕轨产出的纯文本；
-- 非支持轨 / 无字幕轨 / 文件不存在等失败已在第 1 轮 `subtitle_extractor` 与 MCP server 收口；
-- 第 1 轮失败 → 第 2 轮入库**也**失败（不伪装成功、不静默吞）。
+- 非支持轨 / 无字幕轨 / 文件不存在等失败已在 `subtitle_extractor` 与 MCP server 收口；
+- 字幕提取失败 → 入库**也**失败（不伪装成功、不静默吞）。
 """
 
 from __future__ import annotations
@@ -35,14 +34,14 @@ from typing import Any
 logger = logging.getLogger("light_maqa")
 
 
-# 与 V6 既有 source_id 风格分流：sample.md 走 "knowledge_samples/sample.md"，
-# 视频走 "video:<basename>"。冒号是语义命名空间分隔符，**不**是路径分隔符——
-# SQLite FTS unicode61 会把它当 token 边界，但 `_fts_boost_header` 同时写
-# `[doc_path] {source_id}` + `[doc_file] {basename}`，命中权由 body 块独立承担。
+# 与既有 source_id 风格分流：sample.md 走 "knowledge_samples/sample.md"，
+# 视频走 "video:<basename>"。冒号是语义命名空间分隔符，**不**是路径分隔符；
+# `_fts_boost_header` 同时写 `[doc_path] {source_id}` + `[doc_file] {basename}`，
+# 命中权由 body 块独立承担。
 SOURCE_ID_NAMESPACE = "video:"
 
-# V11 R5 D：title slug 长度上限（按字符算）。SQLite FTS source_id 列没硬上限，
-# 控长是为了 trace / 调试输出可读，且避免极端长标题做主键 lookup 性能下降。
+# title slug 长度上限（按字符算）：控长是为了 trace / 调试输出可读，
+# 且避免极端长标题做主键 lookup 时性能下降。
 _TITLE_SLUG_MAX_CHARS = 30
 # slug 内允许保留：中日韩 + 拉丁字母数字；其他全部转 dash 后压缩
 _SLUG_KEEP_RE = re.compile(
@@ -79,7 +78,7 @@ def build_video_source_id(
     向后兼容（V7 本地 mp4 链）：``title=None`` 且 ``ingest_time=None`` 时，
     输出与历史版本完全一致 —— ``video:<basename>``。
 
-    V11 R5 D（V11 URL 链）：传入 ``title`` 或 ``ingest_time`` 中至少一个，
+    URL 链：传入 ``title`` 或 ``ingest_time`` 中至少一个，
     输出格式：``video:YYYY-MM-DD_<title-slug>_<basename>``
     - 同一视频在不同时间入库 → 不同 source_id，新旧都在 KB 里
     - 从 source_id 一眼能看出"哪个视频、哪天入的"
@@ -118,7 +117,7 @@ def is_video_source_id(source_id: str | None) -> bool:
 
 
 def _format_duration(sec: float | int | None) -> str:
-    """V11 R5 C：时长格式化为人类可读的 X分Y秒；空 / 0 → "未知"。"""
+    """时长格式化为人类可读的 X分Y秒；空 / 0 → "未知"。"""
     if not sec or sec <= 0:
         return "未知"
     total = int(sec)
@@ -141,7 +140,7 @@ def _build_video_metadata_header(
     subtitle_lang: str | None,
     asr_provider: str | None,
 ) -> str:
-    """V11 R5 C：构造入库前注入的视频元数据块。
+    """构造入库前注入的视频元数据块。
 
     - 进 FTS body 一起入库，**LLM 答题时一定会看到**，从而清楚"这是哪条视频"
     - 字幕 / ASR 来源透明化，让 LLM 措辞更准确（不再说"根据您贴的内容"）
@@ -181,12 +180,12 @@ def ingest_video_bundle(
     asr_provider: str | None = None,
 ) -> dict[str, Any]:
     """
-    把 V7 第 1 轮 MCP 产物（已清洗的纯文本 + 最小来源标识）写进现有知识库。
+    把 MCP 产物（已清洗的纯文本 + 最小来源标识）写进现有知识库。
 
-    V11 R5 D：可选 ``title`` / ``ingest_time``，传入则用 V11 URL 链格式
-    ``video:YYYY-MM-DD_<slug>_<basename>``；不传则保持 V7 R2 历史格式 ``video:<basename>``。
+    可选 ``title`` / ``ingest_time``，传入则用 V11 URL 链格式
+    ``video:YYYY-MM-DD_<slug>_<basename>``；不传则保持历史格式 ``video:<basename>``。
 
-    V11 R5 C：可选 ``source_url`` / ``duration_sec`` / ``text_source`` /
+    可选 ``source_url`` / ``duration_sec`` / ``text_source`` /
     ``subtitle_lang`` / ``asr_provider`` —— 任一非空即在入库文本头部注入
     ``[视频元数据]`` 块。无任何元数据参数时**完全保持 V7 行为**（无头注入）。
 
@@ -196,7 +195,7 @@ def ingest_video_bundle(
             "source_id": str,           # 实际写入用的稳定 source_id
             "chunks": int,              # 写入块数（含 boost header）
             "error": str,               # 失败原因，ok=True 时为 ""
-            "has_metadata_header": bool, # V11 R5 C：是否注入了元数据头
+            "has_metadata_header": bool, # 是否注入了元数据头
         }
 
     最小失败边界：

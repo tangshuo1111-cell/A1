@@ -1,4 +1,4 @@
-"""V16 R2 web MCP-compatible Adapter registry."""
+"""Web MCP-compatible Adapter registry."""
 
 from __future__ import annotations
 

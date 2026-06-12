@@ -1,5 +1,5 @@
 """
-answer_agent 旧主链 `answer()` 路径所需逻辑（V6 第 6 轮迁入）。
+answer_agent 旧主链 `answer()` 路径所需逻辑。
 
 > 注：本文件 **不是** V6 主入口。仅承接旧主链 `workflow.chat_graph` 与既有
 > `test_answer_agent_output.py` 用到的 `answer()` 实现（KB / direct / external 模板组装）。

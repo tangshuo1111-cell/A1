@@ -1,5 +1,5 @@
 """
-V16 R1：txt / md 文档工具（MCP-compatible Adapter）。
+txt / md 文档工具（MCP-compatible Adapter）。
 
 复用现有 parse_file_source 逻辑，统一输出 DocumentToolResult。
 metadata 补充 V16 要求字段：text_length / file_ext / content_hash 等。

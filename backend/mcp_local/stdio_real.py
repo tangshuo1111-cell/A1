@@ -2,11 +2,11 @@
 通过官方 `mcp` 包启动子进程 FastMCP Server 并调用单个 tool（同步封装）。
 依赖：pip install mcp（依赖见 pyproject.toml / requirements.lock）
 
-V7 第 1 轮：新增按 **业务型 tool 名** 分流到对应 server module 的最小路由表。
+新增按 **业务型 tool 名** 分流到对应 server module 的最小路由表。
 - `video_to_text` → `mcp_servers.video_min_server`（首条业务型 MCP server，本轮当前收口唯一）
 - 其它 tool → 走 `settings.mcp_stdio_module`（默认仍是 ping/echo demo `mcp_servers.min_server`）
 
-`BUSINESS_TOOL_SERVERS` 是当前 V7 第 1 轮的收口表，**只允许有一条**业务型映射；
+`BUSINESS_TOOL_SERVERS` 是当前 的收口表，**只允许有一条**业务型映射；
 要新增条目必须先升版（V7 后续轮）并通过任务看板。
 """
 
@@ -19,7 +19,7 @@ from typing import Any
 
 from config.settings import settings
 
-# V7 第 1 轮：业务型 MCP tool → 对应 server module。
+# 业务型 MCP tool → 对应 server module。
 # 当前收口唯一：video_to_text。明确不是 ping/echo/demo。
 BUSINESS_TOOL_SERVERS: dict[str, str] = {
     "video_to_text": "mcp_servers.video_min_server",

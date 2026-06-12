@@ -1,5 +1,5 @@
 """
-V16 R1：文档工具内容质量判断。
+文档工具内容质量判断。
 
 assess_quality(text, source_type) → quality dict
 

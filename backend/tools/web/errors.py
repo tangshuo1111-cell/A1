@@ -1,4 +1,4 @@
-"""V16 R2 web tool error codes."""
+"""Web tool error codes."""
 
 INVALID_URL = "invalid_url"
 UNSUPPORTED_URL_SCHEME = "unsupported_url_scheme"

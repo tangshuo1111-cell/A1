@@ -1,4 +1,4 @@
-"""Material layer / scope trace — single resolver for response extra (Round 6)."""
+"""Material layer / scope trace — single resolver for response extra."""
 
 from __future__ import annotations
 

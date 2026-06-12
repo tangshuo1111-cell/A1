@@ -1,6 +1,6 @@
-"""台账治理第2b轮 — Main 判断阶段 mixin（六段方法，不含 invoke_executor 主链）。
+"""Main 判断阶段 mixin（六段方法，不含 invoke_executor 主链）。
 
-逻辑原样从 `runtime.py` 迁出，便于 `runtime.py` 瘦身与验收台账对齐。
+逻辑从 `runtime.py` 迁出，便于 `runtime.py` 瘦身。
 """
 
 from __future__ import annotations
@@ -24,25 +24,25 @@ class MainJudgmentPhaseMixin:
     ``MainAgentRuntime(MainJudgmentPhaseMixin, AgnoAgentRuntime[...])``。
     """
 
-    # ---------- 1) 意图识别（V10 R1：三段式主判断结构）----------
+    # ---------- 1) 意图识别（三段式主判断结构）----------
     def shibie_yitu(
         self,
         *,
         message: str,
         http_use_knowledge: bool,
         has_explicit_web: bool,
-        decision_hint: MainDecision | None = None,  # noqa: ARG002 — 第 9 轮起不再使用，仅保留签名兼容
+        decision_hint: MainDecision | None = None,  # noqa: ARG002 — 不再使用，仅保留签名兼容
         history: SessionHistorySnapshot | None = None,
         intent_classifier=None,
     ) -> str:
         """
         识别本轮 main 的协作意图，由 runtime 实体 **直接** 产出。
 
-        V10 R1 起结构调整为「三段式主判断」：
+        结构为「三段式主判断」：
 
         ┌─ 第 1 道：显式强信号优先（命中即 return，不调 LLM）─────────────────┐
         │  - http_use_knowledge=True / has_explicit_web=True                  │
-        │  - V8 R1/R2 结构化锚点：history.followup_video_anchor(message)      │
+        │  - 结构化锚点：history.followup_video_anchor(message)              │
         └──────────────────────────────────────────────────────────────────────┘
         ┌─ 第 2 道：LLM 语义主判断（无显式强信号时）──────────────────────────┐
         │  - 复用 llm.router.classify_intent_with_llm                         │
@@ -59,8 +59,8 @@ class MainJudgmentPhaseMixin:
         - 本方法仍是 MainAgent **自家** runtime 的主判断；
           LLM 只是 runtime 内部使用的"语义判断算子"，不是 service / 规则层
           代算结论再回流——`router_source` 仍写 "main_agent_runtime"，
-          V6 R9 边界（spy 拦 legacy.decide）不被破坏。
-        - V8 R1/R2 follow-up 锚点仍走第 1 道，**不会**被 LLM 抢走。
+          legacy.decide 不被调用（测试 spy 依赖 router_source="main_agent_runtime"）。
+        - follow-up 锚点仍走第 1 道，**不会**被 LLM 抢走。
         - LLM 来源 / fallback 触发原因等可观测信息写进 runtime 实例属性，
           由 `invoke_executor` 立刻读出并追加到 `routing_explain`，
           不增加任何对外 schema 字段。

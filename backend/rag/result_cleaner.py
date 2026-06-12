@@ -61,7 +61,7 @@ def demote_boost_preserve_order_chunks(
 ) -> list[Any]:
     """list[RetrievedChunk] 版本：把 boost 头块移到末尾，再截断 top_k。
 
-    V12 R2：供 hybrid_retrieve 直接操作 RetrievedChunk，无需转换为 dict。
+    供 hybrid_retrieve 直接操作 RetrievedChunk，无需转换为 dict。
     """
     body = [c for c in ranked if not is_rag_boost_header(c.text)]
     boost = [c for c in ranked if is_rag_boost_header(c.text)]

@@ -1,4 +1,4 @@
-"""Executor IO types (Round 3)."""
+"""Executor IO types."""
 
 from __future__ import annotations
 

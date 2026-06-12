@@ -1,4 +1,4 @@
-"""Chat main-chain orchestrator — sole runtime entry (Round 3+)."""
+"""Chat main-chain orchestrator — sole runtime entry."""
 
 from __future__ import annotations
 

@@ -23,7 +23,7 @@ class TurnFlags:
 
 @dataclass(frozen=True)
 class TurnContext:
-    """Canonical request context for one chat turn (Round 1+)."""
+    """Canonical request context for one chat turn."""
 
     user_input: str
     session_id: str | None

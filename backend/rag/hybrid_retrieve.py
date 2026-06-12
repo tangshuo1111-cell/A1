@@ -3,7 +3,6 @@ PG-only since 2026-05-09，注释中的 SQLite/FTS5 表述为历史遗留。
 
 可插拔检索管线：FTS5 宽召回 + 可选 TF-IDF 重排（轻量「深度」升级，无向量库）。
 
-V12 R2 变更：
 - 直接调 retrieve()（返回 list[RetrievedChunk]），移除旧 retrieve_as_legacy_dicts 调用
 - _tfidf_rerank 改为接受 list[RetrievedChunk] 输入，操作 chunk.text
 - 消除了 RetrievedChunk → dict → RetrievedChunk 的双重转换
@@ -81,7 +80,7 @@ def hybrid_retrieve(
     """
     混合检索入口。返回 list[RetrievedChunk]（V12 统一出口）。
 
-    V12 R2：直接调 retrieve()，不再经过旧 retrieve_as_legacy_dicts 中转。
+    直接调 retrieve()，不再经过旧 retrieve_as_legacy_dicts 中转。
     """
     from config.settings import settings
     from rag.retriever import retrieve

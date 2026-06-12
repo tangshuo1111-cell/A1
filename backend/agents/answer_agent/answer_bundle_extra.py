@@ -1,4 +1,4 @@
-"""台账治理第2b轮 — Answer hint / extra / V11 短路辅助（从 runtime 抽出）。"""
+"""Answer hint / extra / fail_explicit 短路辅助（从 runtime 抽出）。"""
 
 from __future__ import annotations
 
@@ -315,7 +315,7 @@ def detect_v11_video_url_failure(
     bundle: AgnoMaterialBundle,
     plan: AgnoCollaborationPlan | None = None,
 ) -> str | None:
-    """V11 R1 fail_explicit 短路检测（供 ``AnswerAgent.huida`` 使用）。"""
+    """fail_explicit 短路检测（供 ``AnswerAgent.huida`` 使用）。"""
     trace_lines = list(getattr(bundle, "trace", []) or [])
     if not trace_lines:
         return None

@@ -10,7 +10,7 @@ from services.capabilities.web import web_orchestration_service as agno_web_serv
 
 from .collect_flow_eval import _token_overlap
 
-# V7 第 1 轮：从消息里抽取本地 .mp4 路径的"显式信号"算子。
+# 从消息里抽取本地 .mp4 路径的"显式信号"算子。
 # 仅做输入清洗，不替 runtime 出主结论；运行期由 `MiddleAgentRuntime.shibie_video_yitu` 调用。
 #
 # 算法：定位每一个 ".mp4" 出现位置，向前吃到第一个"中断符"为止。
@@ -83,7 +83,7 @@ def agno_kb_evidence_tier(message: str, kb: str | None) -> str:
 def is_tool_allowed(plan: object, tool_name: str) -> bool:
     """检查 tool_name 是否在 plan.tools_allowed 白名单中。
 
-    最终语义（V15 R2 收边）：
+    最终语义：
     - tools_allowed 为 None 或缺失属性 → 向后兼容旧 plan，不限制（放行所有工具）
     - tools_allowed 为空元组/空列表 () → **明确禁止所有工具**（direct 模式专用）
     - tools_allowed 含 "*" 或 "__all__" → 允许所有工具（显式不限制）

@@ -22,7 +22,7 @@ EvidenceTier = Literal["none", "weak", "usable", "strong"]
 KbSufficiencyLevel = Literal["none", "weak", "adequate_simple", "adequate_complex", "insufficient"]
 MaterialSufficiencyLevel = Literal["sufficient", "insufficient", "no_match", "low_confidence"]
 
-# Round 6 — unified material lifecycle (prepare → pending_commit → committed)
+# unified material lifecycle (prepare → pending_commit → committed)
 MaterialState = Literal["prepared", "pending_commit", "committed", "discarded", "failed"]
 MaterialSource = Literal["text", "upload", "web", "local_video", "web_video", "document"]
 
@@ -139,7 +139,7 @@ class TurnExitEnvelope:
 
 
 # ---------------------------------------------------------------------------
-# Agent stage results (Round 4) — agents must not emit HTTP / routing fields
+# Agent stage results — agents must not emit HTTP / routing fields
 # ---------------------------------------------------------------------------
 
 AGENT_FORBIDDEN_EXTRA_KEYS: frozenset[str] = frozenset(

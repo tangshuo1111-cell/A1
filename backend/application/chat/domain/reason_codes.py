@@ -1,4 +1,4 @@
-"""Canonical reason codes for profile / path transitions (Round 2+)."""
+"""Canonical reason codes for profile / path transitions."""
 
 from __future__ import annotations
 

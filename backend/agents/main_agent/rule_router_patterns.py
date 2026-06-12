@@ -6,7 +6,7 @@ import re
 
 from schemas import MainDecision, TaskInput
 
-# MAX_FALLBACK_RULES 是 fallback 边界的显式锚点（与 `rule_router.py` 头部 V12 R2 说明一致）。
+# MAX_FALLBACK_RULES 是 fallback 边界的显式锚点（与 `rule_router.py` 头部说明一致）。
 MAX_FALLBACK_RULES: int = 6  # 上限，严禁超过
 
 # 极简问候：不触发检索/外链
@@ -229,7 +229,7 @@ def _asks_knowledge_inventory(clean: str) -> bool:
     return False
 
 
-# V12 R1 新增：针对本项目/本仓库/本系统的明显知识库问题
+# 针对本项目/本仓库/本系统的明显知识库问题
 _PROJECT_ANCHOR_WORDS = frozenset({
     "本项目", "本仓库", "本系统", "仓库里", "项目里", "该系统", "该项目", "该仓库",
     "这个项目", "这个系统", "这个仓库",

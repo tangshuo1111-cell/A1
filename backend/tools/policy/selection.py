@@ -4,7 +4,7 @@
 输出 (order, trace_lines) 供 middle_agent 写入 collection_trace，便于 observability。
 不直接调用工具，只决定顺序；具体执行仍在 middle_agent._run_step。
 
-与 tools.policy.execution_order、schemas.CollectionTask、LangGraph collect 节点协作。
+与 tools.policy.execution_order、schemas.CollectionTask、middle_agent collect 阶段协作。
 """
 
 from __future__ import annotations

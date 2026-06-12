@@ -1,4 +1,4 @@
-"""V16 R2 web processing limits."""
+"""Web processing limits."""
 
 MAX_WEB_BYTES = 2_000_000
 MAX_WEB_TEXT_CHARS = 120_000

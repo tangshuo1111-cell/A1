@@ -1,13 +1,12 @@
 """
-V2：最小样例知识检索接线（挂在 V1 Agno 主链上，不经旧 workflow）。
+最小样例知识检索接线（挂在 Agno 主链上）。
 
 只复用 storage.knowledge_store → 底层 rag.ingest / retriever 链路；
 不新建对外路由、不封装第二套知识库。
 
-V12 变更：
-- fetch_knowledge_chunks() 新入口，返回 list[RetrievedChunk]（V12 统一出口）
-- fetch_knowledge_block() / fetch_knowledge_block_by_source_id() 保留，
-  内部改用统一出口转换，不再直接操作旧字段
+- fetch_knowledge_chunks()：主入口，返回 list[RetrievedChunk]（统一出口）
+- fetch_knowledge_block() / fetch_knowledge_block_by_source_id()：保留，
+  内部改用统一出口转换，不直接操作旧字段
 """
 
 from __future__ import annotations
@@ -58,12 +57,12 @@ def ingest_default_sample_md() -> int:
         source_type="document",
         title="sample.md",
     )
-    logger.info("agno_rag_service ingest sample.md chunks=%s", n)
+    logger.info("rag_orchestration ingest sample.md chunks=%s", n)
     return n
 
 
 # ------------------------------------------------------------------ #
-#  V14 R1 主出口：返回 list[RetrievedChunk]（通过统一检索主入口）        #
+#  主出口：返回 list[RetrievedChunk]（通过统一检索主入口）              #
 # ------------------------------------------------------------------ #
 
 def fetch_knowledge_chunks(
@@ -74,9 +73,9 @@ def fetch_knowledge_chunks(
     filters: dict | None = None,
 ) -> list[RetrievedChunk]:
     """
-    V14 R1 主出口：按用户问题检索，返回 list[RetrievedChunk]。
+    主出口：按用户问题检索，返回 list[RetrievedChunk]。
 
-    V14 R1 升级：
+    分数字段：
     - 新增 strategy 参数（keyword / semantic / auto），默认 auto
     - 新增 filters 参数（source_type / source_id / title）
     - 内部改用统一检索主入口 retrieve_knowledge（不再直接调 knowledge_store.search）
@@ -108,7 +107,7 @@ def fetch_knowledge_chunks(
         )
         return list(chunks)
     except Exception as e:  # noqa: BLE001
-        logger.warning("agno_rag_service fetch_knowledge_chunks failed: %s", e)
+        logger.warning("rag_orchestration fetch_knowledge_chunks failed: %s", e)
         return []
 
 
@@ -119,10 +118,10 @@ def fetch_knowledge_chunks_by_source_id(
     skip_boost_header: bool = True,
 ) -> list[RetrievedChunk]:
     """
-    V12 辅助出口：按 source_id 精确拉同一 source 的入库块，返回 list[RetrievedChunk]。
+    辅助出口：按 source_id 精确拉同一 source 的入库块，返回 list[RetrievedChunk]。
 
-    用于 V8 follow-up 场景（按结构化锚点 source_id 取已知 source 的块），
-    避免退化成"自然语言 → FTS5 相关性"的二级检索。
+    用于 follow-up 场景（按结构化锚点 source_id 取已知 source 的块），
+    避免退化成"自然语言 → 相关性"的二级检索。
     """
     sid = (source_id or "").strip()
     if not sid:
@@ -138,7 +137,7 @@ def fetch_knowledge_chunks_by_source_id(
 
         rows = pg_chunks.fetch_chunks_by_source_pg(sid, max(1, top_k * 2))
     except Exception as e:  # noqa: BLE001
-        logger.warning("agno_rag_service fetch_by_source_id failed: %s", e)
+        logger.warning("rag_orchestration fetch_by_source_id failed: %s", e)
         return []
     if not rows:
         return []

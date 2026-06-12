@@ -1,4 +1,4 @@
-"""Pending knowledge store port (Round 7)."""
+"""Pending knowledge store port."""
 
 from __future__ import annotations
 

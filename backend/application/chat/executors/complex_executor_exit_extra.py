@@ -1,4 +1,4 @@
-"""Complex executor exit extra assembly (Round 2)."""
+"""Complex executor exit extra assembly."""
 
 from __future__ import annotations
 

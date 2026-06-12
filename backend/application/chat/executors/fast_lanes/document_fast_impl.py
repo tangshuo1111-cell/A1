@@ -1,4 +1,4 @@
-"""Document lane fast path implementation (Round 1)."""
+"""Document lane fast path implementation."""
 
 from __future__ import annotations
 

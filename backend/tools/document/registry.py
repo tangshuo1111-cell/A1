@@ -1,5 +1,5 @@
 """
-V16 R1：文档工具 MCP-compatible Adapter 注册表。
+文档工具 MCP-compatible Adapter 注册表。
 
 设计目标：
   1. 每个文档工具注册后具备 input_schema / output_schema / ToolResult / trace /
@@ -11,11 +11,11 @@ V16 R1：文档工具 MCP-compatible Adapter 注册表。
 为什么本轮不外置 MCP Server：
   - 当前项目主链（Main/Middle/Answer）在进程内协作；文档解析涉及
     本地文件字节流，外置 Server 需要 stdio/TCP + 序列化，成本与
-    进程管理复杂度不对等，且 V16 R1 目标是"真实落地"而非"MCP形式化"。
+    进程管理复杂度不对等，目标是"真实落地"而非"MCP形式化"。
   - 技术方案（V16-V17 技术方案 CSV 第 4-7 行）明确允许 Adapter 过渡，
     条件是：有 tool_name/input_schema/output_schema/ToolResult/error_code/
     metadata/trace/可禁用/可替换。本 registry 均已满足。
-  - 后续 V16 R2/R3 若需要真 MCP Server，可把 registry 改为 MCP client
+  - 后续 若需要真 MCP Server，可把 registry 改为 MCP client
     调用，接口不变。
 """
 

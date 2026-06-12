@@ -1,4 +1,4 @@
-"""Controlled feedback gate for V17 R2 default chain."""
+"""Controlled feedback gate for default chain."""
 
 from __future__ import annotations
 

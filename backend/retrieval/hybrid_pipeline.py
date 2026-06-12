@@ -4,12 +4,11 @@
 keyword：走原 FTS（经 retriever）；
 semantic/hybrid：在 FTS 宽池上做向量重排（可选）。
 
-V14 R1 修复：
+修复说明：
 - 修复 retriever.retrieve() 返回 RetrievedChunk 而非 dict，hybrid_pipeline 之前
   错误地对 RetrievedChunk 调用 .setdefault()（dict 方法）导致 AttributeError。
 - 现在 hybrid_pipeline 统一返回 list[RetrievedChunk]（V14 统一出口）。
 
-V14 R2 升级：
 - 把 score_keyword / score_semantic / combined_score 写入 RetrievedChunk
 - 使用 semantic_retriever.HYBRID_ALPHA 作为混合权重（公式明确写在 semantic_retriever.py）
 - combined_score 公式：
@@ -44,12 +43,10 @@ def hybrid_search(
 ) -> list[RetrievedChunk]:
     """在 FTS 宽池基础上做语义/混合重排，返回统一 RetrievedChunk 列表。
 
-    V14 R1：
-    - 参数新增 mode（semantic/hybrid），由 retrieve_knowledge 传入
+        - 参数新增 mode（semantic/hybrid），由 retrieve_knowledge 传入
     - 返回 list[RetrievedChunk]（不再返回 dict）
 
-    V14 R2：
-    - 新增 alpha 参数（hybrid 权重，默认 HYBRID_ALPHA=0.45）
+        - 新增 alpha 参数（hybrid 权重，默认 HYBRID_ALPHA=0.45）
     - RetrievedChunk 填充 score_keyword / score_semantic / combined_score
     - combined_score 与 semantic_retriever 公式一致
 

@@ -1,13 +1,13 @@
 """
 PG-only since 2026-05-09，注释中的 SQLite/FTS5 表述为历史遗留。
 
-V14 R1/R2：统一检索主入口 retrieve_knowledge(...)。
+统一检索主入口 retrieve_knowledge(...)。
 
 设计原则：
 - 这是所有检索策略的唯一对外入口（对 Middle / service 层）
 - 内部按 strategy 分发到 keyword / semantic / hybrid / auto 实现
 - filter 在此层统一生效（keyword / semantic / hybrid 路径均支持）
-- 返回统一 list[RetrievedChunk]（含 V14 R2 完整分数字段）
+- 返回统一 list[RetrievedChunk]（含 完整分数字段）
 - 默认主路径（Middle→KB）唯一通过此入口检索
 
 支持的 strategy：
@@ -18,7 +18,7 @@ V14 R1/R2：统一检索主入口 retrieve_knowledge(...)。
               combined_score = alpha * score_keyword + (1-alpha) * score_semantic
               alpha=0.45（FTS 权重），1-alpha=0.55（语义权重）
               旧数据无向量时（方案 C）：score_semantic=0，退化为 alpha*score_keyword
-- "auto"     : V14 R2 完整三路选路（可解释，trace 可见）：
+- "auto"     : 完整三路选路（可解释，trace 可见）：
               有 embedding 数据 → hybrid；embedding 不可用 → keyword；
               hybrid 失败 → semantic；semantic 也失败 → keyword
 
@@ -36,7 +36,7 @@ Filter 生效范围：
 - hybrid 路径：hybrid_pipeline 返回后 _apply_filters post-filter（不被合并流程绕开）
 - 三种策略 filter 逻辑一致，不存在"某策略无 filter"问题
 
-Score 口径（V14 R2 完整定义）：
+Score 口径（完整定义）：
 - score_keyword     : FTS/BM25 分数 max 归一化（0-1）；keyword 路径下等于 score_normalized
 - score_semantic    : sentence-transformer 余弦相似度（0-1）；无向量时为 on-the-fly 编码结果
 - combined_score    : hybrid 合并分数；formula: alpha*score_keyword + (1-alpha)*score_semantic

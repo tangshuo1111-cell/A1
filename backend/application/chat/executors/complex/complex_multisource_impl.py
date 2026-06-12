@@ -1,4 +1,4 @@
-"""Multisource complex round-0 answer (Round 2)."""
+"""Multisource complex round-0 answer."""
 
 from __future__ import annotations
 

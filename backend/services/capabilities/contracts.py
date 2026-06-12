@@ -1,7 +1,6 @@
 """Cross-capability contracts (§5.2 / §5.3).
 
-Capability layers return facts + advice; Orchestration owns product decisions.
-"""
+Capability layers return facts + advice; Orchestration owns product decisions."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field

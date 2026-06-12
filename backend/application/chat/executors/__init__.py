@@ -1,4 +1,4 @@
-"""Executor profiles — fast / complex / async (Round 3)."""
+"""Executor profiles — fast / complex / async."""
 
 from application.chat.executors.async_executor import AsyncExecutor
 from application.chat.executors.complex_executor import ComplexExecutor

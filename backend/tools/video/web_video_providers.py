@@ -1,5 +1,5 @@
 """
-V16 R4-D：网页视频字幕 — yt-dlp provider（仅字幕 / transcript，不下载完整视频）。
+网页视频字幕 — yt-dlp provider（仅字幕 / transcript，不下载完整视频）。
 
 测试可通过 monkeypatch ``run_ytdlp_subtitle_provider`` 或注入 ``extract_info_fn``。
 """

@@ -100,8 +100,3 @@ def list_stored_source_ids(limit: int = 500) -> list[str]:
     from rag import pg_chunks
 
     return pg_chunks.list_stored_source_ids_pg(limit)
-
-
-def save_vector_placeholder(doc_id: str, vector: list[float]) -> None:
-    """TODO: 向量扩展时写入。"""
-    raise NotImplementedError

@@ -1,4 +1,4 @@
-"""Web lane fast path implementation (Round 1)."""
+"""Web lane fast path implementation."""
 
 from __future__ import annotations
 

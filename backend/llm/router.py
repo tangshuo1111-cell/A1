@@ -1,9 +1,9 @@
 """
-V2：用 LLM 辅助主路由（JSON 输出），失败则回退规则结果。
+用 LLM 辅助主路由（JSON 输出），失败则回退规则结果。
 
-V10 R1 新增：在 `MainAgentRuntime.shibie_yitu` 自家三段式判断里复用的
-**纯意图分类**函数 `classify_intent_with_llm`（不和 V2 的 decision-merge
-路径耦合，保持 V6 R9 "runtime 自产 decision、不调 legacy.decide" 边界）。
+在 `MainAgentRuntime.shibie_yitu` 三段式判断里复用的 **纯意图分类**
+函数 `classify_intent_with_llm`（不和 decision-merge 路径耦合；
+MainAgentRuntime 自产 decision，不调 legacy.decide）。
 
 【边界】仅路由/分类，不生成最终用户回答；不接远端 MCP。
 """
@@ -203,13 +203,13 @@ def maybe_refine_with_llm(task: TaskInput, base: MainDecision) -> MainDecision:
 
 
 # ===========================================================================
-# V10 R1：MainAgentRuntime 三段式判断专用 —— "纯意图分类" LLM 主判断
+# MainAgentRuntime 三段式判断专用 —— "纯意图分类" LLM 主判断
 #
 # 与 maybe_refine_with_llm() 的关键区别：
 #   1) 输入只是一段自然语言 message（不依赖 TaskInput / MainDecision）
 #   2) 输出只是一个意图字符串 + 置信度 + 理由（不动 MainDecision）
-#   3) 由 MainAgentRuntime 在自家 shibie_yitu 内调用 → router_source 仍是
-#      "main_agent_runtime"（V6 R9 的 spy 测试不会被破坏）
+#   3) 由 MainAgentRuntime 在自家 shibie_yitu 内调用 → router_source 须保持
+#      "main_agent_runtime"（测试与下游契约依赖此值）
 #   4) 失败 / 不可用 / 输出无效都返回 LlmIntentResult.unavailable(...)，
 #      让 MainAgentRuntime 自己决定走极少量高置信兜底
 # ===========================================================================
@@ -228,7 +228,7 @@ IntentLiteral = Literal["zhijie_yitu", "zhishu_yitu", "waibu_yitu", "hunhe_yitu"
 
 @dataclass(frozen=True)
 class LlmIntentResult:
-    """V10 R1 LLM 意图分类结果（不直接进 MainDecision，由 runtime 自己消费）。
+    """LLM 意图分类结果（不直接进 MainDecision，由 runtime 自己消费）。
 
     - `available=True` 且 `intent` 合法 → 主判断采用 LLM 结果
     - `available=False` 或 `intent` 无效 → 主判断进入 fallback（极少量高置信规则）
@@ -251,7 +251,7 @@ class LlmIntentResult:
 
 
 class _IntentOnlyOut(BaseModel):
-    """V10 R1：LLM 必须返回的最小可解析子集（多余字段忽略）。"""
+    """LLM 必须返回的最小可解析子集（多余字段忽略）。"""
 
     intent: str = Field(default="", description="zhijie_yitu/zhishu_yitu/waibu_yitu/hunhe_yitu")
     reason: str = Field(default="", description="中文短句：为什么这样判（≤ 80 字）")
@@ -289,7 +289,7 @@ def classify_intent_with_llm(
     *,
     timeout_seconds: float | None = None,
 ) -> LlmIntentResult:
-    """V10 R1 主判断专用：把一段自然语言消息分类成 4 个主意图之一。
+    """主判断专用：把一段自然语言消息分类成 4 个主意图之一。
 
     设计边界（极简、可被 MainAgentRuntime 安全调用）：
     - 不依赖 TaskInput / MainDecision；不写 MainDecision；不修改任何全局状态
@@ -366,7 +366,7 @@ __all__ = [
 
 
 # ===========================================================================
-# V13 R2：资料生命周期意图分类（prepare / commit / none）
+# 资料生命周期意图分类（prepare / commit / none）
 #
 # 设计原则：
 # - 与主路由意图（zhijie/zhishu/waibu/hunhe）完全独立，不干扰原有四类意图
@@ -375,15 +375,15 @@ __all__ = [
 # - 不接管主判断，只产出 v13_prepare_intent / v13_commit_intent 填充值
 # ===========================================================================
 
-# V13 合法意图集合（V13 R2 新增视频意图）
+# 资料生命周期合法意图集合（含视频 prepare 意图）
 _V13_VALID_INTENTS: frozenset[str] = frozenset({
     "prepare_text",
     "prepare_file",
     "prepare_web_url",
-    "prepare_local_video",   # V13 R2 新增：本地视频文件
-    "prepare_web_video",     # V13 R2 新增：网页/视频站 URL
+    "prepare_local_video",   # 本地视频文件
+    "prepare_web_video",     # 网页/视频站 URL
     "commit_pending",
-    "none",      # 无 V13 相关意图（普通问题）
+    "none",      # 无资料 prepare/commit 相关意图（普通问题）
 })
 
 _V13_INTENT_SYSTEM_PROMPT: str = (
@@ -423,7 +423,7 @@ _V13_INTENT_SYSTEM_PROMPT: str = (
 
 @dataclass(frozen=True)
 class V13IntentResult:
-    """V13 R2 资料生命周期意图分类结果。
+    """资料生命周期意图分类结果。
 
     - available=True + intent 合法 → 上游使用此结果填充 plan
     - available=False → 上游走规则兜底
@@ -459,7 +459,7 @@ class V13IntentResult:
 
 
 class _V13IntentOut(BaseModel):
-    """V13 R2：LLM 输出的可解析子集。"""
+    """LLM 输出的可解析子集。"""
 
     intent: str = Field(default="none")
     source_type: str = Field(default="")
@@ -478,7 +478,7 @@ def classify_v13_intent_with_llm(
     *,
     timeout_seconds: float | None = None,
 ) -> V13IntentResult:
-    """V13 R2：把用户消息分类成资料生命周期意图（prepare_* / commit_pending / none）。
+    """把用户消息分类成资料生命周期意图（prepare_* / commit_pending / none）。
 
     设计边界：
     - 完全独立于主路由四类意图，不干扰原有 classify_intent_with_llm

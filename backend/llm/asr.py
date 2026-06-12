@@ -1,7 +1,7 @@
 """
-V11 R1：云 ASR（语音转文本）兜底封装。
+云 ASR（语音转文本）兜底封装。
 
-设计边界（与 V10 R1 `classify_intent_with_llm` 对齐）：
+设计边界（与 `classify_intent_with_llm` 同类纯函数模式对齐）：
 - 这是 video URL 链 **当字幕缺席时** 的兜底：先 yt-dlp 抓官方字幕；
   抓不到才把音频文件交给本模块走云 ASR。
 - **复用** 现有 `LLM_API_KEY`（OpenAI 兼容协议；SiliconFlow 默认）；
@@ -37,7 +37,7 @@ from config.settings import settings
 
 @dataclass(frozen=True)
 class AsrResult:
-    """V11 R1 ASR 结果（不直接进 MainDecision，由 middle runtime 自己消费）。
+    """ASR 结果（不直接进 MainDecision，由 middle runtime 自己消费）。
 
     - `available=True` 且 `text` 非空 → 入库 / 入材料
     - `available=False`               → middle 走 fail_explicit

@@ -1,4 +1,4 @@
-"""Fast executor delivery gate wiring (Round 1)."""
+"""Fast executor delivery gate wiring."""
 
 from __future__ import annotations
 

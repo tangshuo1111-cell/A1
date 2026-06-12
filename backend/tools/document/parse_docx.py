@@ -1,5 +1,5 @@
 """
-V16 R1：docx 文档工具（MCP-compatible Adapter）。
+docx 文档工具（MCP-compatible Adapter）。
 
 技术路线（按技术方案 CSV 第 5 行）：
   - MarkItDown 主入口（microsoft/markitdown）：统一输出 Markdown 文本

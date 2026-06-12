@@ -1,8 +1,7 @@
 """Pre-gate exit hints for TurnFacts — not canonical public response fields.
 
 TurnExitGate owns ``task_status``, ``primary_path``, and ``extra.pending_kind`` on the
-final ChatTurnResult. Assembly and other pre-gate builders must use the keys below.
-"""
+final ChatTurnResult. Assembly and other pre-gate builders must use the keys below."""
 
 from __future__ import annotations
 

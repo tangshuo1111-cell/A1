@@ -1,22 +1,21 @@
 """
 answer_agent runtime：AnswerAgent 实体类 + 自有 `AnswerAgentRuntime` agent 实体。
 
-V6 第 8 轮（真 agent / 强 agent）→ 第 9 轮（终验补强）：
 - answer 拥有自己的 `AnswerAgentRuntime`（继承 `AgnoAgentRuntime`），
   以「意图识别 / 局部策略 / 主判断 / 失败边界 / 清洗约束兜底」五段方法
   **直接产出** `HuidaPan` 的核心字段（da_fengshi / jiegou_mode / baoshou_level /
   lane / primary_path）。
-- `_AgnoLlmZhixingQi` 仍是 answer **内部** 执行器，仅在 `huida(...)` 阶段把 runtime 产出的
-  `HuidaPan` + 各层 hint 合成最终文本，**不**承担主判断；唯一 Final Answer 主体身份不变。
-- 第 9 轮起：上游 `plan.decision` 已是 main runtime 自产（`router_source="main_agent_runtime"`），
-  `plan.xiezuo_pan / bundle.cailiao_pan` 也已是各自 runtime 直产；answer runtime 在此基础上
-  自己做"对外说什么"的主判断，链路上不再有任何"规则函数代算 → runtime 包"的回路。
-- 单一主入口（仍只有这两口）：
+- `_AgnoLlmZhixingQi` 是 answer **内部** 执行器，仅在 `huida(...)` 阶段把 runtime 产出的
+  `HuidaPan` + 各层 hint 合成最终文本，**不**承担主判断；唯一 Final Answer 主体身份。
+- 上游 `plan.decision` 由 main runtime 自产（`router_source="main_agent_runtime"`），
+  `plan.xiezuo_pan / bundle.cailiao_pan` 也由各自 runtime 直产；answer runtime 在此基础上
+  自己做"对外说什么"的主判断，链路上没有任何"规则函数代算 → runtime 包"的回路。
+- 单一主入口（只有这两口）：
     * `pan(plan, bundle) -> HuidaPan`
     * `huida(message, *, context_block, plan, bundle) -> (text, HuidaPan)`
 
-台账治理第2b轮：判断段见 `answer_judgment_mixin.py`，
-``hint`` / ``extra`` / V11 辅助见 `answer_bundle_extra.py`。
+拆分落点：判断段见 `answer_judgment_mixin.py`，
+``hint`` / ``extra`` / 辅助见 `answer_bundle_extra.py`。
 """
 
 from __future__ import annotations

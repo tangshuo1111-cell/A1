@@ -1,4 +1,4 @@
-"""Chat session + pending store factory (Round 7)."""
+"""Chat session + pending store factory."""
 
 from __future__ import annotations
 

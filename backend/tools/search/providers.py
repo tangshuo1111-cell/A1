@@ -1,5 +1,5 @@
 """
-V16 R4-A：web_search provider 调度（fixture + generic_http + 内置商业 API + 遗留 DDG HTML）。
+web_search provider 调度（fixture + generic_http + 内置商业 API + 遗留 DDG HTML）。
 
 fixture：仅测试 / 本地假数据，production_ready=false。
 generic_http：可配置 endpoint + api key 的通用 HTTP 搜索 API 客户端（成功形态由 JSON 解析约定）。

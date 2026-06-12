@@ -1,4 +1,4 @@
-"""Startup configuration validation — single entry for lifespan (Round 11)."""
+"""Startup configuration validation — single entry for lifespan."""
 
 from __future__ import annotations
 

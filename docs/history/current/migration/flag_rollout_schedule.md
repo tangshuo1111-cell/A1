@@ -1,4 +1,9 @@
-# Feature Flag 灰度切换表 (§15.8.2)
+# Feature Flag 灰度切换表 (§15.8.2) — 已归档
+
+> **归档说明**：本表是 P6–P9 迁移期的灰度切换计划，迁移已完成。
+> 当前 `backend/config/feature_flags.py` 中相关能力 flag 默认 **全部为 ON**，
+> 且不再存在 `ENABLE_OLD_UNIFIED_MAIN_CHAIN` kill switch。
+> 本文仅作历史灰度方案存档，不代表当前运行事实。
 
 > 原则：**开 1 关 1** — 每开新开关须保留 `ENABLE_OLD_UNIFIED_MAIN_CHAIN` kill switch。
 

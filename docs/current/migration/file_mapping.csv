@@ -37,7 +37,7 @@ backend/tasks/queue/async_task_queue.py,backend/tasks/queue/async_task_queue.py,
 backend/workers/video_worker_pool.py,backend/workers/pools/video_worker_pool.py,move,P4,retired,workers,P5 shim 已删,P5,执行平面
 backend/workers/task_trace_cache.py,backend/tasks/orchestration/task_trace_cache.py,move,P4,retired,workers,P5 shim 已删,P5,
 backend/workers/entry/video_task_worker.py,原位,retain,—,existing,workers,import 已切 background_executor,,保持入口稳定
-backend/workers/entry/task_dispatcher.py,原位,retain,—,existing,workers,保持 worker entry 协议,,保持入口稳定
+backend/workers/entry/task_dispatcher.py,backend/entry/task_dispatcher.py,facade,—,existing,workers,re-export canonical entry.task_dispatcher（消除逐字节复制）,,保持入口稳定
 backend/workers/tasks/task_runner.py,—,remove,P5,retired,workers,重复目录已删,P5,重复目录清债
 backend/workers/tasks/task_store.py,—,remove,P5,retired,workers,重复目录已删,P5,重复目录清债
 backend/workers/entry/task_plane_worker.py,backend/workers/entry/task_plane_worker.py,new,P9,done,workers,tests/migration/test_async_task_contract.py 通过且统一 worker 消费平台级队列,,平台级 worker runtime
@@ -78,6 +78,6 @@ tests/migration/test_critic_rubric_contract.py,tests/migration/test_critic_rubri
 docs/current/baselines/trace_baseline_new/,docs/current/baselines/trace_baseline_new/,new,P10,done,docs,test_trace_baseline_new 8 sample 新路径,,P10 新 trace 基线
 tests/migration/test_trace_baseline_new.py,tests/migration/test_trace_baseline_new.py,new,P10,done,tests,新路径 call_path 与 route_target_table 对齐,,P10 trace 验收
 tests/manual/baseline_real_external_probe.py,tests/manual/baseline_real_external_probe.py,new,P10,done,tests,optional real_external perf 手测探针,,外部 perf 探针
-docs/current/migration/flag_rollout_schedule.md,docs/current/migration/flag_rollout_schedule.md,new,ops,done,docs,§15.8.2 灰度切换表,,运维灰度表
-docs/current/migration/redis_async_smoke_record.md,docs/current/migration/redis_async_smoke_record.md,new,ops,done,docs,Redis/memory async 联调记录,,运维联调
+docs/current/migration/flag_rollout_schedule.md,docs/history/current/migration/flag_rollout_schedule.md,moved,ops,done,docs,§15.8.2 灰度切换表（迁移完成后归档至 history）,,运维灰度表
+docs/current/migration/redis_async_smoke_record.md,docs/history/current/migration/redis_async_smoke_record.md,moved,ops,done,docs,Redis/memory async 联调记录（一次性签字记录归档至 history）,,运维联调
 tests/migration/test_multi_source_research_optional.py,tests/migration/test_multi_source_research_optional.py,new,P9,done,tests,multi_source_research optional 契约,,P9 optional 任务

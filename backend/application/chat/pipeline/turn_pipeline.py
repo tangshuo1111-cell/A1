@@ -1,4 +1,4 @@
-"""Turn execution pipeline — phased orchestration (Round 3)."""
+"""Turn execution pipeline — phased orchestration."""
 
 from __future__ import annotations
 

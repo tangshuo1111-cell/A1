@@ -1,4 +1,4 @@
-"""Complex executor delivery — thin coordinator (Round 2 + R20 split)."""
+"""Complex executor delivery — thin coordinator ."""
 
 from __future__ import annotations
 

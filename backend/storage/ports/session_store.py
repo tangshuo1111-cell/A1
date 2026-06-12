@@ -1,4 +1,4 @@
-"""Session store port — chat history + video refs (Round 7)."""
+"""Session store port — chat history + video refs."""
 
 from __future__ import annotations
 

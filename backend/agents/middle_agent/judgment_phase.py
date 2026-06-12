@@ -258,7 +258,7 @@ class MiddleJudgmentPhaseMixin:
             signal = "ok"
         return material_insufficient, signal, knowledge_adequate, kb_tier
 
-    # ---------- V8 第 1 轮：承接前文 → 决定是否沿用上一轮锚点 ----------
+    # ---------- 承接前文 → 决定是否沿用上一轮锚点 ----------
     def pan_history_followup(
         self,
         *,
@@ -293,17 +293,17 @@ class MiddleJudgmentPhaseMixin:
         followup_query = f"{anchor.source_id} {msg}".strip()
         return anchor, followup_query
 
-    # ---------- V7 第 1 轮：视频意图识别 ----------
+    # ---------- 视频意图识别 ----------
     def shibie_video_yitu(self, *, message: str) -> dict[str, Any]:
         """视频 .mp4 显式信号；实现见 `video_flow.shibie_video_yitu`。"""
         return video_flow.shibie_video_yitu(message=message)
 
-    # ---------- V7 第 1 轮：业务型 MCP 调用决策（主链上的真实决策点）----------
+    # ---------- 业务型 MCP 调用决策（主链上的真实决策点）----------
     def pan_jubu_celue_video(self, *, video_yitu: dict[str, Any]) -> str:
         """MCP video_to_text 决策；实现见 `video_flow.pan_jubu_celue_video`。"""
         return video_flow.pan_jubu_celue_video(video_yitu=video_yitu)
 
-    # ---------- V11 R1：视频 URL 链（yt-dlp 下字幕 / 云 ASR 兜底 → 入 KB）----------
+    # ---------- 视频 URL 链（yt-dlp 下字幕 / 云 ASR 兜底 → 入 KB）----------
     def shibie_video_url_yitu(self, *, message: str) -> dict[str, Any]:
         """网页视频 URL 显式信号；实现见 `video_flow.shibie_video_url_yitu`。"""
         return video_flow.shibie_video_url_yitu(message=message)
@@ -314,14 +314,14 @@ class MiddleJudgmentPhaseMixin:
         plan: AgnoCollaborationPlan,
         message: str,
     ) -> tuple[dict[str, Any], str]:
-        """V11 R7：优先 `plan.video_url`；实现见 `video_flow.video_url_yitu_from_plan_or_message`。"""
+        """优先 `plan.video_url`；实现见 `video_flow.video_url_yitu_from_plan_or_message`。"""
         return video_flow.video_url_yitu_from_plan_or_message(plan=plan, message=message)
 
     def pan_jubu_celue_video_url(self, *, video_url_yitu: dict[str, Any]) -> str:
         """网页视频 fetch 决策；实现见 `video_flow.pan_jubu_celue_video_url`。"""
         return video_flow.pan_jubu_celue_video_url(video_url_yitu=video_url_yitu)
 
-    # V11 R6 保存到知识库的关键词
+    # 保存到知识库的关键词
     _SAVE_TO_KB_KEYWORDS: frozenset[str] = frozenset({
         "保存", "入库", "存到知识库", "保存到知识库", "收藏",
         "存入知识库", "加入知识库", "存入", "入知识库",
@@ -329,7 +329,7 @@ class MiddleJudgmentPhaseMixin:
     })
 
     def shibie_save_to_kb_yitu(self, *, message: str) -> bool:
-        """V11 R6：识别用户是否要把上一轮视频内容保存到知识库。
+        """识别用户是否要把上一轮视频内容保存到知识库。
 
         关键词匹配，不需要 LLM —— 用户说"保存到知识库"/"入库"就行。
         """

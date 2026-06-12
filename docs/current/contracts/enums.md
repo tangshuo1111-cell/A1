@@ -1,6 +1,6 @@
 # Enums — Canonical Definitions
 
-> **Authority**: §15.3 of 平台图+三强自治核心架构迁移执行计划.md  
+> **Authority**: §15.3 of docs/history/current/平台图+三强自治核心架构迁移执行计划.md  
 > All protocol fields MUST use these enums. Any change requires a plan-doc update first.
 
 ---

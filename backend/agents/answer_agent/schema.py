@@ -1,5 +1,5 @@
 """
-answer_agent 判断对象 schema（V6 第 6 轮迁出）。
+answer_agent 判断对象 schema。
 
 - `HuidaPan`：回答主判断维度，由 AnswerAgent 自己产出，service 只做透传。
 """

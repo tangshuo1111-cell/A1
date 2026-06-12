@@ -1,4 +1,4 @@
-"""PostgreSQL-backed pending knowledge store (Round 7)."""
+"""PostgreSQL-backed pending knowledge store."""
 
 from __future__ import annotations
 

@@ -1,12 +1,11 @@
-r"""V9 R3 默认主 chat 路由：`POST /chat/agno`。
+r"""默认主 chat 路由：`POST /chat/agno`。
 
-身份：**V9 R3 后唯一的公开 chat 主路由**，承载 V6 三强 Agent + V7 视频链 + V8 会话记忆。
-- 服务函数：`services.agno_chat_service.run_agno_chat_turn`（无 LangGraph）。
+身份：**唯一的公开 chat 主路由**，承载三强 Agent 协作 + 视频链 + 会话记忆。
+- 服务函数：`services.agno_chat_service.run_agno_chat_turn`。
 - 前端 `frontend/lib/api.ts: postChat` 默认连本路由。
 - 默认 smoke：`scripts\smoke_backend.ps1`、`scripts\smoke_chains.ps1` 均打本路由。
-- 旧 `POST /chat`、`POST /chat/async` 已物理删除（V9 R3）；任务查询现由 `GET /tasks/{id}` 契约承担。
-
-V13 R2：新增 `POST /chat/agno/upload`（multipart），支持拖拽文件 prepare 链路。
+- 任务查询由 `GET /tasks/{id}` 契约承担。
+- `POST /chat/agno/upload`（multipart）支持拖拽文件 prepare 链路。
 """
 
 from __future__ import annotations
@@ -24,10 +23,10 @@ from services import agno_chat_service
 
 router = APIRouter()
 
-# V13 R2：文件上传大小上限（10 MB，本路由当前先覆盖轻量文本与常见办公文档）
+# 文件上传大小上限（10 MB，本路由当前先覆盖轻量文本与常见办公文档）
 _MAX_FILE_BYTES: int = 10 * 1024 * 1024
 
-# V13 R2：支持的文件扩展名（与 document parse service 对齐）
+# 支持的文件扩展名（与 document parse service 对齐）
 _SUPPORTED_EXTENSIONS: frozenset[str] = frozenset({
     ".txt",
     ".md",
@@ -52,9 +51,9 @@ def _decode_upload_raw_bytes(raw_bytes: bytes) -> str | bytes:
 @router.post("/agno", response_model=ChatResponse)
 @limiter.limit(chat_rate_limit_string())
 async def post_chat_agno(request: Request, body: ChatRequest) -> ChatResponse:
-    """V1 默认基础问答入口：只走 agno_chat_service，不经 LangGraph。
+    """默认基础问答入口：走 agno_chat_service 主链。
 
-    生产版第二轮（B-007）：路由 async；主链同步函数在线程池执行，避免阻塞事件循环。
+    路由 async；主链同步函数在线程池执行，避免阻塞事件循环。
     """
     rid = getattr(request.state, "request_id", None)
     runner = functools.partial(
@@ -83,7 +82,7 @@ async def post_chat_agno_upload(
     ),
     file: UploadFile = File(..., description="待 prepare 的文件（如 .txt/.md/.docx/.pdf/.xlsx，≤ 10 MB）"),  # noqa: B008
 ) -> ChatResponse:
-    """V13 R2 拖拽文件入口：multipart 上传文本/常见办公文件，触发文件 prepare 链路。
+    """拖拽文件入口：multipart 上传文本/常见办公文件，触发文件 prepare 链路。
 
     请求格式：multipart/form-data
       - message:       用户说的话（如"先帮我解析这个文件"）
@@ -128,7 +127,7 @@ async def post_chat_agno_upload(
     if not raw_bytes:
         raise_validation("EMPTY_FILE", "上传的文件内容为空。")
 
-    # 3) UTF-8 / GBK 解码卸载到线程池（B-008）
+    # 3) UTF-8 / GBK 解码卸载到线程池
     file_content: str | bytes = await asyncio.to_thread(_decode_upload_raw_bytes, raw_bytes)
 
     # 4) 将完整文件名作为 v13_title，保留扩展名供下游 parser 判别

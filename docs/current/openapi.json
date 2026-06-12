@@ -35,7 +35,7 @@
           "public-default"
         ],
         "summary": "Post Chat Agno",
-        "description": "V1 默认基础问答入口：只走 agno_chat_service，不经 LangGraph。\n\n生产版第二轮（B-007）：路由 async；主链同步函数在线程池执行，避免阻塞事件循环。",
+        "description": "默认基础问答入口：走 agno_chat_service 主链。\n\n路由 async；主链同步函数在线程池执行，避免阻塞事件循环。",
         "operationId": "post_chat_agno_chat_agno_post",
         "requestBody": {
           "content": {
@@ -77,7 +77,7 @@
           "public-default"
         ],
         "summary": "Post Chat Agno Upload",
-        "description": "V13 R2 拖拽文件入口：multipart 上传文本/常见办公文件，触发文件 prepare 链路。\n\n请求格式：multipart/form-data\n  - message:       用户说的话（如\"先帮我解析这个文件\"）\n  - session_id:    会话 ID（可选，跨轮保存需一致）\n  - use_knowledge: 是否同时检索知识库（默认 false）\n  - file:          支持的文件（≤ 10 MB）\n\n响应：与 POST /chat/agno 完全相同的 ChatResponse 结构。\nextra 字段会额外包含：\n  - pending_kind: \"material_pending\" / \"processing_pending\" / ...\n  - pending_source_id: 当前待保存材料的 pending_id（如存在）\n  - pending_preview: 待保存材料的标题、来源类型与元信息摘要\n\n解析状态说明（extra.pending_preview.metadata.extract_status）：\n  - ok:                 解析成功，资料已进入 pending，可在后续轮次中说「保存到知识库」\n  - unsupported_format: 不支持的文件格式（当前只支持 .txt / .md）\n  - file_not_found:     文件内容为空\n  - parse_failed:       解析过程出错\n  - empty_content:      解析成功但内容为空",
+        "description": "拖拽文件入口：multipart 上传文本/常见办公文件，触发文件 prepare 链路。\n\n请求格式：multipart/form-data\n  - message:       用户说的话（如\"先帮我解析这个文件\"）\n  - session_id:    会话 ID（可选，跨轮保存需一致）\n  - use_knowledge: 是否同时检索知识库（默认 false）\n  - file:          支持的文件（≤ 10 MB）\n\n响应：与 POST /chat/agno 完全相同的 ChatResponse 结构。\nextra 字段会额外包含：\n  - pending_kind: \"material_pending\" / \"processing_pending\" / ...\n  - pending_source_id: 当前待保存材料的 pending_id（如存在）\n  - pending_preview: 待保存材料的标题、来源类型与元信息摘要\n\n解析状态说明（extra.pending_preview.metadata.extract_status）：\n  - ok:                 解析成功，资料已进入 pending，可在后续轮次中说「保存到知识库」\n  - unsupported_format: 不支持的文件格式（当前只支持 .txt / .md）\n  - file_not_found:     文件内容为空\n  - parse_failed:       解析过程出错\n  - empty_content:      解析成功但内容为空",
         "operationId": "post_chat_agno_upload_chat_agno_upload_post",
         "requestBody": {
           "content": {

@@ -1,4 +1,4 @@
-"""Synthesize feedback requests when AnswerAgent builder is absent (Round 2)."""
+"""Synthesize feedback requests when AnswerAgent builder is absent."""
 
 from __future__ import annotations
 

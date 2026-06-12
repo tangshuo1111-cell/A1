@@ -1,9 +1,8 @@
 """
-PG-only since 2026-05-09（检索走 PG tsvector / hybrid_retrieve）。
-
 middle_agent runtime：MiddleAgent 实体类 + 自有 `MiddleAgentRuntime` agent 实体。
 
-V6 第 8 轮（真 agent / 强 agent）→ 第 9 轮（终验补强）：
+检索走 PG tsvector / hybrid_retrieve（PG-only）。
+
 - middle 拥有自己的 `MiddleAgentRuntime`（继承 `AgnoAgentRuntime`），
   在子类里以「意图识别 / 局部策略(kb+web) / 主判断 / 失败边界 / 清洗约束兜底」五段方法
   **直接产出** `CailiaoPan / AgnoMaterialBundle` 的核心字段。
@@ -12,35 +11,30 @@ V6 第 8 轮（真 agent / 强 agent）→ 第 9 轮（终验补强）：
     * 调 `retrieve_service / agno_web_service` 真实拉材料（**执行器**，不是主脑）
     * 数值兜底
   绝不允许"先把 cailiao_pan / bundle 核心结论算完再包装"。
-- 第 9 轮起：main 已不再让 `decide_for_agno_chat` 代算，下游 middle 看到的
-  `plan.decision.router_source == "main_agent_runtime"` —— middle runtime 完全
-  基于 `plan.xiezuo_pan` 这个由 main runtime 直接产出的强约束做自己的主判断。
+- middle runtime 完全基于 `plan.xiezuo_pan`（由 main runtime 直接产出，
+  `plan.decision.router_source == "main_agent_runtime"`）这个强约束做自己的主判断。
 - 单一主入口：`MiddleAgent.caipan(message, *, plan, http_use_knowledge=False) -> AgnoMaterialBundle`。
 
-V7 第 1 轮新增：「业务型 MCP 调用决策点」由 MiddleAgentRuntime 直接产出。
+业务型 MCP 调用决策点由 MiddleAgentRuntime 直接产出：
 - `shibie_video_yitu(...)`：从 message 抽取本地 .mp4 路径的"显式信号"算子（输入清洗）；
 - `pan_jubu_celue_video(...)`：根据视频意图直接给出 MCP 调用决策
   （`call_video_to_text` / `skip_no_video_yitu` / `skip_path_unsafe`）；
 - 当决策为 `call_video_to_text` 时，runtime 通过 `mcp_local.mcp_client.call_mcp_tool(
-  "video_to_text", {...})` 真实拉起子进程 MCP server（首条业务型 MCP tool），
+  "video_to_text", {...})` 真实拉起子进程 MCP server，
   抽出的可入库纯文本 + 最小来源标识透传进 `AgnoMaterialBundle.mcp_video_*` 字段。
-- 调用决策权在 MiddleAgentRuntime 自身——**不**让 service / api / route 偷判断；
-  AnswerAgent 不新增能力调用主判断权。
+- 调用决策权在 MiddleAgentRuntime 自身——**不**让 service / api / route 偷判断。
 
-V7 第 2 轮新增：把第 1 轮的"可入库纯文本"真接进现有 ingest 链（不平行造系统）。
-- 当 `mcp_video_ok=True` 时，runtime 自家在 MCP 调用结果就位的同一帧里调
+视频文本接入既有 ingest 链（不平行造系统）：
+- 当 `mcp_video_ok=True` 时，runtime 在 MCP 调用结果就位的同一帧里调
   `rag.video_ingest.ingest_video_bundle(...)`，把文本写进 PG 知识库；
-- 入库 source_id 规范成 `video:<basename>`，与既有 sample.md 等 source_id 显式分流，
-  后续问答阶段命中时可立刻识别"这条命中来自 V7 视频链"；
-- 入库结果（`ingested / source_id / chunks / error`）一并透传到 bundle V7 字段；
+- 入库 source_id 规范成 `video:<basename>`，与既有 sample.md 等 source_id 显式分流；
+- 入库结果（`ingested / source_id / chunks / error`）一并透传到 bundle 字段；
 - 入库**仅在 MCP 调用真实成功**且文本非空时触发，对失败路径仍保持结构化失败。
 
-冷启动说明（V7 第 2 轮 风险点 3 的最小处理）：
-- 业务型 MCP tool 仍每次以子进程方式拉起，存在冷启动开销；本轮**不**做平台化连接池。
-- 在主链中 video_to_text 仅当显式识别到 .mp4 路径意图时才触发（已由
-  `pan_jubu_celue_video` 兜住）；常规 V6 主链的吞吐与冷启动开销零相关。
-- 后续问答命中走 `retrieve_service`（PG 检索），
-  不会重复触发 stdio 子进程；冷启动只发生在"入库那一帧"。
+冷启动：业务型 MCP tool 每次以子进程方式拉起，存在冷启动开销；当前**不**做平台化连接池。
+video_to_text 仅当显式识别到 .mp4 路径意图时才触发（由 `pan_jubu_celue_video` 兜住），
+常规主链吞吐与冷启动开销零相关；后续问答命中走 `retrieve_service`（PG 检索），
+不会重复触发 stdio 子进程。
 """
 
 from __future__ import annotations
@@ -126,7 +120,7 @@ class MiddleAgentRuntime(
         message = str(inputs.get("message", ""))
         plan: AgnoCollaborationPlan = inputs["plan"]
         http_use_knowledge = bool(inputs.get("http_use_knowledge", False))
-        # V8 第 1 轮：当前会话前文承接对象（与 main 看到的是同一份；新会话默认 None）。
+        # 当前会话前文承接对象（与 main 看到的是同一份；新会话默认 None）。
         history: SessionHistorySnapshot | None = inputs.get("history")
         decision: MainDecision = plan.decision
         msg = message.strip()
@@ -141,7 +135,7 @@ class MiddleAgentRuntime(
         # V15 legacy 收边：仅有孤立的 legacy knowledge_block / orphan legacy knowledge_block
         # 不得单独维持 sufficient，最终由 gather + finalize 阶段统一降级判断。
 
-        # V15 R1 修正：工具拦截失败记录（在 invoke_executor 生命周期内汇集）
+        # 工具拦截失败记录（在 invoke_executor 生命周期内汇集）
         _v15_blocked_failures: list[dict] = []
 
         # === gather → trace / V13 / finalize → bundle（invoke_tail_flow）===
@@ -283,12 +277,12 @@ class MiddleAgent(MiddleAgentPort):
     ) -> MiddleAgentResult:
         """单一主入口：经自有 `MiddleAgentRuntime` 执行链产出材料主判断对象。
 
-        V8 第 1 轮：新增 `history` 形参（默认 None，保持向后兼容）—— 当 service
+        新增 `history` 形参（默认 None，保持向后兼容）—— 当 service
         在每轮入口构造好 `SessionHistorySnapshot` 时显式传入；MiddleAgent 自身
         runtime 会在材料判断阶段决定是否要"沿用上一轮视频对象"继续补材，
         从而把"刚才那个视频"这种指代真转成对 video:<basename> 命名空间的检索。
 
-        V13 R2 新增形参：
+        新增形参：
         - session_id: 当前会话 ID（供 pending store 按 session 存储）
         - v13_text_content: 直接文本内容（prepare_text 场景，可能不同于 message）
         - v13_title: 文本标题（可选）

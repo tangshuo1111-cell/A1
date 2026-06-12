@@ -20,8 +20,7 @@ class TurnCache:
     """Per-turn cache keyed by request_id + lane + logical key.
 
     This cache is a performance-only optimization. Misses must always fall back
-    to the normal compute path and must never change product semantics.
-    """
+    to the normal compute path and must never change product semantics."""
 
     def __init__(self, *, request_id: str | None, lane: str = "") -> None:
         self._request_id = str(request_id or "")

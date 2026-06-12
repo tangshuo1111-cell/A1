@@ -1,4 +1,4 @@
-"""Policy-layer config (Round 11).
+"""Policy-layer config.
 
 Business rules live in sibling modules — import policies from here or directly:
 - ``config.safe_rule`` — redaction / safety field lists

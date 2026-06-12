@@ -1,4 +1,4 @@
-"""Per-lane fast path dispatch — routes to per-lane ``*_fast_impl`` modules (Round 3+)."""
+"""Per-lane fast path dispatch — routes to per-lane ``*_fast_impl`` modules."""
 
 from __future__ import annotations
 

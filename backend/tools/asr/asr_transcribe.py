@@ -78,7 +78,7 @@ def _r5c_duration_decision(
     *,
     user_confirmed: bool,
 ) -> tuple[str, str, str]:
-    """V16-R5C 三段时长规则。
+    """三段时长规则（≤15min / 15–120min / >2h）。
 
     返回 (decision, error_code, reason):
       - decision="allow"        ：≤ short_threshold（默认 900s/15min），直接 ASR
@@ -240,7 +240,7 @@ def _asr_transcribe(
             meta={"file_size": sz},
         )
 
-    # V16-R5C 三段时长规则（≤15min 直进 / 15-120min 需 user_confirmed / >2h 拒绝）。
+    # 三段时长规则（≤15min 直进 / 15–120min 需 user_confirmed / >2h 拒绝）。
     decision, dec_code, dec_reason = _r5c_duration_decision(
         duration_sec, user_confirmed=user_confirmed
     )

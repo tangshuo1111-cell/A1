@@ -1,6 +1,6 @@
 # Lane Capability Whitelist
 
-> **Authority**: §15.5 of 平台图+三强自治核心架构迁移执行计划.md  
+> **Authority**: §15.5 of docs/history/current/平台图+三强自治核心架构迁移执行计划.md  
 > **Naming convention**: `capability.<lane>.<verb>`  
 > Fast and complex share the capability pool; call-count limits differ.
 

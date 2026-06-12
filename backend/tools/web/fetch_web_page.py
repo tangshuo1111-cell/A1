@@ -1,4 +1,4 @@
-"""V16 R2 static web page fetch tool."""
+"""Static web page fetch tool."""
 
 from __future__ import annotations
 

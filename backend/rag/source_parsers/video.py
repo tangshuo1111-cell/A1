@@ -15,7 +15,7 @@ from ._common import (
 )
 
 
-# ── V13 R2：视频来源 parser ─────────────────────────────────────────────────
+# ── 视频来源 parser ─────────────────────────────────────────────────
 def parse_video_source(
     *,
     source_type: str,       # SOURCE_TYPE_LOCAL_VIDEO 或 SOURCE_TYPE_WEB_VIDEO

@@ -1,6 +1,6 @@
 # Trace Field Catalog
 
-> **Authority**: §15.6 of 平台图+三强自治核心架构迁移执行计划.md  
+> **Authority**: §15.6 of docs/history/current/平台图+三强自治核心架构迁移执行计划.md  
 > **Implementation**: `backend/core/observability.py`, `backend/observability.py`  
 > **Forbidden**: Do NOT create a second trace framework.
 

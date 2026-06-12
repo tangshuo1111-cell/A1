@@ -4,23 +4,20 @@ FastAPI 应用入口（协议层）。
 启动（本地）：设置 `PYTHONPATH=backend` 且 cwd 为仓库根后执行
 `uvicorn api.main:app --host 127.0.0.1 --port 8000`；推荐 `python scripts/run_dev.py --backend`。
 
-路由边界（V9 R3 收口后）：
+路由边界：
 - 公开 / 默认主路由：
     * GET /health
-    * POST /chat/agno  —— **唯一默认主 chat 路由**，承载 V6 三强 Agent + V7 视频链 + V8 会话记忆，
+    * POST /chat/agno  —— **唯一默认主 chat 路由**，承载三强 Agent 协作 + 视频链 + 会话记忆，
       前端 lib/api.ts: postChat 默认就连这里。
     * GET /tasks/{task_id}
     * GET /tasks/{task_id}/result
 - 管理 / 内部：/ingest/*、/sessions/*、/internal/*（ADMIN_API_KEY 非空时校验 X-Admin-Key）
 
-生产版第一轮：若设置环境变量 `API_BEARER_TOKEN`，则除 `/health`、`/docs`（含静态）、`/openapi.json`、`/redoc` 外均须 `Authorization: Bearer <token>`；未设置则行为与旧版一致（本地开发默认不启用）。
+鉴权：若设置环境变量 `API_BEARER_TOKEN`，则除 `/health`、`/docs`（含静态）、`/openapi.json`、`/redoc`
+外均须 `Authorization: Bearer <token>`；未设置则默认不启用（本地开发）。
 
-生产版第二轮：`POST /chat/agno` 为 **`async`** 路由，主链 `run_agno_chat_turn` 经 **`asyncio.to_thread`** 执行；`/chat/agno/upload` 同步解码与大模型调用同上；不改变 JSON 契约。
-
-V9 R3 物理移除：
-- POST /chat、POST /chat/async（旧 LangGraph 主链入口）
-- services.chat_service / services.async_chat_service / workflow.* / 01_主链核心\\app.py CLI
-- 全部已删除；不再以"兼容层"形态存在。
+并发：`POST /chat/agno` 为 **`async`** 路由，主链 `run_agno_chat_turn` 经 **`asyncio.to_thread`** 执行；
+`/chat/agno/upload` 的同步解码与大模型调用同上；不改变 JSON 契约。
 
 与 services.agno_chat_service、storage.pg_pool（PostgreSQL）协作。
 """

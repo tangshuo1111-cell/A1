@@ -3,7 +3,7 @@ MCP 调用出口：可选真实 stdio MCP（子进程 FastMCP Server），失败
 
 【注意】项目目录勿再命名为 `mcp/`，否则会遮蔽官方 `mcp` 包导致 stdio 联调失败。
 
-V7 第 1 轮新增「业务型 tool」概念：
+新增「业务型 tool」概念：
 - `BUSINESS_TOOL_NAMES` 列出主链可调用的业务型 MCP tool（当前唯一：`video_to_text`）；
 - 这类 tool **必须** 走真子进程 stdio MCP——失败时明确返回 `transport=stdio_error`，
   **不允许** 静默回退到进程内模拟（否则就成了"普通函数互调冒充 MCP"）；
@@ -20,7 +20,7 @@ from config.settings import settings
 # 本地模拟：name -> handler(arguments) -> JSON 可序列化对象
 _LOCAL_HANDLERS: dict[str, Callable[[dict[str, Any]], Any]] = {}
 
-# V7 第 1 轮：当前收口唯一的业务型 MCP tool 名单（与 mcp_local.stdio_real 保持一致）
+# 当前收口唯一的业务型 MCP tool 名单（与 mcp_local.stdio_real 保持一致）
 BUSINESS_TOOL_NAMES: set[str] = {"video_to_text"}
 
 
@@ -32,18 +32,13 @@ def is_business_tool(name: str) -> bool:
 def register_local_tool(name: str, fn: Callable[[dict[str, Any]], Any]) -> None:
     """注册进程内 MCP 风格工具（模拟用）。
 
-    V7 第 1 轮起：业务型 MCP tool **不允许** 在本表注册，避免被冒充为"真 MCP 调用"。
+    起：业务型 MCP tool **不允许** 在本表注册，避免被冒充为"真 MCP 调用"。
     """
     if name in BUSINESS_TOOL_NAMES:
         raise ValueError(
             f"业务型 MCP tool {name!r} 不允许注册本地模拟 handler——必须走真子进程 stdio MCP",
         )
     _LOCAL_HANDLERS[name] = fn
-
-
-def call_tool_placeholder(name: str, arguments: dict[str, Any]) -> Any:
-    """兼容旧入口：转调最小 MCP 风格封装。"""
-    return call_mcp_tool(name, arguments)
 
 
 def _call_stdio(name: str, arguments: dict[str, Any]) -> dict[str, Any] | None:
@@ -79,7 +74,7 @@ def call_mcp_tool(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     - `stdio_error`：业务型 tool 调用 stdio 失败（**不**回退本地模拟，明确收口为失败）
     - `none`：未知 tool
 
-    V7 第 1 轮约束：业务型 tool（`BUSINESS_TOOL_NAMES`）失败时返回明确失败，
+    约束：业务型 tool（`BUSINESS_TOOL_NAMES`）失败时返回明确失败，
     **不**伪装成功、**不**静默吞掉、**不**回退到 in_process_simulated。
     """
     stdio_res = _call_stdio(name, arguments)

@@ -1,5 +1,5 @@
 """
-V16 R4-B：OCR provider 实现（generic HTTP multipart + 本地 Tesseract 可选路径）。
+OCR provider 实现（generic HTTP multipart + 本地 Tesseract 可选路径）。
 """
 
 from __future__ import annotations

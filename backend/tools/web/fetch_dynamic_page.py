@@ -1,4 +1,4 @@
-"""V16 R2 dynamic web page fetch tool; R4-D Playwright provider 抽层."""
+"""Dynamic web page fetch tool; Playwright provider 抽层."""
 
 from __future__ import annotations
 

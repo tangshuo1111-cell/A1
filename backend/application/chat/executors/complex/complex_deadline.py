@@ -1,4 +1,4 @@
-"""Complex path deadline short-circuit helpers (Round 2)."""
+"""Complex path deadline short-circuit helpers."""
 
 from __future__ import annotations
 

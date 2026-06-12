@@ -1,4 +1,4 @@
-"""V11 R5 C：视频字幕入库前的"轻 LLM 梳理"。
+"""视频字幕入库前的"轻 LLM 梳理"。
 
 设计边界（与 router.py 一脉相承）
 ---------------------------------
@@ -101,7 +101,7 @@ def tidy_subtitle(text: str, *, force: bool = False) -> TidyResult:
     model = (settings.video_tidy_model or "").strip() or settings.llm_router_model
 
     try:
-        # V11 R5+ 修复：tidy 用**专用**短超时 + 不重试。
+        # tidy 用**专用**短超时 + 不重试。
         # tidy 失败已经降级用原文（不影响入库 / 回答），但 retry 期间会**同步阻塞**
         # 整个 /chat/agno 请求；默认 llm 超时 60s × retry 2 次 → 最坏 180s，
         # 前端 fetch 早就超时报"服务器异常"了。专用配置：默认 30s + 0 retry，

@@ -1,6 +1,6 @@
 # LaneDecision Schema
 
-> **Authority**: §15.4.1 of 平台图+三强自治核心架构迁移执行计划.md  
+> **Authority**: §15.4.1 of docs/history/current/平台图+三强自治核心架构迁移执行计划.md  
 > **Version**: 1  
 > **Pydantic model**: `backend/application/ingress/lane_decision_schema.py`
 

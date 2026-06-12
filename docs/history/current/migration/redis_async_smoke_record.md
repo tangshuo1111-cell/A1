@@ -1,4 +1,7 @@
-# Redis 异步队列联调记录 (§15.8 / P9)
+# Redis 异步队列联调记录 (§15.8 / P9) — 已归档
+
+> **归档说明**：本文是 P9 阶段一次性的 async 队列联调/签字记录（2026-05-22），
+> 仅作历史存档，不代表当前运行手册。当前 `ENABLE_ASYNC_CONTROL_PLANE_V2` 已默认开启。
 
 > **Date**: 2026-05-22  
 > **Scope**: `tasks.queue.async_task_queue` + `workers.entry.task_plane_worker`

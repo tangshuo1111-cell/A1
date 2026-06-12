@@ -2,7 +2,7 @@
 
 通过 `setup_structured_logging()` 在 lifespan 中替换默认 handler。
 输出格式由环境变量 LOG_FORMAT 控制：json | text（默认 text）。
-敏感字段经 ``core.log_redaction`` 脱敏（Round 12）。
+敏感字段经 ``core.log_redaction`` 脱敏。
 """
 
 from __future__ import annotations

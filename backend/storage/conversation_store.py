@@ -13,9 +13,6 @@ def append_turn(**kwargs) -> None:
     return cg.append_turn(**kwargs)
 
 
-append_turn_placeholder = append_turn
-
-
 def get_turn_by_task_id(task_id: str):
     return cg.get_turn_by_task_id(task_id)
 

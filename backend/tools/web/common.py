@@ -1,4 +1,4 @@
-"""Shared helpers for V16 R2 web tools."""
+"""Shared helpers for web tools."""
 
 from __future__ import annotations
 

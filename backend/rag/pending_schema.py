@@ -1,5 +1,5 @@
 """
-V13 R1：统一资料生命周期 schema。
+统一资料生命周期 schema。
 
 定义：
 - SourcePayload：来自各来源（text / file / web_url / local_video / web_video）的统一中间 payload
@@ -12,7 +12,6 @@ V13 R1：统一资料生命周期 schema。
 - commit 后调用 V12 knowledge_store.save_document_text → ingest_text 入库
 - 不新建第二套知识库；不复活旧 retrieve_as_legacy_dicts / fetch_knowledge_block 路径
 
-V13 R2：
 - local_video / web_video 已并入统一生命周期（SOURCE_TYPE_LOCAL_VIDEO / SOURCE_TYPE_WEB_VIDEO）
 - PendingVideoText 降级为 V11 兼容层，默认主路径使用 PendingKnowledgeItem
 """
@@ -33,7 +32,7 @@ SOURCE_TYPE_WEB_VIDEO = "web_video"          # 网页/视频站 URL（字幕/ASR
 SOURCE_TYPE_OCR_DOCUMENT = "ocr_document"
 SOURCE_TYPE_ASR_TRANSCRIPT = "asr_transcript"
 SOURCE_TYPE_WEB_SEARCH = "web_search"
-# V16 R1：文档类来源类型（各有专属 metadata）
+# 文档类来源类型（各有专属 metadata）
 SOURCE_TYPE_DOCX = "docx"                    # Word .docx（段落/标题/表格）
 SOURCE_TYPE_XLSX = "xlsx"                    # Excel .xlsx（sheet/行列）
 SOURCE_TYPE_PDF = "pdf"                      # PDF（文本 PDF + 扫描 PDF 检测）
@@ -81,7 +80,7 @@ def derive_pending_kind(
 class SourcePayload:
     """所有来源的统一中间结构体，parser 产出后统一进入此格式。
 
-    V13 R1 字段：
+    字段：
     - source_type  : 来源类型（text / text_file / web_url）
     - source_id    : 入库时使用的标识，格式由来源类型决定
     - title        : 资料标题（来自文件名 / 网页 <title> / 用户提供）
@@ -89,7 +88,7 @@ class SourcePayload:
     - metadata     : 结构化元信息（见下文）
     - raw_source   : 原始来源标识（URL / 文件路径 / 空字符串）
 
-    metadata 统一字段（V13 R1 最小集）：
+    metadata 统一字段（最小集）：
     - title / name
     - url / file_path
     - parser_name
@@ -119,8 +118,8 @@ class PendingKnowledgeItem:
 
     生命周期：PENDING → COMMITTED（commit 后）/ DISCARDED（用户取消/过期）
 
-    V13 R1：仅在内存中，不持久化。生命周期与 session 同步。
-    V13 R2：可考虑 SQLite 持久化，支持服务重启后找回。
+    仅在内存中，不持久化。生命周期与 session 同步。
+    可考虑 SQLite 持久化，支持服务重启后找回。
     """
 
     pending_id: str
@@ -237,7 +236,7 @@ _PENDING_ITEM_FIELDS = (
 
 
 def pending_item_to_dict(item: PendingKnowledgeItem) -> dict[str, Any]:
-    """Serialize pending item for PG persistence (Round 7)."""
+    """Serialize pending item for PG persistence."""
     return asdict(item)
 
 

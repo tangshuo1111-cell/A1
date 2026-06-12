@@ -1,4 +1,4 @@
-"""Thin compat surface for shared fast-path helpers (Round 17)."""
+"""Thin compat surface for shared fast-path helpers."""
 
 from __future__ import annotations
 

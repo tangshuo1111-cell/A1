@@ -1,4 +1,4 @@
-"""In-process pending knowledge store (Round 7)."""
+"""In-process pending knowledge store."""
 
 from __future__ import annotations
 

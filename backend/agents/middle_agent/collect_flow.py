@@ -1,5 +1,5 @@
 """
-middle_agent 旧主链 `collect()` 路径所需逻辑（V6 第 6 轮迁入）。
+middle_agent 旧主链 `collect()` 路径所需逻辑。
 
 > 注：本文件 **不是** V6 主入口。仅承接旧主链 `workflow.chat_graph` 与既有
 > `test_middle_agent.py` 用到的 `collect()` 实现（RAG / Tool / MCP 多路取材）。

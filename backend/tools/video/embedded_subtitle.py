@@ -1,5 +1,5 @@
 """
-V16 R4-C：内嵌字幕提取（ffprobe 探测 + ffmpeg 导出 SRT 文本）。
+内嵌字幕提取（ffprobe 探测 + ffmpeg 导出 SRT 文本）。
 
 不在模块 import 时依赖 ffprobe/ffmpeg；通过 shutil.which + subprocess 运行时检测。
 """

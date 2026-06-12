@@ -1,4 +1,4 @@
-"""Pipeline stage 2 — ingress, approval, arbitration, shared prep (Round 3)."""
+"""Pipeline stage 2 — ingress, approval, arbitration, shared prep."""
 
 from __future__ import annotations
 

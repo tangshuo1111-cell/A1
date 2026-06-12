@@ -43,12 +43,12 @@ def load_recent_text(session_id: str | None, max_chars: int | None = None) -> st
         pool = get_pool()
         with pool.connection() as conn, conn.cursor() as cur:
             cur.execute(
-                """
+                    """
                     SELECT line FROM session_memory_lines
                     WHERE session_id = %s
                     ORDER BY id DESC
                     LIMIT 30;
-                    """,
+                """,
                 (session_id,),
             )
             lines = [str(r[0]) for r in cur.fetchall() if r and r[0]]

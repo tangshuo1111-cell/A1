@@ -90,7 +90,7 @@ def _migrate_schema() -> None:
             key TEXT PRIMARY KEY,
             value TEXT NOT NULL
         );
-        """,
+ """,
         """
         CREATE TABLE IF NOT EXISTS task_jobs (
             task_id TEXT PRIMARY KEY,
@@ -117,15 +117,15 @@ def _migrate_schema() -> None:
             updated_at TEXT,
             next_action_hint TEXT
         );
-        """,
+ """,
         """
         CREATE INDEX IF NOT EXISTS idx_task_jobs_status
         ON task_jobs (status);
-        """,
+ """,
         """
         CREATE INDEX IF NOT EXISTS idx_task_jobs_started
         ON task_jobs (started_at);
-        """,
+ """,
         """
         CREATE TABLE IF NOT EXISTS turns (
             id BIGSERIAL PRIMARY KEY,
@@ -141,7 +141,7 @@ def _migrate_schema() -> None:
             router_source TEXT DEFAULT '',
             user_visible_status TEXT DEFAULT ''
         );
-        """,
+ """,
         """
         CREATE TABLE IF NOT EXISTS session_memory_lines (
             id BIGSERIAL PRIMARY KEY,
@@ -149,21 +149,21 @@ def _migrate_schema() -> None:
             line TEXT NOT NULL,
             created_at TEXT NOT NULL
         );
-        """,
+ """,
         """
         CREATE TABLE IF NOT EXISTS rag_chunks (
             id BIGSERIAL PRIMARY KEY,
             source_id TEXT NOT NULL,
             content TEXT NOT NULL
         );
-        """,
+ """,
         """
         CREATE INDEX IF NOT EXISTS idx_rag_chunks_source_id ON rag_chunks (source_id);
-        """,
+ """,
         """
         CREATE INDEX IF NOT EXISTS rag_chunks_content_tsv
         ON rag_chunks USING GIN (to_tsvector('simple', COALESCE(content, '')));
-        """,
+ """,
         """
         CREATE TABLE IF NOT EXISTS rag_chunk_meta (
             id BIGSERIAL PRIMARY KEY,
@@ -175,22 +175,22 @@ def _migrate_schema() -> None:
             created_at TEXT NOT NULL DEFAULT '',
             metadata_json TEXT NOT NULL DEFAULT '{}'
         );
-        """,
+ """,
         """
         CREATE INDEX IF NOT EXISTS idx_chunk_meta_source_id
         ON rag_chunk_meta (source_id);
-        """,
+ """,
         """
         CREATE UNIQUE INDEX IF NOT EXISTS idx_chunk_meta_chunk_id
         ON rag_chunk_meta (chunk_id);
-        """,
+ """,
         """
         CREATE TABLE IF NOT EXISTS rag_embeddings (
             rowid BIGINT PRIMARY KEY,
             dim INTEGER NOT NULL,
             vec BYTEA NOT NULL
         );
-        """,
+ """,
         """
         CREATE TABLE IF NOT EXISTS turn_product_metrics (
             id BIGSERIAL PRIMARY KEY,
@@ -213,29 +213,29 @@ def _migrate_schema() -> None:
             message_text TEXT,
             answer_summary TEXT
         );
-        """,
+ """,
         """
         ALTER TABLE turn_product_metrics ADD COLUMN IF NOT EXISTS sample_label TEXT;
-        """,
+ """,
         """
         ALTER TABLE turn_product_metrics ADD COLUMN IF NOT EXISTS message_text TEXT;
-        """,
+ """,
         """
         ALTER TABLE turn_product_metrics ADD COLUMN IF NOT EXISTS answer_summary TEXT;
-        """,
+ """,
         """
         ALTER TABLE turn_product_metrics ADD COLUMN IF NOT EXISTS async_final_answer TEXT;
-        """,
+ """,
         """
         ALTER TABLE turn_product_metrics ADD COLUMN IF NOT EXISTS async_poll_status TEXT;
-        """,
+ """,
         """
         ALTER TABLE turn_product_metrics ADD COLUMN IF NOT EXISTS async_background_ms INTEGER;
-        """,
+ """,
         """
         CREATE INDEX IF NOT EXISTS idx_turn_product_metrics_created
         ON turn_product_metrics (created_at);
-        """,
+ """,
         """
         CREATE TABLE IF NOT EXISTS agno_session_state (
             session_key TEXT PRIMARY KEY,
@@ -244,7 +244,7 @@ def _migrate_schema() -> None:
             pending_video_json TEXT,
             updated_at TEXT NOT NULL
         );
-        """,
+ """,
         """
         CREATE TABLE IF NOT EXISTS agno_pending_items (
             pending_id TEXT PRIMARY KEY,
@@ -253,11 +253,11 @@ def _migrate_schema() -> None:
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL
         );
-        """,
+ """,
         """
         CREATE INDEX IF NOT EXISTS idx_agno_pending_session
         ON agno_pending_items (session_id);
-        """,
+    """,
     ]
     with pool.connection() as conn:
         with conn.cursor() as cur:
@@ -268,7 +268,7 @@ def _migrate_schema() -> None:
                 INSERT INTO app_schema_meta(key, value)
                 VALUES ('runtime_schema_version', '1')
                 ON CONFLICT (key) DO NOTHING;
-                """
+            """
             )
         conn.commit()
     logger.info("PostgreSQL schema migration applied (version=1)")

@@ -2,7 +2,7 @@
 工具 / 资料收集策略：执行顺序计算（policy 子层）。
 
 依据 CollectionTask 的渠道与 middle_collect_priority 决定 local / rag / http / mcp 顺序；
-供 middle_agent.collect 与 LangGraph collect 节点使用（单一真相，避免散落 if/else）。
+供 middle_agent.collect 阶段使用（单一真相，避免散落 if/else）。
 
 输入：CollectionTask；输出：步骤名列表（与 _run_step 约定一致）。
 """

@@ -1,7 +1,7 @@
 """
 Agno 基础问答的薄壳转发模块。
 
-V9 R3 现状：
+现状：
 - 真正的运行时实现位于 `agents.answer_agent.llm_exec`，由 `AnswerAgent._AgnoLlmZhixingQi`
   作为 answer 的内部 LLM 执行器使用。
 - 本文件仅做两件事：

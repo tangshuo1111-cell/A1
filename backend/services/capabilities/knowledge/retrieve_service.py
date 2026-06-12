@@ -1,10 +1,9 @@
-"""KB retrieval orchestration — sole business-layer retrieve entry (Round 5).
+"""KB retrieval orchestration — sole business-layer retrieve entry.
 
 Business / agent / application code must import retrieval only from this module
 (or ``kb_pipeline`` / ``rag_orchestration_service`` compat wrappers that delegate here).
 Direct ``rag.*`` / ``knowledge.*`` / ``storage.knowledge_store`` imports are forbidden
-outside ``services/capabilities/knowledge/``.
-"""
+outside ``services/capabilities/knowledge/``."""
 
 from __future__ import annotations
 

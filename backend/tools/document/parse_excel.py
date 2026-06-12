@@ -1,5 +1,5 @@
 """
-V16 R1：Excel 文档工具（MCP-compatible Adapter）。
+Excel 文档工具（MCP-compatible Adapter）。
 
 技术路线（按技术方案 CSV 第 6 行）：
   - openpyxl 主方案：读取 sheet、行列、单元格值

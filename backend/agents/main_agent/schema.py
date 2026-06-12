@@ -1,22 +1,21 @@
 """
-main_agent 判断对象 schema（V6 第 6 轮迁出）。
+main_agent 判断对象 schema。
 
 - `MainXiezuoPan`：主协作判维度，由 main 自己产出，下游必须尊重。
 - `AgnoCollaborationPlan`：MainAgent.pan 的对外结构化返回值。
 
-V13 R1 变更：
-- AgnoCollaborationPlan 新增 v13_prepare_intent / v13_commit_intent 两个字段
-- 用于传递「当前轮用户是否带资料要 prepare」和「是否要求保存到知识库」的判断
-- Main 不直接执行 prepare/commit，只输出 plan，由 Middle 按 plan 执行工具
+`AgnoCollaborationPlan` 的 prepare/commit 意图字段：
+- v13_prepare_intent / v13_commit_intent：传递「当前轮用户是否带资料要 prepare」和
+  「是否要求保存到知识库」的判断；Main 不直接执行 prepare/commit，只输出 plan，
+  由 Middle 按 plan 执行工具。
 
-V15 R1 变更（真约束字段，不是 trace 装饰）：
+真约束字段（不是 trace 装饰，Middle/Answer 必须据此决定执行路径）：
 - needs_retrieval    : Middle 是否必须调 retrieve_knowledge（从 decision.need_rag 派生）
 - retrieval_strategy : 传给 retrieve_knowledge 的 strategy 参数（"auto"/"keyword"/"semantic"/"hybrid"）
-- needs_pending      : Middle 是否需要处理 V13 pending/commit（从 v13_prepare_intent/v13_commit_intent 派生）
+- needs_pending      : Middle 是否需要处理 pending/commit（从 v13_prepare_intent/v13_commit_intent 派生）
 - pending_reference  : pending 操作类型 "latest"/"all"/"prepare"/"commit"/"none"
 - answer_mode        : Answer 回答模式 "knowledge_grounded"/"temporary_material"/"commit_result"/"direct"/"conservative"
 - tools_allowed      : Middle 本轮允许调用的工具白名单（list[str]）
-这 6 个字段是真约束：Middle/Answer 必须根据它们决定执行路径，不是仅记录 trace。
 """
 
 from __future__ import annotations
@@ -43,7 +42,7 @@ class MainXiezuoPan:
 
 @dataclass(frozen=True)
 class V13PrepareIntent:
-    """V13 R1：本轮「资料 prepare」意图描述（Main 判断、Middle 执行）。
+    """本轮「资料 prepare」意图描述（Main 判断、Middle 执行）。
 
     source_type : "text" / "text_file" / "web_url"（本轮支持的三类）
     raw_source  : URL / 文件名 / "" （供 Middle 调用对应 prepare 工具时使用）
@@ -77,25 +76,25 @@ class ExecutionPlan:
 @dataclass(frozen=True)
 class AgnoCollaborationPlan:
     """
-    V6：main 输出的 **协作决策**（不仅是路由标签），供 middle / answer 改变行为。
+    main 输出的 **协作决策**（不仅是路由标签），供 middle / answer 改变行为。
 
     - `force_skip_evidence`：为 True 时 middle **不得**做知识拉取（除非显式网页意图），answer 走短答策略。
     - `web_supplement_mode`：`explicit_only` = 仅显式/路由网页；`on_kb_miss_or_hint` = 允许「知识空再补搜」等既有门控。
     - `answer_composition`：answer 侧组织回答的主策略（与 `answer_style` 解耦一层，专用于 Agno 链）。
     - `xiezuo_pan`：通用协作判维度（真实驱动 middle/answer，与上列布尔/枚举一致推导）。
-    - `video_url`：V11 R7+ Main 第 1 道从消息里已抽取的白名单视频 URL；Middle **优先**
+    - `video_url`：Main 从消息里已抽取的白名单视频 URL；Middle **优先**
       用此值驱动 `fetch_video_text`，避免再对 message 做一次 `extract_video_url`。
 
-    V13 R1 新增字段：
+    prepare/commit 意图字段：
     - `v13_prepare_intent`：当 Main 判断用户本轮提供了资料（URL / 文件 / 文本）时，
       填充此字段告知 Middle 应执行哪类 prepare 工具；None 表示本轮无需 prepare。
-    - `v13_commit_intent`：True = Main 判断用户想保存到知识库（跨轮场景：上轮有 pending，
+    - `v13_commit_intent`：True = Main 判断用户想保存到知识库（跨轮场景：上轮有 pending,
       本轮说「保存」）；Middle 将据此调 commit_pending 工具。
 
-    V15 R1 新增真约束字段（不是 trace 装饰字段，会直接影响 Middle/Answer 执行路径）：
+    真约束字段（不是 trace 装饰字段，会直接影响 Middle/Answer 执行路径）：
     - `needs_retrieval`    : 是否需要知识库检索，Middle 根据此字段决定是否调 retrieve_knowledge
     - `retrieval_strategy` : retrieve_knowledge 策略（"auto"/"keyword"/"semantic"/"hybrid"）
-    - `needs_pending`      : 是否需要 V13 pending/commit 操作
+    - `needs_pending`      : 是否需要 pending/commit 操作
     - `pending_reference`  : pending 操作引用类型（"latest"/"all"/"prepare"/"commit"/"none"）
     - `answer_mode`        : Answer 回答模式约束
       - "knowledge_grounded" : 基于 retrieved_chunks 回答
@@ -115,22 +114,22 @@ class AgnoCollaborationPlan:
     xiezuo_pan: MainXiezuoPan
     video_url: str | None = field(default=None)
 
-    # V13 R1
+    # prepare/commit 意图
     v13_prepare_intent: V13PrepareIntent | None = field(default=None)
     v13_commit_intent: bool = field(default=False)
 
-    # V15 R1 真约束字段（有默认值，向后兼容；下游必须消费，不得仅写 trace）
+    # 真约束字段（有默认值，向后兼容；下游必须消费，不得仅写 trace）
     needs_retrieval: bool = field(default=False)
     retrieval_strategy: str = field(default="auto")   # auto/keyword/semantic/hybrid/source_all
     needs_pending: bool = field(default=False)
     pending_reference: str = field(default="none")    # latest/all/prepare/commit/none
     answer_mode: str = field(default="direct")        # knowledge_grounded/temporary_material/commit_result/direct/conservative
     tools_allowed: tuple[str, ...] = field(default_factory=tuple)  # 空元组=明确禁止所有工具；None=不限制（旧plan兼容）；("*",)=显式允许所有
-    # V15 统一收口新增：检索过滤条件，由 Middle 传入 retrieve_knowledge(filters=...)
-    # 当前由 Middle 在 V8 锚点处自动生成 {"source_id": anchor.source_id}
+    # 检索过滤条件，由 Middle 传入 retrieve_knowledge(filters=...)
+    # 当前由 Middle 在会话锚点处自动生成 {"source_id": anchor.source_id}
     # 普通检索时为 None（不过滤）；plan 层也可由 Main 直接填充
     retrieval_filters: dict[str, str] | None = field(default=None)
-    # V17 R1：多来源任务建模。Main 只产出可执行计划，Middle 执行。
+    # 多来源任务建模。Main 只产出可执行计划，Middle 执行。
     job_type: str = field(default="normal_chat")
     source_inputs: tuple[str, ...] = field(default_factory=tuple)
     tool_plan: dict[str, Any] | None = field(default=None)
@@ -142,7 +141,7 @@ class AgnoCollaborationPlan:
     max_rounds: int = field(default=0)
     original_user_intent: str = field(default="")
     execution_plan: ExecutionPlan | None = field(default=None)
-    # V18 R1：SLA / budget 元信息（由 chat 主链入口回填；不改变 Main 自身签字逻辑）
+    # SLA / budget 元信息（由 chat 主链入口回填；不改变 Main 自身签字逻辑）
     sla_budget_ms: int = field(default=0)
     deadline_monotonic: float = field(default=0.0)
     remaining_ms_hint: int = field(default=0)

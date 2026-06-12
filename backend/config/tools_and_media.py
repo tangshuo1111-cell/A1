@@ -32,7 +32,7 @@ class ToolsAndMediaSettings:
         default_factory=lambda: _env_float("HTTP_FETCH_TIMEOUT_SEC", 8.0)
     )
 
-    # --- V11 R1：视频 URL 链 + 云 ASR ---
+    # --- 视频 URL 链 + 云 ASR ---
     video_url_enabled: bool = field(
         default_factory=lambda: _env_bool("VIDEO_URL_ENABLED", True)
     )
@@ -82,7 +82,7 @@ class ToolsAndMediaSettings:
         default_factory=lambda: _env_int("ASR_MAX_FILE_MB", 50)
     )
 
-    # --- V11 R2：Cookies ---
+    # --- Cookies ---
     video_cookies_from_browser: str = field(
         default_factory=lambda: _env_str("VIDEO_COOKIES_FROM_BROWSER", "").strip().lower()
     )
@@ -90,7 +90,7 @@ class ToolsAndMediaSettings:
         default_factory=lambda: _env_str("VIDEO_COOKIES_FILE", "").strip()
     )
 
-    # --- V11 R5：字幕梳理 ---
+    # --- 字幕梳理 ---
     video_tidy_enabled: bool = field(
         default_factory=lambda: _env_bool("VIDEO_TIDY_ENABLED", False)
     )
@@ -107,7 +107,7 @@ class ToolsAndMediaSettings:
         default_factory=lambda: _env_int("VIDEO_TIDY_MAX_RETRIES", 0)
     )
 
-    # --- V16 R1：文档处理上限与工具开关 ---
+    # --- 文档处理上限与工具开关 ---
     v16_max_file_mb: int = field(
         default_factory=lambda: _env_int("V16_MAX_FILE_MB", 20)
     )

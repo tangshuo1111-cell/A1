@@ -1,4 +1,4 @@
-"""Pipeline stage 1 — session snapshot and stitch (Round 3)."""
+"""Pipeline stage 1 — session snapshot and stitch."""
 
 from __future__ import annotations
 

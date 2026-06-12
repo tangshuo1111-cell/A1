@@ -1,4 +1,4 @@
-"""Fast executor profile — lane dispatch only (Round 3+)."""
+"""Fast executor profile — lane dispatch only."""
 
 from __future__ import annotations
 

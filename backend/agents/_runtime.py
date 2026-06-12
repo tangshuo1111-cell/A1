@@ -1,18 +1,15 @@
 """
-agents 共享：agent framework runtime 基础（V6 第 7~9 轮）。
+agents 共享：agent framework runtime 基础。
 
-设计演进：
-- V6 第 7 轮：让 main / middle / answer 都通过同一个 `AgnoAgentRuntime` 执行壳产出主判断。
-- V6 第 8 轮：把"agent 实体"语义真正落到 runtime 子类——每个 agent 应该 **拥有自己的
-  `AgnoAgentRuntime` 子类**（如 `MainAgentRuntime`），在子类里以 **「意图识别 / 局部策略 /
-  主判断 / 失败边界 / 清洗约束兜底」五段方法** 直接产出主判断核心字段。
-  外层规则函数被降级为"清洗 / 约束 / 兜底"层，**不允许**先把核心结论算完。
-- V6 第 9 轮（本轮，终验补强）：把 main 的 `MainDecision`（含 `answer_channel / need_rag /
-  need_external_info / router_source`）也从规则函数 `decide_for_agno_chat` 迁出，
-  改由 `MainAgentRuntime.panduan_main_decision(...)` 自己产出（标志 `router_source="main_agent_runtime"`）。
+设计要点：
+- main / middle / answer 都通过同一个 `AgnoAgentRuntime` 执行壳产出主判断。
+- 每个 agent **拥有自己的 `AgnoAgentRuntime` 子类**（如 `MainAgentRuntime`），
+  在子类里以 **「意图识别 / 局部策略 / 主判断 / 失败边界 / 清洗约束兜底」五段方法**
+  直接产出主判断核心字段；外层规则函数只做"清洗 / 约束 / 兜底"，**不允许**先把核心结论算完。
+- `MainDecision`（含 `answer_channel / need_rag / need_external_info / router_source`）
+  由 `MainAgentRuntime.panduan_main_decision(...)` 自己产出（`router_source="main_agent_runtime"`）。
   `decide_for_agno_chat` 仅保留为外部兼容兜底，runtime 主路径不再依赖它。
-  本基础类新增 `runtime_brain_owned_by_agent` 属性，外部测试可直接断言"主脑确实由
-  runtime 子类自己 override 的 `invoke_executor` 提供"。
+  `runtime_brain_owned_by_agent` 属性供测试断言"主脑由 runtime 子类 override 的 `invoke_executor` 提供"。
 
 执行链仍是三步：`prepare_frame → invoke_executor → finalize_outcome`。
 - `executor` 仍可作为可选注入 hook（测试 / 未来 LLM 化），但 **默认主脑** 是 runtime 子类自身的

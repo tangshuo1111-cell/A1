@@ -1,7 +1,7 @@
 """
-V13 R1：统一资料生命周期服务（prepare / pending / commit / list / discard）。
+统一资料生命周期服务（prepare / pending / commit / list / discard）。
 
-这是 V13 R1 的核心服务层，负责：
+这是 的核心服务层，负责：
 1. prepare_*_source：把各类来源转成 PendingKnowledgeItem，存入 pending store
 2. commit_pending：用户确认保存后，调 V12 knowledge_store → ingest 正式入库
 3. list_pending / get_pending / discard_pending：pending 管理
@@ -10,7 +10,7 @@ V13 R1：统一资料生命周期服务（prepare / pending / commit / list / di
 - commit 后走 V12 knowledge_store.save_document_text → ingest_text（统一主出口）
 - 不重建第二套知识库；不复活旧 retrieve_as_legacy_dicts / fetch_knowledge_block
 - prepare 只解析、不入库；commit 才入库
-- pending store 仅内存（V13 R2 可升级）
+- pending store 仅内存（可后续持久化）
 
 三态说明：
 - TEMPORARY  : 资料在当前轮进入上下文，尚未 prepare（仅当轮可用）
@@ -44,7 +44,7 @@ logger = logging.getLogger("light_maqa")
 
 
 def _sync_task_taskstore_after_prepare(item: PendingKnowledgeItem) -> None:
-    """V16 R4-E：prepare 成功后把 pending_id 回填 SQLite task_jobs。"""
+    """prepare 成功后把 pending_id 回填 SQLite task_jobs。"""
     if item.extract_status != "ok":
         return
     tid = (item.metadata or {}).get("v16_task_id")
@@ -131,7 +131,7 @@ def prepare_document_source(
     store: PendingStore | None = None,
 ) -> PendingKnowledgeItem:
     """
-    V16 R1：文档类文件（.docx / .xlsx / .pdf）prepare。
+    文档类文件（.docx / .xlsx / .pdf）prepare。
 
     调用 document tool registry → DocumentToolResult → PendingKnowledgeItem。
     失败时 extract_status=error_code，不得 commit。
@@ -166,7 +166,7 @@ def prepare_file_source(
 ) -> PendingKnowledgeItem:
     """
     文本型文件（.txt / .md）prepare。
-    V16 R1：.docx / .xlsx / .pdf 自动分发到 prepare_document_source。
+    .docx / .xlsx / .pdf 自动分发到 prepare_document_source。
 
     file_content 可传入已读取的内容（来自前端上传），否则从 file_path 读取。
     返回 PendingKnowledgeItem（已加入 pending store）。
@@ -212,7 +212,7 @@ def prepare_web_url_source(
     store: PendingStore | None = None,
 ) -> PendingKnowledgeItem:
     """
-    V16 R2 网页 URL prepare：Web ToolResult → pending。
+    网页 URL prepare：Web ToolResult → pending。
 
     返回 PendingKnowledgeItem（已加入 pending store）。
     失败时 extract_status 为 error_code；失败态不得 commit。

@@ -1,4 +1,4 @@
-"""Thin facade — canonical main-chain logic lives in ``turn_orchestrator`` (Round 5+)."""
+"""Thin facade — canonical main-chain logic lives in ``turn_orchestrator``."""
 
 from __future__ import annotations
 

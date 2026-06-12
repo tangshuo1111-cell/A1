@@ -1,4 +1,4 @@
-"""PostgreSQL-backed chat session store (Round 7)."""
+"""PostgreSQL-backed chat session store."""
 
 from __future__ import annotations
 

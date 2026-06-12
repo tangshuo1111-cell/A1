@@ -1,4 +1,4 @@
-"""KB lane fast path implementation (Round 1)."""
+"""KB lane fast path implementation."""
 
 from __future__ import annotations
 

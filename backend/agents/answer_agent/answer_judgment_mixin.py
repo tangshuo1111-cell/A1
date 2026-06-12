@@ -1,4 +1,4 @@
-"""台账治理第2b轮 — Answer 判断阶段 mixin（五段 + feedback_request，不含 huida 主链）。"""
+"""Answer 判断阶段 mixin（五段 + feedback_request，不含 huida 主链）。"""
 
 from __future__ import annotations
 

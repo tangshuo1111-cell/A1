@@ -1,4 +1,4 @@
-"""Complex pipeline — Middle/gather stage (Round 7)."""
+"""Complex pipeline — Middle/gather stage."""
 
 from __future__ import annotations
 

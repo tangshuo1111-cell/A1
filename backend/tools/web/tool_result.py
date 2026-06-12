@@ -1,7 +1,7 @@
 """
-V16 R2: unified web tool result.
+unified web tool result.
 
-WebToolResult extends the V16 R1 DocumentToolResult instead of creating a
+WebToolResult extends the DocumentToolResult instead of creating a
 second incompatible shape. Web-specific fields are first-class for tests and
 reports, while metadata keeps the same downstream mapping style.
 """

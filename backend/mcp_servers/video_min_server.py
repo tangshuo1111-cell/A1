@@ -1,10 +1,10 @@
 """
-V7 第 1 轮：首条业务型 MCP Server（stdio + FastMCP），暴露 `video_to_text` 业务能力。
+首条业务型 MCP Server（stdio + FastMCP），暴露 `video_to_text` 业务能力。
 
-明确边界（V7 第 1 轮）：
+明确边界：
 - 这是当前**收口唯一**的业务型 MCP server——服务于「本地 .mp4 → 字幕文本」这条链；
 - 唯一业务型 tool 是 `video_to_text`（**不**是 ping / echo / hello world / demo）；
-- 该 tool 只负责"产出可入库纯文本"，**不**直接负责入库（入库走现有 ingest 链，第 2 轮收口）；
+- 该 tool 只负责"产出可入库纯文本"，**不**直接负责入库（入库走现有 ingest 链）；
 - 唯一最小视频来源 = 本地 `.mp4` 路径；
 - 唯一最小转文本方案 = 字幕提取链（mov_text / tx3g），无 ASR、无外部 API、无 ffmpeg。
 

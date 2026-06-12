@@ -1,8 +1,7 @@
-"""Canonical HTTP field ownership (Round 9).
+"""Canonical HTTP field ownership.
 
 Each public field has exactly one writer module for the final response shape.
-Intermediate candidates in executors/gates are overwritten at exit assembly.
-"""
+Intermediate candidates in executors/gates are overwritten at exit assembly."""
 
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-"""Complex pipeline — session writeback, extra assembly, exit gate (Round 7)."""
+"""Complex pipeline — session writeback, extra assembly, exit gate."""
 
 from __future__ import annotations
 

@@ -18,7 +18,7 @@ from ._common import (
     _now_iso,
 )
 
-# ── V16 R1：文档来源 parser（docx / xlsx / pdf）───────────────────────────────
+# ── 文档来源 parser（docx / xlsx / pdf）───────────────────────────────
 _DOC_EXT_TO_SOURCE_TYPE: dict[str, str] = {
     ".docx": SOURCE_TYPE_DOCX,
     ".xlsx": SOURCE_TYPE_XLSX,
@@ -39,7 +39,7 @@ def parse_document_source(
     file_content: str | bytes | None = None,
 ) -> tuple[SourcePayload, str, str]:
     """
-    V16 R1：文档类文件（docx / xlsx / pdf）→ ToolResult → SourcePayload。
+    文档类文件（docx / xlsx / pdf）→ ToolResult → SourcePayload。
 
     通过 document tool registry 调用对应的 MCP-compatible Adapter。
     失败时返回带 error_code 的 SourcePayload（text 为空）。

@@ -1,4 +1,4 @@
-"""Lane-specific fast path dispatch from executor (Round 1)."""
+"""Lane-specific fast path dispatch from executor."""
 
 from __future__ import annotations
 

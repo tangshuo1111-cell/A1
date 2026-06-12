@@ -97,7 +97,7 @@ def _describe_extract_error(e: BaseException) -> str:
 
 
 def _apply_cookies_opt(opts: dict[str, Any]) -> str:
-    """V11 R2：按 settings.video_cookies_choice() 在 yt-dlp opts 上注入 cookies 源。"""
+    """按 settings.video_cookies_choice() 在 yt-dlp opts 上注入 cookies 源。"""
     if "cookiesfrombrowser" in opts and opts["cookiesfrombrowser"]:
         cb = opts["cookiesfrombrowser"]
         name = ""

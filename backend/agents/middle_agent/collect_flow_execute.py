@@ -75,7 +75,7 @@ def _run_http_tools(task: CollectionTask) -> tuple[list[str], list[str], bool, l
 
 
 def _rag_dedupe_key(h: object) -> tuple[object, ...]:
-    """V12 R2：h 现在是 RetrievedChunk；兼容保留 rowid 逻辑退场后用 chunk_id 去重。"""
+    """h 现在是 RetrievedChunk；兼容保留 rowid 逻辑退场后用 chunk_id 去重。"""
     if hasattr(h, "chunk_id"):
         return ("chunk_id", h.chunk_id)  # type: ignore[union-attr]
     if isinstance(h, dict):

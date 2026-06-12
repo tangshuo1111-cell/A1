@@ -1,4 +1,4 @@
-"""Pipeline stage 4 — complex orchestration (Round 7: thin coordinator)."""
+"""Pipeline stage 4 — complex orchestration (thin coordinator)."""
 
 from __future__ import annotations
 

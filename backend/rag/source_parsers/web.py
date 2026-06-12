@@ -24,7 +24,7 @@ def parse_web_url_source(
     task_id: str = "",
 ) -> tuple[SourcePayload, str, str]:
     """
-    V16 R2：网页 URL prepare：web registry → WebToolResult → SourcePayload。
+    网页 URL prepare：web registry → WebToolResult → SourcePayload。
 
     默认主路径只走 fetch_web_page MCP-compatible Adapter，不再直接调用旧
     agno_web_service 抓取函数，避免 web_url 绕过 ToolResult / pending。

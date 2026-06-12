@@ -1,4 +1,4 @@
-"""Complex executor MiddleAgent stage (Round 2)."""
+"""Complex executor MiddleAgent stage."""
 
 from __future__ import annotations
 

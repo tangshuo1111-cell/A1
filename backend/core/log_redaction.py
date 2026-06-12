@@ -1,4 +1,4 @@
-"""Log redaction helpers — driven by ``config.safe_rule.SAFE`` (Round 12)."""
+"""Log redaction helpers — driven by ``config.safe_rule.SAFE``."""
 
 from __future__ import annotations
 

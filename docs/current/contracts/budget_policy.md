@@ -1,6 +1,6 @@
 # Budget Policy
 
-> **Authority**: §15.7 of 平台图+三强自治核心架构迁移执行计划.md  
+> **Authority**: §15.7 of docs/history/current/平台图+三强自治核心架构迁移执行计划.md  
 > **Code defaults**: `backend/config/budget_policy.py`
 
 ---
@@ -44,7 +44,7 @@ round_index >= MAX_AUTONOMY_ROUNDS → stop_reason = "max_round_reached"
 
 | Layer | Injected by | Consumed by | Fuse enforced by |
 |---|---|---|---|
-| Sync main chain | `application/chat/budget_clock.py` | MiddleAgent / tool calls | `application/chat/run_chat_turn.py` |
+| Sync main chain | `application/chat/budget_clock.py` | MiddleAgent / tool calls | `application/chat/turn_orchestrator.py` |
 | Autonomy loop | MainAgent | Middle / Answer | MainAgent |
 | Async task | `tasks/orchestration/task_dispatcher` | worker | worker |
 

@@ -1,4 +1,4 @@
-"""V16 R4-E：Cookie 解析、脱敏与校验（不记录明文）。"""
+"""Cookie 解析、脱敏与校验（不记录明文）。"""
 
 from __future__ import annotations
 

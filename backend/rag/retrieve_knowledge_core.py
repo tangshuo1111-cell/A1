@@ -135,7 +135,7 @@ def _auto_dispatch(
     filters: dict[str, str],
     embedding_enabled: bool,
 ) -> tuple[list[RetrievedChunk], str, str]:
-    """auto 策略（V14 R2 完整三路选路，可解释）：
+    """auto 策略（完整三路选路，可解释）：
 
     选路规则：
     1. embedding 未启用 → keyword（最快，无 ST 依赖）

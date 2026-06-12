@@ -1,4 +1,4 @@
-"""State-machine runtime (Round 2 will own transitions)."""
+"""Turn phase runtime state for the chat state machine."""
 
 from __future__ import annotations
 

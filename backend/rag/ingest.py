@@ -78,7 +78,7 @@ def ingest_documents(paths: list[Path]) -> int:
     """
     [LEGACY-ONLY] 读取 UTF-8 本地 txt/md 并入库，返回总块数。
 
-    V16 R1 说明：
+    说明：
     - 本函数仅供旧 sample 初始化（knowledge_samples 目录的 txt/md 灌库），
       不参与 V16 默认主路径。
     - 默认主路径：前端上传文件 → prepare_file_source / prepare_document_source
@@ -91,7 +91,7 @@ def ingest_documents(paths: list[Path]) -> int:
     for path in paths:
         p = Path(path)
         ext_lower = p.suffix.lower()
-        # V16 R1：主动拒绝新文档类型（先于 is_file 检查，防止占位路径绕过）
+        # 主动拒绝新文档类型（先于 is_file 检查，防止占位路径绕过）
         if ext_lower in {".docx", ".xlsx", ".xlsm", ".pdf"}:
             raise ValueError(
                 f"[ingest_documents LEGACY-ONLY] 不支持 {ext_lower} 文件。"

@@ -1,4 +1,4 @@
-"""V16 R4-B：OCR 工具错误码。"""
+"""OCR 工具错误码。"""
 
 OCR_NOT_CONFIGURED = "ocr_not_configured"
 EXTERNAL_PROCESSING_DISABLED = "external_processing_disabled"

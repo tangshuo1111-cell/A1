@@ -1,4 +1,4 @@
-"""Async executor profile — task enqueue contract only (Round 3)."""
+"""Async executor profile — task enqueue contract only."""
 
 from __future__ import annotations
 

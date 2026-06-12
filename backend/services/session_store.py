@@ -1,4 +1,4 @@
-"""会话状态存储 facade（G-024 / Round 8）。
+"""会话状态存储 facade。
 
 实现由 ``storage.store_factory`` 按 ``STORE_BACKEND`` 选择 memory 或 pg；
 本模块暴露显式 ``get_session_store()``，不再使用 lazy ``__getattr__`` proxy。

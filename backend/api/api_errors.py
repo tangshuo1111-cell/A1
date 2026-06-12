@@ -1,4 +1,4 @@
-"""API-layer helpers for raising ``AppError`` with stable codes (Round 8)."""
+"""API-layer helpers for raising ``AppError`` with stable codes."""
 
 from __future__ import annotations
 

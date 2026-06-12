@@ -1,4 +1,4 @@
-"""V16 R4-D：动态网页 Playwright provider（延迟导入；可注入 fake page 做测试）。"""
+"""动态网页 Playwright provider（延迟导入；可注入 fake page 做测试）。"""
 
 from __future__ import annotations
 

@@ -1,14 +1,13 @@
 """
 main_agent runtime：MainAgent 实体类 + 自有 `MainAgentRuntime` agent 实体。
 
-V6 第 8 轮（真 agent / 强 agent）→ 第 9 轮（终验补强）：
 - main 自己拥有 `MainAgentRuntime`（继承 `AgnoAgentRuntime`），在子类里以
   「意图识别 / 局部策略 / 主判断 / 失败边界 / 清洗约束兜底」五段方法 **直接产出**
   `MainXiezuoPan / AgnoCollaborationPlan` 的核心字段。
-- 第 9 轮新增：**`MainDecision` 也由 runtime 自产** —— `panduan_main_decision(...)`
-  根据自家 `shibie_yitu` 的意图直接组 `MainDecision`（含 `answer_channel / need_rag /
+- **`MainDecision` 也由 runtime 自产** —— `panduan_main_decision(...)` 根据自家
+  `shibie_yitu` 的意图直接组 `MainDecision`（含 `answer_channel / need_rag /
   need_external_info`），并把 `router_source` 标为 `"main_agent_runtime"`，
-  以此向下游证明"协作主路由由 main 自己的 runtime 实体直接产出"。
+  向下游表明"协作主路由由 main 自己的 runtime 实体直接产出"。
 - Python 规则只允许做：
     * 输入清洗（`agno_web_service.user_requests_web_search` 这种"显式信号"算子）
     * `dispatch_task` 仅用于发 task_id（ID 算子，不是判断）
@@ -17,8 +16,8 @@ V6 第 8 轮（真 agent / 强 agent）→ 第 9 轮（终验补强）：
   绝不允许"先把 xiezuo_pan / decision 核心结论算完再包装"。
 - 单一主入口：`MainAgent.pan(message, ...) -> AgnoCollaborationPlan`。
 
-台账治理第2b轮：判断六段见 `main_judgment_mixin.py`，主链见 `main_invoke_flow.py`，
-V10 fallback 规则见 `main_fallback_rules.py`。
+拆分落点：判断六段见 `main_judgment_mixin.py`，主链见 `main_invoke_flow.py`，
+fallback 规则见 `main_fallback_rules.py`。
 """
 
 from __future__ import annotations
@@ -121,7 +120,7 @@ def build_main_xiezuo_pan(
 
     内部转交给 `MainAgentRuntime` 的主判断方法（避免 runtime 与该函数判出不同核心字段）。
 
-    第 9 轮起 `shibie_yitu` 不再依赖 `decision_hint`，所以这里按 (`d.answer_channel`,
+    `shibie_yitu` 不再依赖 `decision_hint`，所以这里按 (`d.answer_channel`,
     `http_use_knowledge`, `explicit_web`) 反推一手意图给 runtime；这是**兼容兜底**专用，
     runtime 主路径不走这条函数。
     """

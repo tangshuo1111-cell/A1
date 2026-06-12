@@ -1,4 +1,4 @@
-"""Current routing decision snapshot (written by state machine from Round 2)."""
+"""Current routing decision snapshot (written by turn_state_machine)."""
 
 from __future__ import annotations
 

@@ -27,8 +27,7 @@ def chunks_to_compact_prompt_block(
     """Build a compact evidence block for answer prompts.
 
     Prefer正文 over verbose source_id/chunk_id labels to reduce token load while
-    preserving multiple evidence points for synthesis.
-    """
+    preserving multiple evidence points for synthesis."""
     parts: list[str] = []
     remaining = max(0, int(max_chars))
     for idx, chunk in enumerate(list(chunks)[: max(0, int(max_chunks))], start=1):

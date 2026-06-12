@@ -1,4 +1,4 @@
-"""Material lifecycle adapters — map store/bundle shapes to chat_contracts (Round 6)."""
+"""Material lifecycle adapters — map store/bundle shapes to chat_contracts."""
 
 from __future__ import annotations
 

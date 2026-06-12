@@ -510,7 +510,7 @@ def list_recent_jobs(limit: int = 50) -> list[dict[str, Any]]:
     pool = get_pool()
     with pool.connection() as conn, _cursor(conn) as cur:
         cur.execute(
-            """
+                """
                 SELECT task_id, session_id, request_id, status, current_node,
                        started_at, finished_at, user_query_preview, task_type,
                        source_type, stage, progress, error_code, result_pending_id,
@@ -518,7 +518,7 @@ def list_recent_jobs(limit: int = 50) -> list[dict[str, Any]]:
                 FROM task_jobs
                 ORDER BY COALESCE(finished_at, started_at) DESC NULLS LAST
                 LIMIT %s;
-                """,
+            """,
             (limit,),
         )
         rows = [dict(r) for r in cur.fetchall()]
