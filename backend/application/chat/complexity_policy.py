@@ -38,6 +38,16 @@ _STRONG_DIAGNOSTIC = (
     "机制层面",
     "多步推理",
 )
+_STRONG_STRUCTURED_EXPLAIN = (
+    "讲成面试官",
+    "面试官能听懂",
+    "面试时怎么讲",
+    "面试怎么讲",
+    "讲清楚这个项目",
+    "给面试官讲",
+    "项目讲成",
+    "为什么不是普通",
+)
 _STRONG_DECISION = (
     "推荐",
     "取舍",
@@ -66,6 +76,7 @@ STRONG_COMPLEX_REASON_CODES = frozenset({
     "solution_design",
     "diagnostic_reasoning",
     "multi_step",
+    "structured_explanation",
 })
 
 
@@ -94,6 +105,11 @@ def evaluate_complex_candidate(message: str) -> ComplexCandidateSignal:
     _hit(_STRONG_CROSS_MATERIAL, "cross_material", "strong")
     _hit(_STRONG_DESIGN, "solution_design", "strong")
     _hit(_STRONG_DIAGNOSTIC, "diagnostic_reasoning", "strong")
+    _hit(_STRONG_STRUCTURED_EXPLAIN, "structured_explanation", "strong")
+    if "为什么不是" in msg and "而是" in msg:
+        triggers.append("strong:decision_tradeoff")
+        if "decision_tradeoff" not in codes:
+            codes.append("decision_tradeoff")
     _hit(_WEAK_COMPLEX, "multi_analysis", "weak")
 
     if len(re.findall(r"[?？]", msg)) >= 2 and len(msg) > 60:

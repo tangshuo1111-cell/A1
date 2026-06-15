@@ -209,19 +209,24 @@
 - 来源版本：`V3：Complex / Agent Collaboration`
 - 来源 case：`complex_interview_explanation`
 - 问题类型：`complex agent collaboration degradation / kb_fast 接管`
-- 当前状态：`Open`
+- 当前状态：`Fixed`
 - 原始证据：
 - `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v3_complex_agent_20260613_135505.json`
 - `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v3_complex_agent_20260613_135505.md`
-- 最新复测证据（KI-V3-001 修复后，仍失败）：
-- `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v3_complex_agent_20260615_135404.json`
-- `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v3_complex_agent_20260615_135404.md`
-- 现象：
+- 修复证据：
+- `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v3_complex_agent_20260615_140542.json`
+- `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v3_complex_agent_20260615_140542.md`
+- 现象（修复前）：
 - 项目面试讲解型复杂问题返回：
 - `task_status=succeeded`
 - `primary_path=kb_fast`
 - `mode=fast`（未进入 complex 三 Agent 协作链）
 - 没有稳定体现预期的 complex agent collaboration 路径
+- 修复摘要（2026-06-15）：
+- 在 `complexity_policy.py`（单一 complex_candidate 事实源）补充「结构化讲解 / 面试叙事 / 对比解释」强信号（`structured_explanation`、`decision_tradeoff`）
+- `mode_selector` 在强 reason code 下升格 `mode=complex`，不再被 `kb_fast` 早退吞掉
+- 修复后 E2E：`v3_complex_agent` **8/8**；`complex_interview_explanation` **通过**
+- 关键行为：`mode=complex`、`executor_profile=complex`、`primary_path=agno_basic_v2_kb`（非 `kb_fast`）；`collaboration_trace` 含 Main / Middle / Answer 协作证据
 - 为什么是真问题：
 - 面试讲解型问题不只是知识库问答
 - 它还需要复杂意图识别、材料组织、表达取舍和 grounding
@@ -231,10 +236,12 @@
 - complex / kb_fast 边界
 - V3 协作证据可信度
 - 当前处理策略：
-- 本轮（KI-V3-001）不修；保留为 open known issue
-- 后续在 complex intent routing、kb_fast fallback、answer grounding 可观测性层统一治理
+- 已于 2026-06-15 完成最小 complexity_policy 修复并冻结
+- 未修改 eval 降标准、未新增第二套 complex 判定器、未改 Agent 协作协议
+- 风险 / 观察项：
+- 结构化讲解信号仍依赖任务形态 cue，其他面试表述可能未覆盖
+- `complex_web_kb_compare` 本轮 E2E 通过，非本轮修复目标，稳定性待观察
 - 后续建议：
-- 减少复杂项目讲解题被 `kb_fast` 直接吞掉的概率
-- 增强该题型的 Main plan / Middle material / Answer grounding 暴露
+- 扩展讲解型 cue 时继续在 `complexity_policy` 单点维护，勿在 `kb_fast_impl` 平行写判断
 - 回归方式：
 - `py scripts/evaluation/run_eval_suite.py --suite v3_complex_agent`
