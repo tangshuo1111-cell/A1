@@ -7,6 +7,7 @@ import uuid
 from typing import Any
 
 from application.chat.budget_clock import SLA_BUDGET_MS
+from application.chat.chat_contracts import resolve_background_task_id
 from application.chat.executors.fast_lanes.fast_capability_policy import (
     cross_lane_violation_for_capabilities,
 )
@@ -23,6 +24,7 @@ from application.chat.turn_facts import TurnFacts
 from application.chat.turn_response_builder import build_chat_turn_result
 from schemas import ChatTurnResult
 from services.capabilities.contracts import CapabilityAdvice
+from tools.video.errors import VIDEO_URL_UNSUPPORTED
 
 
 def build_fast_trace_extra(
@@ -52,14 +54,6 @@ def should_demote_fast_to_async(extra: dict[str, Any]) -> bool:
     return str(extra.get("arbitrator.decided_mode") or "") == "async"
 
 
-def _background_task_id_from_extra(extra: dict[str, Any]) -> str:
-    for key in ("task_id", "background_task_id"):
-        value = str(extra.get(key) or "").strip()
-        if value and not value.startswith("fast-"):
-            return value
-    return ""
-
-
 def build_fast_result(
     *,
     answer: str,
@@ -87,7 +81,7 @@ def build_fast_result(
         or f"fast-{int(time.time() * 1000)}-{uuid.uuid4().hex[:8]}"
     )
     collab_trace = [f"v15:needs_retrieval_plan=False path={fast_path}", f"v15:fast_path={fast_path}"]
-    background_task_id = _background_task_id_from_extra(extra)
+    background_task_id = resolve_background_task_id(extra=extra)
     pending_kind = pending_kind_signal_from_extra(extra) or ""
     is_fast_pending = bool(background_task_id) or pending_kind == PendingKind.FAST_PENDING.value
     top_task_id: str | None = None
@@ -167,6 +161,7 @@ def build_fast_result(
         pk = PendingKind(pending_kind) if pending_kind else PendingKind.NONE
     except ValueError:
         pk = PendingKind.NONE
+    video_hard_failure = str(extra.get("v16_video_error_code") or "").strip() == VIDEO_URL_UNSUPPORTED
     facts = TurnFacts(
         router_lane=lane,
         effective_mode="fast",
@@ -176,6 +171,9 @@ def build_fast_result(
         primary_path_candidate=primary_path,
         async_pending=answer_type == "fast_pending",
         answer_type=answer_type,
+        hard_failure=video_hard_failure,
+        legacy_task_status="failed" if video_hard_failure else None,
+        pipeline_ok=not video_hard_failure,
     )
     return apply_turn_exit_to_chat_turn(
         build_chat_turn_result(
@@ -186,6 +184,8 @@ def build_fast_result(
             answer_type=answer_type,
             extra=merged_extra,
             elapsed_ms=elapsed_ms,
+            pipeline_ok=not video_hard_failure,
+            ok=not video_hard_failure,
         ),
         facts=facts,
         effective_mode="fast",

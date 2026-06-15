@@ -8,7 +8,7 @@ def select_lane(signals: RequestSignals) -> tuple[str, float]:
         return "general", 0.96
     if signals.source_kinds_count >= 3 and signals.has_complex_intent:
         return "general", 0.95
-    if signals.has_video_url or signals.has_video_attachment:
+    if signals.has_video_url or signals.has_unsupported_video_url or signals.has_video_attachment:
         return "video", 0.98
     if signals.has_document_payload or signals.has_document_intent:
         return "document", 0.94

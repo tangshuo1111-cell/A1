@@ -9,6 +9,25 @@ from urllib.parse import urlparse
 from application.chat.executors.fast_lanes import fast_llm
 from application.chat.exit_signals import set_pending_kind_signal
 from application.chat.pending_kind import PendingKind
+from tools.video.errors import VIDEO_URL_UNSUPPORTED
+
+VIDEO_URL_UNSUPPORTED_ANSWER = (
+    "该链接不是支持的视频源，无法获取字幕或转写。"
+    "请提供支持的平台视频链接，或上传本地视频材料。"
+)
+
+
+def _unsupported_video_fast_result() -> tuple[str, dict[str, Any]]:
+    return VIDEO_URL_UNSUPPORTED_ANSWER, {
+        "fast_path": "video",
+        "lane": "video",
+        "mode": "fast",
+        "v16_video_error_code": VIDEO_URL_UNSUPPORTED,
+        "v16_video_source_type": "unsupported",
+        "capabilities_called": ["capability.video.url_validate"],
+        "fast_exit_reason": "video_url_unsupported",
+        "v15_execution_status": "failed",
+    }
 
 
 def run_video_fast_path(
@@ -29,9 +48,13 @@ def run_video_fast_path(
 
     budget_clock = clock
     match = re.search(r"https?://[^\s]+", message or "", flags=re.IGNORECASE)
-    url = match.group(0) if match else ""
+    url = match.group(0).rstrip(".,;:)]}>") if match else ""
     if not url:
         return None
+    from video.url_fetch import is_supported_video_url
+
+    if not is_supported_video_url(url):
+        return _unsupported_video_fast_result()
     result = _extract_web_video_subtitle(url, session_id=session_id or "")
     fetch = video_tool_result_to_fetch_result(url=url, result=result)
     metadata = dict(getattr(result, "metadata", {}) or {})

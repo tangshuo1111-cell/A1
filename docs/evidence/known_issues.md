@@ -45,10 +45,13 @@
 - 来源版本：`V2：Capability Chains + Fake Success Negatives`
 - 来源 case：`video_total_failure`
 - 问题类型：`video intent honesty / invalid video URL fallback error`
-- 当前状态：`Deferred`
+- 当前状态：`Fixed`
 - 原始证据：
 - `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v2_capability_all_20260613_154809.json`
 - `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v2_capability_all_20260613_154809.md`
+- 修复证据：
+- `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v2_capability_video_20260615_150530.json`
+- `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v2_capability_video_20260615_150530.md`
 - 现象：
 - 用户输入视频任务，但 URL 是 `https://example.com/not-a-real-video`
 - 系统实际返回 `task_status=succeeded`
@@ -65,9 +68,8 @@
 - video intent 识别后的失败诚实性
 - V2 video total failure 回归口径
 - 当前处理策略：
-- 当前不修业务主链
-- 先纳入 known issue 台账
-- 后续优先排查 video intent 命中后的 invalid URL / non-video URL 失败出口
+- 已于 2026-06-15 通过 ingress 视频意图信号 + video_fast 显式 unsupported 失败修复
+- explicit video intent + unsupported URL 留在 video lane；`task_status=failed`；不再 web_async / document_fast
 - 后续建议：
 - video 意图命中后，应优先维持 video lane 的失败或阻断语义
 - 禁止无 transcript / 无 video evidence 时被 document fast 成功接管

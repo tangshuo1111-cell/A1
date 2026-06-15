@@ -3,17 +3,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from typing import Any, Final
-from urllib.parse import urlparse
 
 _URL_RE = re.compile(r"https?://[^\s]+", re.IGNORECASE)
-_VIDEO_HOST_HINTS = (
-    "bilibili.com",
-    "youtube.com",
-    "youtu.be",
-    "v.qq.com",
-    "youku.com",
-    "ixigua.com",
-)
 _ASCII_DOC_EXT_RE: re.Pattern[str] = re.compile(
     r"\b(?:pdf|docx?|xlsx?|pptx?|markdown|md)\b",
     re.IGNORECASE,
@@ -26,12 +17,32 @@ _COMPLEX_HINTS = ("对比", "比较", "综合", "多来源", "分别", "同时",
 _VIDEO_FILE_HINTS = (".mp4", ".mov", ".mkv", ".avi", ".webm")
 _OCR_HINTS = ("扫描版", "ocr", "识别", "按章节", "提取重点")
 _MIXED_EVIDENCE_HINTS = ("网页证据", "知识库和网页", "结合知识库", "网页和知识库", "多方证据")
+_VIDEO_INTENT_HINTS: Final[tuple[str, ...]] = (
+    "总结这个视频",
+    "总结以下视频",
+    "这个视频",
+    "该视频",
+    "这段视频",
+    "本视频",
+    "短视频",
+    "录像",
+    "影片",
+)
+_WEBPAGE_INTENT_OVERRIDES: Final[tuple[str, ...]] = (
+    "网页",
+    "页面",
+    "网站",
+    "这篇文章",
+    "这个链接",
+    "该链接",
+)
 
 
 @dataclass(frozen=True)
 class RequestSignals:
     urls: tuple[str, ...]
     has_video_url: bool
+    has_unsupported_video_url: bool
     has_video_attachment: bool
     has_web_url: bool
     has_document_payload: bool
@@ -45,6 +56,24 @@ class RequestSignals:
     asks_background_processing: bool
     source_kinds_count: int
     attachment_count: int
+
+
+def _normalize_url_token(url: str) -> str:
+    return url.rstrip(".,;:)]}>")
+
+
+def _has_explicit_video_intent(message: str) -> bool:
+    msg = (message or "").strip()
+    if not msg:
+        return False
+    if any(token in msg for token in _WEBPAGE_INTENT_OVERRIDES):
+        return False
+    lower = msg.lower()
+    if any(token in msg for token in _VIDEO_INTENT_HINTS):
+        return True
+    if "视频" in msg:
+        return True
+    return bool(re.search(r"\bvideo\b", lower))
 
 
 def _normalize_attachments(attachments: list[dict[str, Any]] | None) -> tuple[dict[str, Any], ...]:
@@ -75,14 +104,17 @@ def classify_request(
 ) -> RequestSignals:
     msg = (message or "").strip()
     lower = msg.lower()
-    urls = tuple(_URL_RE.findall(msg))
-    parsed_hosts = tuple((urlparse(url).netloc or "").lower() for url in urls)
-    has_video_url = any(any(hint in host for hint in _VIDEO_HOST_HINTS) for host in parsed_hosts)
-    has_web_url = bool(urls) and not has_video_url
+    urls = tuple(_normalize_url_token(u) for u in _URL_RE.findall(msg))
+    from video.url_fetch import is_supported_video_url
+
+    has_video_url = any(is_supported_video_url(url) for url in urls)
+    has_explicit_video_intent = _has_explicit_video_intent(msg)
+    has_unsupported_video_url = bool(urls) and has_explicit_video_intent and not has_video_url
     normalized_attachments = _normalize_attachments(attachments)
     attachment_names = " ".join(str(item.get("name") or "") for item in normalized_attachments).lower()
     attachment_types = {str(item.get("type") or "") for item in normalized_attachments}
     has_video_attachment = any(hint in attachment_names for hint in _VIDEO_FILE_HINTS)
+    has_web_url = bool(urls) and not has_video_url and not has_unsupported_video_url
     has_document_payload = (
         v13_file_content is not None
         or bool((v13_text_content or "").strip())
@@ -94,7 +126,7 @@ def classify_request(
     if "local_file" in attachment_types:
         has_document_intent = True
     has_kb_intent = use_knowledge or any(token.lower() in lower for token in _KB_HINTS)
-    has_web_intent = has_web_url or any(token in lower for token in _WEB_HINTS)
+    has_web_intent = (has_web_url or any(token in lower for token in _WEB_HINTS)) and not has_unsupported_video_url
     has_ocr_intent = any(token in lower for token in _OCR_HINTS)
     has_long_video_hint = "长视频" in msg or "后台" in msg or "youtube.com" in lower or "youtu.be" in lower
     has_mixed_evidence_intent = any(token in msg for token in _MIXED_EVIDENCE_HINTS)
@@ -102,7 +134,7 @@ def classify_request(
     has_complex_intent = sum(1 for token in _COMPLEX_HINTS if token in msg) >= 1 or len(urls) > 1
     source_kinds_count = sum(
         1 for flag in (
-            has_video_url or has_video_attachment,
+            has_video_url or has_video_attachment or has_unsupported_video_url,
             has_document_payload and not has_video_attachment,
             has_web_intent,
             has_kb_intent,
@@ -111,6 +143,7 @@ def classify_request(
     return RequestSignals(
         urls=urls,
         has_video_url=has_video_url,
+        has_unsupported_video_url=has_unsupported_video_url,
         has_video_attachment=has_video_attachment,
         has_web_url=has_web_url,
         has_document_payload=has_document_payload,
