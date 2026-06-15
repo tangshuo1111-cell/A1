@@ -23,6 +23,7 @@ from tests.evaluation.runners.eval_runner import (  # noqa: E402
     v1_case_file,
     v2_suite_case_files,
 )
+from tests.evaluation.runners.eval_real_external_runner import run_real_external_smoke_suite  # noqa: E402
 
 
 def main() -> int:
@@ -40,12 +41,23 @@ def main() -> int:
             "v2_5_multiturn_state",
             "v3_complex_agent",
             "regression_all",
+            "real_external_smoke",
         ],
     )
     args = parser.parse_args()
 
     client = EvalHttpClient()
     health_error: str | None = None
+    if args.suite == "real_external_smoke":
+        result = run_real_external_smoke_suite(client=client)
+        print("suite: real_external_smoke")
+        print(f"backend: {result['backend_base_url']}")
+        print(f"final_verdict: {result['final_verdict']}")
+        print(f"exit_code: {result['exit_code']}")
+        print(f"json report: {result['report_paths']['json']}")
+        print(f"markdown report: {result['report_paths']['markdown']}")
+        return int(result["exit_code"])
+
     try:
         client.health_check()
     except BackendUnavailableError as exc:

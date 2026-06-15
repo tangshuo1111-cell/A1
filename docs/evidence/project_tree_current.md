@@ -1,0 +1,114 @@
+# 当前项目目录树（评测与证据相关）
+
+> 生成时间：2026-06-15
+> 排除：`__pycache__`、`.pyc`、runtime reports 具体文件
+
+```
+A1_publish/
+tests/evaluation/
+  tests/evaluation/cases/
+    real_external_smoke.yaml
+    v0_smoke.yaml
+    v1_route_exit_state.yaml
+    v2_5_multiturn_state.yaml
+    v2_capability_document.yaml
+    v2_capability_kb.yaml
+    v2_capability_video.yaml
+    v2_capability_web.yaml
+    v3_complex_agent.yaml
+  tests/evaluation/fixtures/
+    tests/evaluation/fixtures/documents/
+      empty.txt
+      sample.md
+      sample.txt
+      scanned_pdf_placeholder.txt
+    tests/evaluation/fixtures/kb/
+      seed_empty.md
+      seed_strong.md
+      seed_weak.md
+    tests/evaluation/fixtures/providers/
+      fake_asr_failed.json
+      fake_asr_success.json
+      fake_ocr_failed.json
+      fake_ocr_success.json
+    tests/evaluation/fixtures/video/
+      bad_subtitle.srt
+      README.md
+      with_subtitle.srt
+    tests/evaluation/fixtures/web/
+      cookie_required.html
+      dynamic_like.html
+      static_low_quality.html
+      static_success.html
+    README.md
+  tests/evaluation/runners/
+    eval_agent_collaboration_rules.py
+    eval_agent_extractors.py
+    eval_assertions.py
+    eval_capability_extractors.py
+    eval_case_loader.py
+    eval_complex_agent_runner.py
+    eval_fake_success_rules.py
+    eval_field_catalog.py
+    eval_http_client.py
+    eval_multiturn_runner.py
+    eval_real_external_runner.py
+    eval_real_external_status.py
+    eval_result_writer.py
+    eval_rule_catalog.py
+    eval_runner.py
+    eval_sandbox.py
+    eval_state_closure_rules.py
+    eval_state_extractors.py
+  tests/evaluation/schemas/
+    eval_case.schema.json
+    eval_result.schema.json
+    real_external_smoke_case.schema.json
+  README.md
+  test_eval_capability_chains.py
+  test_eval_case_schema.py
+  test_eval_complex_agent.py
+  test_eval_field_catalog.py
+  test_eval_multiturn_state.py
+  test_eval_real_external_smoke.py
+  test_eval_regression_gate.py
+  test_eval_route_exit_state.py
+  test_eval_rule_catalog.py
+scripts/evaluation/
+  _gen_project_tree.py
+  render_eval_overview.py
+  reset_eval_sandbox.py
+  run_eval_regression.py
+  run_eval_smoke.py
+  run_eval_suite.py
+runtime_data/eval_sandbox/
+  runtime_data/eval_sandbox/kb_seed/
+    .gitkeep
+  runtime_data/eval_sandbox/reports/
+    .gitkeep
+  runtime_data/eval_sandbox/task_results/
+    .gitkeep
+  runtime_data/eval_sandbox/tmp/
+    .gitkeep
+  runtime_data/eval_sandbox/traces/
+    .gitkeep
+  runtime_data/eval_sandbox/uploads/
+    .gitkeep
+  README.md
+docs/evidence/
+  01_项目评测体系_V1.md
+  eval_field_promotion_plan.md
+  eval_governance_guardrails.md
+  eval_rule_fragility_audit.md
+  evaluation_reproducibility.md
+  known_issues.md
+  README.md
+  real_external_smoke_sample.md
+  real_external_smoke_spec.md
+  v3_observable_fields_report.md
+```
+
+## 说明
+
+- 本树仅覆盖评测工程与证据文档相关目录，不是全仓库树。
+- 原始 smoke 报告见 `runtime_data/eval_sandbox/reports/eval_real_external_smoke_*.json/md`（不入库）。

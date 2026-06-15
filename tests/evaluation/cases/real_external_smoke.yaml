@@ -1,0 +1,60 @@
+- case_id: llm_real_minimal
+  case_name: 真实 LLM 最小问答探测
+  category: llm
+  probe_mode: direct_provider
+  timeout_sec: 30
+  user_input: "用一句话回答：1+1 等于几？"
+
+- case_id: web_static_real
+  case_name: 真实静态网页抓取
+  category: web
+  probe_mode: http_chat
+  timeout_sec: 60
+  user_input: "请总结这个网页的要点：https://docs.python.org/3/tutorial/index.html"
+  session_setup:
+    session_id: eval-real-web-static
+    use_knowledge: false
+
+- case_id: document_fixture_real
+  case_name: 真实文档 fixture 解析
+  category: document
+  probe_mode: direct_tool
+  timeout_sec: 30
+  fixtures:
+    - tests/fixtures/v16_materials/txt/sample_success.txt
+    - tests/fixtures/v16_materials/docx/sample_success.docx
+
+- case_id: kb_real_roundtrip
+  case_name: 知识库写入检索闭环
+  category: kb
+  probe_mode: http_chat
+  timeout_sec: 90
+  kb_seed_prefix: eval_smoke_
+  user_input: "根据知识库回答：eval smoke 测试知识的主链入口是什么？"
+  session_setup:
+    session_id: eval-real-kb-roundtrip
+    use_knowledge: true
+
+- case_id: video_subtitle_probe_real
+  case_name: 视频字幕 probe
+  category: video
+  probe_mode: http_chat
+  timeout_sec: 60
+  env_url_key: REAL_VIDEO_TEST_URL
+  local_fixture: tests/fixtures/v16_materials/video/local_with_subtitle.mp4
+  user_input_template: "请总结这个视频的主要内容：{url}"
+
+- case_id: asr_real_short_audio
+  case_name: 短音频 ASR 真实探测
+  category: asr
+  probe_mode: direct_tool
+  timeout_sec: 45
+  fixture: tests/fixtures/v16_real_samples/asr/human_voice.wav
+  max_duration_sec: 5
+
+- case_id: ocr_real_sample
+  case_name: 扫描 PDF OCR 真实探测
+  category: ocr
+  probe_mode: direct_tool
+  timeout_sec: 45
+  fixture: tests/fixtures/v16_materials/pdf_scanned/sample_scanned_like.pdf

@@ -24,6 +24,10 @@ V16「真实验收证据包」正文已从仓库主线移除，以降低 `git cl
 - 脆弱性盘点：[`docs/evidence/eval_rule_fragility_audit.md`](/D:/1/A1_publish/docs/evidence/eval_rule_fragility_audit.md)
 - known issue 台账：[`docs/evidence/known_issues.md`](/D:/1/A1_publish/docs/evidence/known_issues.md)
 - V3 可观测字段勘测：[`docs/evidence/v3_observable_fields_report.md`](/D:/1/A1_publish/docs/evidence/v3_observable_fields_report.md)
+- real_external_smoke spec：[`docs/evidence/real_external_smoke_spec.md`](/D:/1/A1_publish/docs/evidence/real_external_smoke_spec.md)
+- 评测可复现性：[`docs/evidence/evaluation_reproducibility.md`](/D:/1/A1_publish/docs/evidence/evaluation_reproducibility.md)
+- real_external_smoke 脱敏样例：[`docs/evidence/real_external_smoke_sample.md`](/D:/1/A1_publish/docs/evidence/real_external_smoke_sample.md)
+- 当前目录树：[`docs/evidence/project_tree_current.md`](/D:/1/A1_publish/docs/evidence/project_tree_current.md)
 
 ## 评测运行产物
 
@@ -38,6 +42,7 @@ V16「真实验收证据包」正文已从仓库主线移除，以降低 `git cl
 - `eval_v2_5_multiturn_state_*.json/md`
 - `eval_v3_complex_agent_*.json/md`
 - `eval_v4_regression_overview_*.json/md`
+- `eval_real_external_smoke_*.json/md`（真实外部 smoke，不入库）
 
 当前 V4 总览分类包括：
 

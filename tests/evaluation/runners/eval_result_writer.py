@@ -474,3 +474,57 @@ def write_regression_overview_report(report: dict[str, Any]) -> dict[str, Path]:
     json_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     md_path.write_text(_render_markdown(report), encoding="utf-8")
     return {"json": json_path, "markdown": md_path}
+
+
+def _render_real_external_markdown(report: dict[str, Any]) -> str:
+    lines = [
+        f"# Eval Report: {report['suite_name']}",
+        "",
+        f"- suite_role: `{report.get('suite_role', '')}`",
+        f"- version_note: `{report.get('version_note', '')}`",
+        f"- backend_base_url: `{report.get('backend_base_url', '')}`",
+        f"- started_at: `{report.get('started_at', '')}`",
+        f"- finished_at: `{report.get('finished_at', '')}`",
+        f"- final_verdict: `{report.get('final_verdict', '')}`",
+        f"- exit_code: `{report.get('exit_code', 0)}`",
+        "",
+        "## Environment Summary",
+        "",
+    ]
+    for key, value in (report.get("environment_summary") or {}).items():
+        lines.append(f"- {key}: `{value}`")
+    lines.extend(["", "## Dependency Preflight", "", "| id | status | configured | product_failure | reason |", "| --- | --- | --- | --- | --- |"])
+    for item in report.get("dependency_preflight") or []:
+        lines.append(
+            f"| {item.get('case_id')} | {item.get('status')} | {item.get('configured')} | "
+            f"{item.get('product_failure')} | {item.get('reason') or '-'} |"
+        )
+    lines.extend(["", "## Capability Cases", "", "| case_id | status | configured | product_failure | duration_ms | reason |", "| --- | --- | --- | --- | --- | --- |"])
+    for item in report.get("capability_cases") or []:
+        lines.append(
+            f"| {item.get('case_id')} | {item.get('status')} | {item.get('configured')} | "
+            f"{item.get('product_failure')} | {item.get('duration_ms', 0)} | {item.get('reason') or '-'} |"
+        )
+    opt = report.get("optional_regression") or {}
+    lines.extend(["", "## Optional Regression", "", f"- enabled: `{opt.get('enabled', False)}`", f"- reason: `{opt.get('reason', '')}`"])
+    if opt.get("report_paths"):
+        lines.append(f"- report_paths: `{opt.get('report_paths')}`")
+    lines.extend(["", "## Summary Counts", ""])
+    for key, value in (report.get("summary") or {}).items():
+        lines.append(f"- {key}: {value}")
+    lines.extend(["", "## Sanitized Summary", "", "```", str(report.get("sanitized_summary") or ""), "```", "", "## Recommendations", ""])
+    for rec in report.get("recommendations") or []:
+        lines.append(f"- {rec}")
+    return "\n".join(lines) + "\n"
+
+
+def write_real_external_smoke_report(report: dict[str, Any], *, timestamp_text: str | None = None) -> dict[str, Path]:
+    from tests.evaluation.runners.eval_real_external_status import build_sanitized_summary
+
+    ts = timestamp_text or _timestamp_text()
+    json_path, md_path = _report_paths("real_external_smoke", ts)
+    if "sanitized_summary" not in report:
+        report["sanitized_summary"] = build_sanitized_summary(report)
+    json_path.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    md_path.write_text(_render_real_external_markdown(report), encoding="utf-8")
+    return {"json": json_path, "markdown": md_path}

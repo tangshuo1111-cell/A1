@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "real_external_smoke_case.schema.json",
+  "title": "Real External Smoke Case",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["case_id", "case_name", "category", "probe_mode", "timeout_sec"],
+  "properties": {
+    "case_id": { "type": "string", "minLength": 1 },
+    "case_name": { "type": "string", "minLength": 1 },
+    "category": {
+      "type": "string",
+      "enum": ["llm", "web", "document", "kb", "video", "asr", "ocr"]
+    },
+    "probe_mode": {
+      "type": "string",
+      "enum": ["direct_provider", "direct_tool", "http_chat"]
+    },
+    "timeout_sec": { "type": "number", "minimum": 1 },
+    "user_input": { "type": "string" },
+    "session_setup": { "type": "object" },
+    "fixtures": { "type": "array", "items": { "type": "string" } },
+    "fixture": { "type": "string" },
+    "env_url_key": { "type": "string" },
+    "local_fixture": { "type": "string" },
+    "user_input_template": { "type": "string" },
+    "kb_seed_prefix": { "type": "string" },
+    "max_duration_sec": { "type": "number" }
+  }
+}
