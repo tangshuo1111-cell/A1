@@ -122,10 +122,13 @@
 - 来源版本：`V2.5：Multi-turn State Closure`
 - 来源 case：`continue_without_context_flow`
 - 问题类型：`follow-up context honesty / empty-session closure error`
-- 当前状态：`Deferred`
+- 当前状态：`Fixed`
 - 原始证据：
 - `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v2_5_multiturn_state_20260613_154930.json`
 - `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v2_5_multiturn_state_20260613_154930.md`
+- 修复证据：
+- `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v2_5_multiturn_state_20260615_143810.json`
+- `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v2_5_multiturn_state_20260615_143810.md`
 - 现象：
 - 空会话 turn_1 输入“继续刚才那个内容。”
 - 系统返回 `task_status=succeeded`
@@ -142,9 +145,8 @@
 - continue / 刚才 / 上一轮 指代类请求
 - V2.5 session closure 诚实性
 - 当前处理策略：
-- 当前不修业务主链
-- 先纳入 known issue 台账
-- 后续优先排查 follow-up 检测、empty-session 守门和 closure honesty
+- 已于 2026-06-15 通过 `lift_empty_context_followup` 事实抬升修复
+- 空上下文 follow-up 不再 `default_success`；`task_status=blocked`；answer 使用确定性澄清文案，不依赖 LLM 措辞
 - 后续建议：
 - 无 previous steps / 无 stitch context 时，应更保守地落到 blocked、clarify 或显式无上下文状态
 - 禁止把空上下文继续请求记为成功闭环

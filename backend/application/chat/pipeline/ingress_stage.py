@@ -71,6 +71,12 @@ def run_ingress_stage(state: TurnPipelineState) -> ChatTurnResult | None:
             ingress=state.ingress,
             user_message=state.message,
             approval_hold=state.approval_hold,
+            history_snapshot=state.history_snapshot,
+            pending_video=state.pending_video,
+            prev_video_ref=state.prev_video_ref,
+            v13_text_content=state.v13_text_content,
+            v13_file_content=state.v13_file_content,
+            stitch_applied=state.stitch_applied,
         )
 
     state.effective_mode, state.arbitrator_reason, state.arbitrator_trace, state.turn_state = arbitrate_turn_mode(

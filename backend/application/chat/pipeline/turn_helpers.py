@@ -21,10 +21,20 @@ from application.chat.domain.events import mode_arbitrated_event
 from application.chat.domain.reason_codes import ARBITRATOR_INACTIVE
 from application.chat.trace_writer import append_arbitrator_trace
 from application.chat.turn_exit_gate import apply_turn_exit_to_chat_turn
-from application.chat.turn_facts import turn_facts_from_chat_result, lift_session_approval_hold
+from application.chat.turn_facts import (
+    build_empty_context_followup_answer,
+    lift_empty_context_followup,
+    lift_session_approval_hold,
+    turn_facts_from_chat_result,
+)
 from application.chat.turn_state_machine import TurnStateBundle, apply_event
 from config.feature_flags import is_enabled
-from domain.session_types import PendingVideoText, PrevVideoRef, SessionApprovalHold
+from domain.session_types import (
+    PendingVideoText,
+    PrevVideoRef,
+    SessionApprovalHold,
+    SessionHistorySnapshot,
+)
 from schemas import ChatTurnResult
 
 
@@ -85,6 +95,12 @@ def with_turn_exit_gate(
     bundle_pending_item_present: bool = False,
     user_message: str | None = None,
     approval_hold: SessionApprovalHold | None = None,
+    history_snapshot: SessionHistorySnapshot | None = None,
+    pending_video: PendingVideoText | None = None,
+    prev_video_ref: PrevVideoRef | None = None,
+    v13_text_content: str | None = None,
+    v13_file_content: str | bytes | None = None,
+    stitch_applied: bool = False,
 ) -> ChatTurnResult:
     from application.chat.approval_gate_flow import build_approval_hold_followup_answer
 
@@ -104,11 +120,33 @@ def with_turn_exit_gate(
         approval_hold=approval_hold,
         user_message=user_message or "",
     )
-    if facts is not facts_before_lift and approval_hold is not None:
+    approval_lifted = facts is not facts_before_lift
+    if approval_lifted and approval_hold is not None:
         out["answer"] = build_approval_hold_followup_answer(approval_hold)
         out["answer_type"] = "approval_blocked"
         out["pipeline_ok"] = False
         out["task_id"] = None
+    has_active_approval_hold = (
+        isinstance(approval_hold, SessionApprovalHold) and approval_hold.blocked
+    )
+    if not approval_lifted and not has_active_approval_hold:
+        facts_before_empty = facts
+        facts, extra = lift_empty_context_followup(
+            facts=facts,
+            extra=extra,
+            user_message=user_message or "",
+            history_snapshot=history_snapshot,
+            pending_video=pending_video,
+            prev_video_ref=prev_video_ref,
+            v13_text_content=v13_text_content,
+            v13_file_content=v13_file_content,
+            stitch_applied=stitch_applied,
+        )
+        if facts is not facts_before_empty:
+            out["answer"] = build_empty_context_followup_answer()
+            out["answer_type"] = "approval_blocked"
+            out["pipeline_ok"] = False
+            out["task_id"] = None
     out["extra"] = extra
     return apply_turn_exit_to_chat_turn(
         out,

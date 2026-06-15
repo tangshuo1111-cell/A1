@@ -242,6 +242,143 @@ def _has_real_task_evidence(extra: dict[str, Any]) -> bool:
     return bool(raw_pending and raw_pending != PendingKind.NONE.value)
 
 
+EMPTY_CONTEXT_FOLLOWUP_ANSWER = (
+    "当前没有可承接的上文。请补充你想继续的内容，或重新说明问题。"
+)
+
+
+_EMPTY_CONTEXT_FOLLOWUP_EXPLICIT = (
+    "继续刚才",
+    "刚才那个",
+    "刚才这",
+    "上一轮",
+    "上一次",
+    "保存刚才",
+    "继续处理",
+    "继续总结",
+    "继续分析",
+    "接着说",
+    "接着说",
+    "接着讲",
+    "接着分析",
+    "接着回答",
+    "接着总结",
+    "再说一次",
+)
+
+
+def _is_empty_context_followup_candidate(user_message: str) -> bool:
+    """Follow-up continuation without prior session context (stricter than agent anchor signal)."""
+    from domain.session_types import looks_like_followup_reference
+
+    msg = (user_message or "").strip()
+    if not msg or not looks_like_followup_reference(msg):
+        return False
+    lower = msg.lower()
+    if "http://" in lower or "https://" in lower:
+        return False
+    if any(
+        token in msg
+        for token in (
+            "总结这个网页",
+            "总结这个链接",
+            "分析这个文档",
+            "处理这个视频",
+            "请总结这个",
+            "请分析这个",
+            "请处理这个",
+        )
+    ):
+        return False
+    return any(token in msg for token in _EMPTY_CONTEXT_FOLLOWUP_EXPLICIT)
+
+
+def build_empty_context_followup_answer() -> str:
+    return EMPTY_CONTEXT_FOLLOWUP_ANSWER
+
+
+def _has_carryover_session_facts(
+    *,
+    extra: dict[str, Any],
+    pending_video: Any | None,
+    prev_video_ref: Any | None,
+    v13_text_content: str | None = None,
+    v13_file_content: str | bytes | None = None,
+    stitch_applied: bool = False,
+) -> bool:
+    if pending_video is not None:
+        return True
+    if prev_video_ref is not None:
+        return True
+    if _has_real_task_evidence(extra):
+        return True
+    if (v13_text_content or "").strip() or v13_file_content is not None:
+        return True
+    if stitch_applied or extra.get("turn_stitch.applied"):
+        return True
+    if int(extra.get("v15_temporary_materials_count") or 0) > 0:
+        return True
+    if int(extra.get("web_evidence_chars") or 0) > 0:
+        return True
+    if str(extra.get("web_primary_source") or "").strip():
+        return True
+    if int(extra.get("v15_retrieved_chunks_count") or 0) > 0:
+        return True
+    return False
+
+
+def lift_empty_context_followup(
+    *,
+    facts: TurnFacts,
+    extra: dict[str, Any],
+    user_message: str,
+    history_snapshot: Any | None,
+    pending_video: Any | None = None,
+    prev_video_ref: Any | None = None,
+    v13_text_content: str | None = None,
+    v13_file_content: str | bytes | None = None,
+    stitch_applied: bool = False,
+) -> tuple[TurnFacts, dict[str, Any]]:
+    """Promote empty-session follow-up reference to blocked clarify exit facts."""
+    if not _is_empty_context_followup_candidate(user_message):
+        return facts, extra
+    if history_snapshot is not None and history_snapshot.has_context:
+        return facts, extra
+    if _has_carryover_session_facts(
+        extra=extra,
+        pending_video=pending_video,
+        prev_video_ref=prev_video_ref,
+        v13_text_content=v13_text_content,
+        v13_file_content=v13_file_content,
+        stitch_applied=stitch_applied,
+    ):
+        return facts, extra
+
+    extra_out = dict(extra)
+    extra_out.update(
+        {
+            "empty_context_followup": True,
+            "followup_detected": True,
+            "history_used": False,
+        }
+    )
+    return (
+        replace(
+            facts,
+            approval=ApprovalExitSignal(blocked=True),
+            answer_type="approval_blocked",
+            effective_mode="blocked",
+            public_mode="blocked",
+            executor_profile="blocked",
+            primary_path_candidate="approval_gate",
+            pipeline_ok=False,
+            async_pending=False,
+            legacy_task_status="blocked",
+        ),
+        extra_out,
+    )
+
+
 def lift_session_approval_hold(
     *,
     facts: TurnFacts,
