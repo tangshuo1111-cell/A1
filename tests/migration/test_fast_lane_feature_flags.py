@@ -97,7 +97,8 @@ def test_lane_fast_flag_off_escalates_to_complex(
     )
     out = run_agno_chat_turn_impl(message, session_id=f"p7-{flag}", deps=_legacy_deps(), **kwargs)
     extra = out["extra"]
-    assert out["answer"] == "complex-fallback"
+    # 证据不足分支会前置确定性声明，故用 endswith 校验复杂链兜底答案仍生效。
+    assert out["answer"].endswith("complex-fallback")
     assert "fast_lane_name" not in extra
     assert extra.get("fast_path") is not True
     assert str(out.get("primary_path") or "") not in {

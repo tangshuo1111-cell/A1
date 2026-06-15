@@ -10,7 +10,12 @@ from typing import Any
 from application.chat.budget_clock import BudgetClock
 from application.chat.domain.context import TurnContext
 from application.chat.turn_state_machine import TurnStateBundle
-from domain.session_types import PendingVideoText, PrevVideoRef, SessionApprovalHold, SessionHistorySnapshot
+from domain.session_types import (
+    PendingVideoText,
+    PrevVideoRef,
+    SessionApprovalHold,
+    SessionHistorySnapshot,
+)
 
 
 @dataclass

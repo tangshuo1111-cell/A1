@@ -6,7 +6,7 @@
     "lines": 160
   },
   "backend/storage/memory_chat_session_store.py": {
-    "lines": 68
+    "lines": 83
   },
   "backend/workers/entry/task_plane_worker.py": {
     "lines": 65

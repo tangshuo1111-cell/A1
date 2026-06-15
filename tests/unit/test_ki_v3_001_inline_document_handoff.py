@@ -3,15 +3,16 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from agents.main_agent.schema import AgnoCollaborationPlan, MainXiezuoPan, V13PrepareIntent
+from agents.main_agent.schema import AgnoCollaborationPlan, MainXiezuoPan
 from application.chat.inline_document_material import (
     extract_inline_document_from_message,
     promote_message_inline_document,
 )
 from application.chat.path_labels import resolve_complex_primary_path
-from application.chat.pipeline.inline_document_plan_handoff import apply_inline_document_plan_handoff
+from application.chat.pipeline.inline_document_plan_handoff import (
+    apply_inline_document_plan_handoff,
+)
 from schemas import MainDecision
-
 
 _CASE_MESSAGE = (
     "请基于下面这段文档内容，判断它适合放进项目面试讲解的哪一部分，并说明取舍："

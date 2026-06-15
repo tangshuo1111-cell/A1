@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-
 from tests.evaluation.runners.eval_agent_collaboration_rules import (
     check_answer_grounded_in_material,
     check_common_agent_collaboration,
@@ -25,9 +24,17 @@ from tests.evaluation.runners.eval_agent_extractors import (
     extract_quality_gate_fields,
     extract_second_round_fields,
 )
-from tests.evaluation.runners.eval_assertions import assert_allowed_value, assert_task_status_is_canonical
+from tests.evaluation.runners.eval_assertions import (
+    assert_allowed_value,
+    assert_task_status_is_canonical,
+)
 from tests.evaluation.runners.eval_field_catalog import classify_field
-from tests.evaluation.runners.eval_http_client import BackendUnavailableError, CaseTimeoutError, EvalHttpClient, ExecutionError
+from tests.evaluation.runners.eval_http_client import (
+    BackendUnavailableError,
+    CaseTimeoutError,
+    EvalHttpClient,
+    ExecutionError,
+)
 from tests.evaluation.runners.eval_result_writer import write_eval_agent_report
 
 
@@ -176,7 +183,7 @@ def evaluate_v3_case(case: dict[str, Any], client: EvalHttpClient) -> dict[str, 
     failures, warnings = _evaluate_hard_assertions(case, common, actual)
 
     soft_fields = list(
-        (((case.get("expected") or {}).get("soft_observability") or {}).get("try_extract") or [])
+        ((case.get("expected") or {}).get("soft_observability") or {}).get("try_extract") or []
     )
     missing_fields: list[str] = []
     for field_name in soft_fields:

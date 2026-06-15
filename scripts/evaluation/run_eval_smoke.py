@@ -1,14 +1,16 @@
 from __future__ import annotations
 
-from pathlib import Path
 import sys
-
+from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tests.evaluation.runners.eval_case_loader import default_case_file, load_eval_cases
+from tests.evaluation.runners.eval_case_loader import (  # noqa: E402
+    default_case_file,
+    load_eval_cases,
+)
 
 
 def main() -> int:

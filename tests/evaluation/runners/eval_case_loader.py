@@ -4,13 +4,13 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-
 from tests.evaluation.runners.eval_assertions import (
     assert_expected_exists,
     assert_judge_exists,
     assert_required_fields,
     assert_unique_case_ids,
 )
+
 
 def _repo_root() -> Path:
     return Path(__file__).resolve().parents[3]

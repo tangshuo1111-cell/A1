@@ -7,7 +7,6 @@ from application.chat.complexity_policy import (
 from application.ingress.mode_selector import select_mode
 from application.ingress.request_classifier import classify_request
 
-
 _INTERVIEW_MESSAGE = (
     "请帮我把这个项目讲成面试官能听懂的话：它为什么不是普通 RAG，"
     "而是一个带 route、capability、multi-turn state、agent collaboration 评测体系的项目？"

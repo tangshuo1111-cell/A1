@@ -7,8 +7,8 @@ from collections import deque
 
 from application.chat.budget_clock import format_ms as _format_ms
 from application.chat.history_buffer import format_context as _format_context
-from application.chat.inline_document_material import promote_message_inline_document
 from application.chat.history_buffer import history_key as _history_key
+from application.chat.inline_document_material import promote_message_inline_document
 from application.chat.pipeline.pipeline_state import TurnPipelineState
 from application.chat.turn_cache import TurnCache, bind_turn_cache, turn_cache_active
 from domain.session_types import SessionHistorySnapshot

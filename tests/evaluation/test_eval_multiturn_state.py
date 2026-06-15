@@ -2,14 +2,20 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
-from tests.evaluation.runners.eval_multiturn_runner import evaluate_flow, load_multiturn_cases, run_multiturn_suite, v2_5_case_file
+from tests.evaluation.runners.eval_multiturn_runner import (
+    evaluate_flow,
+    load_multiturn_cases,
+    run_multiturn_suite,
+    v2_5_case_file,
+)
 from tests.evaluation.runners.eval_result_writer import write_eval_multiturn_report
-from tests.evaluation.runners.eval_state_closure_rules import check_common_state_honesty, check_save_without_pending
+from tests.evaluation.runners.eval_state_closure_rules import (
+    check_common_state_honesty,
+    check_save_without_pending,
+)
 from tests.evaluation.runners.eval_state_extractors import (
-    extract_common_state_fields,
     extract_commit_state_fields,
+    extract_common_state_fields,
     extract_followup_state_fields,
     extract_pending_state_fields,
     extract_session_state_fields,

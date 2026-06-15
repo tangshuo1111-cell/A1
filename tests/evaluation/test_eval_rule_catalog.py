@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 from tests.evaluation.runners.eval_assertions import check_must_not_happen_basic
-from tests.evaluation.runners.eval_rule_catalog import RULE_CHECKERS, build_observed_fields, build_rule_coverage_summary
+from tests.evaluation.runners.eval_rule_catalog import (
+    RULE_CHECKERS,
+    build_observed_fields,
+    build_rule_coverage_summary,
+)
 
 
 def test_build_observed_fields_keeps_answer_and_whitelisted_stable_fields() -> None:

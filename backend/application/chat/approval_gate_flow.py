@@ -25,10 +25,9 @@ from application.chat.turn_exit_extra import build_common_exit_extra
 from application.chat.turn_exit_gate import apply_turn_exit_to_chat_turn
 from application.chat.turn_facts import TurnFacts
 from application.chat.turn_response_builder import build_chat_turn_result
-from domain.session_types import SessionApprovalHold
 from application.ingress.request_classifier import classify_request
 from config.feature_flags import approval_gate_active
-
+from domain.session_types import SessionApprovalHold
 
 _APPROVAL_HOLD_KINDS: frozenset[ApprovalKind] = frozenset({"long_video_asr", "heavy_processing"})
 

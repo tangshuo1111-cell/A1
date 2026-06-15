@@ -2,16 +2,15 @@
 
 from __future__ import annotations
 
-from threading import Lock
 from unittest.mock import patch
 
 import pytest
 
+from application.chat.approval_gate import ApprovalGateResult
 from application.chat.approval_gate_flow import (
     build_approval_blocked_turn_result,
     persist_approval_blocked_session_hold,
 )
-from application.chat.approval_gate import ApprovalGateResult
 from application.chat.history_buffer import ChatTurnDeps
 from application.chat.pipeline.turn_helpers import with_turn_exit_gate
 from application.chat.run_chat_turn import run_agno_chat_turn_impl

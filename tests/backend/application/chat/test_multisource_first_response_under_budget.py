@@ -170,7 +170,8 @@ def test_multisource_turn_task_status_partial_via_run_chat_turn(
         deps=deps,
     )
 
-    assert out["answer"] == "综合比较后的首答。"
+    # 证据不足分支会前置确定性声明，比较型首答应保留在尾部。
+    assert out["answer"].endswith("综合比较后的首答。")
     assert out["task_status"] == "partial"
     assert out["extra"]["pending_kind"] == PendingKind.PARTIAL_PENDING.value
     assert out["extra"].get("limitations")

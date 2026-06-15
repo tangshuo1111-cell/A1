@@ -24,9 +24,7 @@ PROMOTED_FIELD_PATTERNS: dict[str, tuple[str, ...]] = {
         r'"commit_status"\s*:',
         r"commit_status=",
     ),
-    "kb_hits": (
-        r'"kb_hits"\s*:',
-    ),
+    "kb_hits": (r'"kb_hits"\s*:',),
     "background_task_id": (
         r'"background_task_id"\s*:',
         r"resolve_background_task_id",
@@ -36,9 +34,7 @@ PROMOTED_FIELD_PATTERNS: dict[str, tuple[str, ...]] = {
 
 def _backend_sources() -> list[Path]:
     return [
-        path
-        for path in sorted((ROOT / "backend").rglob("*.py"))
-        if "__pycache__" not in path.parts
+        path for path in sorted((ROOT / "backend").rglob("*.py")) if "__pycache__" not in path.parts
     ]
 
 

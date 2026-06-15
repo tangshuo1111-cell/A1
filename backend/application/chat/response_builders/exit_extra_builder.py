@@ -5,14 +5,14 @@ from __future__ import annotations
 from typing import Any
 
 from application.chat.chat_contracts import TurnExitEnvelope
+from application.chat.insufficient_evidence_answer_contract import (
+    apply_insufficient_evidence_answer_contract,
+)
 from application.chat.response_builders.compat_builder import merge_compat_fields
 from application.chat.response_builders.extra_builder import (
     insufficient_evidence,
     is_complex_task,
     resolve_failure_reason_code,
-)
-from application.chat.insufficient_evidence_answer_contract import (
-    apply_insufficient_evidence_answer_contract,
 )
 from application.chat.response_builders.field_writer import (
     apply_decision_fields,
@@ -68,7 +68,11 @@ def apply_exit_envelope(
     apply_material_fields(extra, envelope)
     apply_timing_fields(out, extra)
     if canonical_extra.get("insufficient_evidence") is True:
-        out["answer"] = apply_insufficient_evidence_answer_contract(str(out.get("answer") or ""))
+        from config.cost_rule import COST
+
+        out["answer"] = apply_insufficient_evidence_answer_contract(
+            str(out.get("answer") or ""), max_chars=COST.max_output_chars
+        )
     extra["answer_char_count"] = len(str(out.get("answer") or ""))
     out["extra"] = extra
     return out

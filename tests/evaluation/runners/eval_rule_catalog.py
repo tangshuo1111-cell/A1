@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+import re
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Mapping
-import re
+from typing import Any
 
 import yaml
-
 from tests.evaluation.runners.eval_field_catalog import classify_field
 
 
@@ -250,16 +250,16 @@ def _no_fake_video_material(observed: ObservedFields) -> RuleVerdict:
 def _no_fake_doc_parse(observed: ObservedFields) -> RuleVerdict:
     answer = observed.answer
     task_status = str(observed.get("task_status") or "")
-    if _contains_any(answer, ("OCR 已完成", "已完整解析文档", "扫描 PDF 摘要", "OCR provider success")) or (
-        bool(observed.get("document_ocr_required")) and task_status == "succeeded" and answer
-    ):
-        if not observed.has_any("parse_status", "document_ocr_required", "pending_kind", "ocr_provider"):
-            return RuleVerdict(
-                "A_NO_FAKE_DOC_PARSE",
-                "hard_fail",
-                True,
-                "document parse/OCR claimed without parse signal",
-            )
+    if (
+        _contains_any(answer, ("OCR 已完成", "已完整解析文档", "扫描 PDF 摘要", "OCR provider success"))
+        or (bool(observed.get("document_ocr_required")) and task_status == "succeeded" and answer)
+    ) and not observed.has_any("parse_status", "document_ocr_required", "pending_kind", "ocr_provider"):
+        return RuleVerdict(
+            "A_NO_FAKE_DOC_PARSE",
+            "hard_fail",
+            True,
+            "document parse/OCR claimed without parse signal",
+        )
     return RuleVerdict("A_NO_FAKE_DOC_PARSE", "hard_fail", False)
 
 

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 from tests.evaluation.runners.eval_case_loader import default_case_file, load_eval_cases
 from tests.evaluation.runners.eval_sandbox import (
     clear_eval_sandbox_outputs,

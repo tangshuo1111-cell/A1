@@ -9,7 +9,6 @@ from tests.evaluation.runners.eval_rule_catalog import (
     classify_rule_id,
 )
 
-
 REQUIRED_FIELDS = (
     "case_id",
     "case_name",

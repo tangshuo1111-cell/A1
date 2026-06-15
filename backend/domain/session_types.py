@@ -105,10 +105,7 @@ def looks_like_task_status_inquiry(message: str) -> bool:
     msg = (message or "").strip()
     if not msg:
         return False
-    for pat in _TASK_STATUS_INQUIRY_PATTERNS:
-        if pat.search(msg):
-            return True
-    return False
+    return any(pat.search(msg) for pat in _TASK_STATUS_INQUIRY_PATTERNS)
 
 
 def looks_like_followup_reference(message: str) -> bool:

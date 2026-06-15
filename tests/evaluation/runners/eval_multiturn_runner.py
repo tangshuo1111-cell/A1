@@ -1,14 +1,22 @@
 from __future__ import annotations
 
+import time
 from datetime import datetime
 from pathlib import Path
-import time
 from typing import Any
 
 import yaml
-
-from tests.evaluation.runners.eval_assertions import assert_allowed_value, assert_required_trace_fields, assert_task_status_is_canonical
-from tests.evaluation.runners.eval_http_client import BackendUnavailableError, CaseTimeoutError, EvalHttpClient, ExecutionError
+from tests.evaluation.runners.eval_assertions import (
+    assert_allowed_value,
+    assert_required_trace_fields,
+    assert_task_status_is_canonical,
+)
+from tests.evaluation.runners.eval_http_client import (
+    BackendUnavailableError,
+    CaseTimeoutError,
+    EvalHttpClient,
+    ExecutionError,
+)
 from tests.evaluation.runners.eval_result_writer import write_eval_multiturn_report
 from tests.evaluation.runners.eval_state_closure_rules import (
     check_background_task_followup,
@@ -29,7 +37,6 @@ from tests.evaluation.runners.eval_state_extractors import (
     extract_session_state_fields,
     extract_task_state_fields,
 )
-
 
 _HARD_CLOSURE_CHECKS = frozenset({
     "save_without_pending",

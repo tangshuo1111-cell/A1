@@ -98,7 +98,8 @@ def test_autonomy_flag_off_skips_feedback_loop(monkeypatch: pytest.MonkeyPatch) 
         deps=_deps(),
     )
     extra = out["extra"]
-    assert out["answer"] == "单轮复杂回答"
+    # 证据不足分支会前置确定性声明，单轮兜底答案应保留在尾部。
+    assert out["answer"].endswith("单轮复杂回答")
     assert called["web"] == 0
     assert "loop_id" not in extra
     assert "autonomy_events" not in extra

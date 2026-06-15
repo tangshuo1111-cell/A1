@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from threading import Lock
 from unittest.mock import patch
 
 import pytest

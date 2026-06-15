@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
 STABLE_CONTRACT_FIELDS: tuple[str, ...] = (
     "task_status",
     "primary_path",

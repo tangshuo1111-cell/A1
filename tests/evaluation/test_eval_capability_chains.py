@@ -8,6 +8,7 @@ from tests.evaluation.runners.eval_capability_extractors import (
     extract_video_capability_fields,
     extract_web_capability_fields,
 )
+from tests.evaluation.runners.eval_case_loader import load_eval_cases
 from tests.evaluation.runners.eval_fake_success_rules import (
     check_document_fake_success,
     check_kb_fake_success,
@@ -16,7 +17,6 @@ from tests.evaluation.runners.eval_fake_success_rules import (
 )
 from tests.evaluation.runners.eval_result_writer import write_eval_report
 from tests.evaluation.runners.eval_runner import run_suite, v2_suite_case_files
-from tests.evaluation.runners.eval_case_loader import load_eval_cases
 
 
 def test_v2_case_files_exist() -> None:

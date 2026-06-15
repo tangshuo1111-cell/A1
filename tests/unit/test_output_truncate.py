@@ -173,7 +173,9 @@ def test_truncation_disabled_when_under_limit(monkeypatch: pytest.MonkeyPatch) -
         nodes_contract=lambda tr: {},
     )
     out = run_agno_chat_turn_impl("请根据知识库资料详细回答这个问题", session_id="s2", deps=deps)
-    assert out["answer"] == txt
+    # insufficient_evidence 场景会前置确定性证据不足声明；未到上限不应截断正文。
+    assert out["answer"].endswith(txt)
+    assert len(out["answer"]) < 5000
 
 
 def test_run_agno_chat_turn_impl_exposes_sla_budget_fields(monkeypatch: pytest.MonkeyPatch) -> None:

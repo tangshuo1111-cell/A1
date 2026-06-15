@@ -1,19 +1,28 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
 import sys
-
+from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from tests.evaluation.runners.eval_http_client import BackendUnavailableError, EvalHttpClient
-from tests.evaluation.runners.eval_multiturn_runner import run_multiturn_suite, v2_5_case_file
-from tests.evaluation.runners.eval_runner import run_suite, v1_case_file, v2_suite_case_files
-from tests.evaluation.runners.eval_complex_agent_runner import v3_case_file
-from scripts.evaluation.render_eval_overview import render_regression_overview
+from scripts.evaluation.render_eval_overview import render_regression_overview  # noqa: E402
+from tests.evaluation.runners.eval_complex_agent_runner import v3_case_file  # noqa: E402
+from tests.evaluation.runners.eval_http_client import (  # noqa: E402
+    BackendUnavailableError,
+    EvalHttpClient,
+)
+from tests.evaluation.runners.eval_multiturn_runner import (  # noqa: E402
+    run_multiturn_suite,
+    v2_5_case_file,
+)
+from tests.evaluation.runners.eval_runner import (  # noqa: E402
+    run_suite,
+    v1_case_file,
+    v2_suite_case_files,
+)
 
 
 def main() -> int:

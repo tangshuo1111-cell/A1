@@ -322,9 +322,7 @@ def _has_carryover_session_facts(
         return True
     if str(extra.get("web_primary_source") or "").strip():
         return True
-    if int(extra.get("v15_retrieved_chunks_count") or 0) > 0:
-        return True
-    return False
+    return int(extra.get("v15_retrieved_chunks_count") or 0) > 0
 
 
 def lift_empty_context_followup(

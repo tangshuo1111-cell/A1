@@ -4,6 +4,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from tests.evaluation.runners.eval_assertions import (
+    assert_allowed_value,
+    assert_required_trace_fields,
+    assert_task_status_is_canonical,
+    check_must_not_happen_basic,
+)
 from tests.evaluation.runners.eval_capability_extractors import (
     extract_common_exit_fields,
     extract_document_capability_fields,
@@ -11,14 +17,8 @@ from tests.evaluation.runners.eval_capability_extractors import (
     extract_video_capability_fields,
     extract_web_capability_fields,
 )
-from tests.evaluation.runners.eval_complex_agent_runner import run_v3_suite, v3_case_file
-from tests.evaluation.runners.eval_assertions import (
-    assert_allowed_value,
-    assert_required_trace_fields,
-    assert_task_status_is_canonical,
-    check_must_not_happen_basic,
-)
 from tests.evaluation.runners.eval_case_loader import load_eval_cases
+from tests.evaluation.runners.eval_complex_agent_runner import run_v3_suite, v3_case_file
 from tests.evaluation.runners.eval_fake_success_rules import (
     check_common_fake_success,
     check_document_fake_success,
@@ -26,7 +26,12 @@ from tests.evaluation.runners.eval_fake_success_rules import (
     check_video_fake_success,
     check_web_fake_success,
 )
-from tests.evaluation.runners.eval_http_client import BackendUnavailableError, CaseTimeoutError, EvalHttpClient, ExecutionError
+from tests.evaluation.runners.eval_http_client import (
+    BackendUnavailableError,
+    CaseTimeoutError,
+    EvalHttpClient,
+    ExecutionError,
+)
 from tests.evaluation.runners.eval_result_writer import write_eval_report
 
 

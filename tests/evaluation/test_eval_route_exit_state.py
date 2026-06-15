@@ -3,12 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-
 from tests.evaluation.runners.eval_assertions import assert_task_status_is_canonical
+from tests.evaluation.runners.eval_case_loader import load_eval_cases
 from tests.evaluation.runners.eval_http_client import BackendUnavailableError
 from tests.evaluation.runners.eval_result_writer import write_eval_report
 from tests.evaluation.runners.eval_runner import evaluate_case, run_suite, v1_case_file
-from tests.evaluation.runners.eval_case_loader import load_eval_cases
 
 
 def test_v1_case_file_exists() -> None:

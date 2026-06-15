@@ -5,7 +5,9 @@ from __future__ import annotations
 from typing import Any
 
 from application.chat.executors.complex_executor import run_main_stage as _run_main_stage
-from application.chat.pipeline.inline_document_plan_handoff import apply_inline_document_plan_handoff
+from application.chat.pipeline.inline_document_plan_handoff import (
+    apply_inline_document_plan_handoff,
+)
 from application.chat.pipeline.pipeline_state import TurnPipelineState
 
 

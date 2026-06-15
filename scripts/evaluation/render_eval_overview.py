@@ -1,12 +1,11 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
-import json
 from typing import Any
 
 from tests.evaluation.runners.eval_result_writer import write_regression_overview_report
-
 
 KNOWN_ISSUE_CASE_MAP = {
     "video_total_failure": "KI-V2-001",
