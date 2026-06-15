@@ -21,12 +21,14 @@ from tests.evaluation.runners.eval_http_client import (
 )
 from tests.evaluation.runners.eval_real_external_status import (
     aggregate_capability_summary,
+    build_environment_summary,
     build_recommendations,
     build_sanitized_summary,
     compute_exit_code,
     compute_final_verdict,
     dependency_missing_reason_from_errors,
     is_dependency_missing_error,
+    load_project_env_files,
     make_entry,
     resolve_product_failure,
 )
@@ -463,10 +465,30 @@ def run_capability_web_static_real(case: dict[str, Any], client: EvalHttpClient,
         ))
 
 
+def _document_tool_name_for_path(path: Path) -> str | None:
+    suffix = path.suffix.lower()
+    mapping = {
+        ".txt": "parse_txt_document",
+        ".md": "parse_md_document",
+        ".docx": "parse_docx",
+        ".pdf": "parse_pdf",
+        ".xlsx": "parse_excel",
+        ".xls": "parse_excel",
+    }
+    return mapping.get(suffix)
+
+
+def _register_document_tools() -> None:
+    import tools.document.parse_docx  # noqa: F401
+    import tools.document.parse_excel  # noqa: F401
+    import tools.document.parse_pdf  # noqa: F401
+    import tools.document.parse_text  # noqa: F401
+
+
 def run_capability_document_fixture_real(case: dict[str, Any]) -> dict[str, Any]:
     t0 = time.perf_counter()
     _ensure_backend_path()
-    import tools.document.parse_text  # noqa: F401
+    _register_document_tools()
     from tools.document.registry import call_tool
 
     fixtures = [str(p) for p in (case.get("fixtures") or [])]
@@ -485,7 +507,11 @@ def run_capability_document_fixture_real(case: dict[str, Any]) -> dict[str, Any]
         if not path.exists():
             errors.append(f"missing:{rel}")
             continue
-        result = call_tool("parse_text", file_path=str(path))
+        tool_name = _document_tool_name_for_path(path)
+        if not tool_name:
+            errors.append(f"unsupported_extension:{path.suffix}")
+            continue
+        result = call_tool(tool_name, file_path=str(path))
         if result.status == "success" and (result.text or "").strip():
             parsed += 1
         else:
@@ -915,6 +941,7 @@ def run_real_external_smoke_suite(
     client: EvalHttpClient | None = None,
     case_file: str | Path | None = None,
 ) -> dict[str, Any]:
+    env_files_loaded = load_project_env_files(_repo_root(), override=False)
     started_at = datetime.now().isoformat(timespec="seconds")
     http_client = client or EvalHttpClient()
     preflight = run_dependency_preflight(http_client)
@@ -931,12 +958,7 @@ def run_real_external_smoke_suite(
         "started_at": started_at,
         "finished_at": finished_at,
         "backend_base_url": http_client.base_url,
-        "environment_summary": {
-            "LIGHT_MAQA_FAKE_LLM": "1" if _env_truthy("LIGHT_MAQA_FAKE_LLM") else "0",
-            "DATABASE_URL_set": bool(os.environ.get("DATABASE_URL", "").strip()),
-            "REAL_VIDEO_TEST_URL_set": bool(os.environ.get("REAL_VIDEO_TEST_URL", "").strip()),
-            "REAL_EXTERNAL_RUN_REGRESSION": os.environ.get("REAL_EXTERNAL_RUN_REGRESSION", "0"),
-        },
+        "environment_summary": build_environment_summary(env_files_loaded=env_files_loaded),
         "dependency_preflight": preflight,
         "capability_cases": capability_results,
         "optional_regression": optional_regression,

@@ -134,6 +134,18 @@ py scripts/evaluation/run_eval_suite.py --suite real_external_smoke
 
 ## 3. Suite 结构
 
+### 3.0 启动时 env 加载（评测层）
+
+suite 启动时调用 `load_project_env_files(repo_root, override=False)`，候选路径与 `backend/config/_helpers._candidate_env_files` 对齐：
+
+1. `<repo>/.env`
+2. `<repo>/backend/config/env.txt`
+3. 上级目录 `.env`（最多 3 层）
+
+**不**在 preflight 阶段 `import config.settings`（避免副作用）；仅 `load_dotenv`。进程内已存在的 `os.environ` 项优先（`override=False`）。
+
+`environment_summary` 可含 `env_files_loaded`、`LLM_API_KEY.present/length/masked`，**禁止**写入完整 key 或 env 文件原文。
+
 ### 3.1 `dependency_preflight`（7 项，非 capability case）
 
 | preflight_id | 检测内容 |
@@ -152,7 +164,19 @@ py scripts/evaluation/run_eval_suite.py --suite real_external_smoke
 |---|---------|------|
 | 1 | `llm_real_minimal` | 真实 LLM 最小问答 |
 | 2 | `web_static_real` | 真实静态网页抓取 |
-| 3 | `document_fixture_real` | 真实文档解析（含 optional `http_chat` sub_step） |
+| 3 | `document_fixture_real` | 真实文档解析（`direct_tool`；按扩展名映射 registry 工具名） |
+
+`document_fixture_real` 扩展名 → registry 工具名（只读调用，不改业务）：
+
+| 扩展名 | registry 工具名 |
+|--------|----------------|
+| `.txt` | `parse_txt_document` |
+| `.md` | `parse_md_document` |
+| `.docx` | `parse_docx` |
+| `.pdf` | `parse_pdf` |
+| `.xlsx` / `.xls` | `parse_excel` |
+
+禁止调用不存在的 `parse_text`。`tool_not_found` / `parser_dependency_missing` → `dependency_missing`；至少一个 fixture 解析出文本即 `configured_and_passed`。
 | 4 | `kb_real_roundtrip` | KB 写入/检索闭环 |
 | 5 | `video_subtitle_probe_real` | 视频字幕 probe |
 | 6 | `asr_real_short_audio` | 短音频 ASR |

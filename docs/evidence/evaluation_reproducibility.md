@@ -39,11 +39,23 @@ py scripts/evaluation/run_eval_suite.py --suite regression_all
 
 ## 3. 真实外部能力可复现（手动 staging smoke）
 
+`real_external_smoke` 启动时会自动加载项目既有 env 文件（与 `backend/config/_helpers.py` 候选路径一致）：
+
+1. 仓库根目录 `.env`
+2. `backend/config/env.txt`
+3. 上级目录 `.env`（最多 3 层）
+
+规则：`load_dotenv(override=False)` —— **当前 PowerShell 已 export 的变量优先**，不会被 env 文件覆盖。报告只记录 key 是否存在、长度、masked 形态，**不写入完整 key**。
+
 ```powershell
+# 真实 LLM 需在进程中关闭 fake LLM（可覆盖 env.txt 未设置的项）
 $env:LIGHT_MAQA_FAKE_LLM = "0"
-# 配置 LLM_API_KEY / ASR / OCR 等（勿入库）
+# 若未使用 env.txt，也可仅在当前会话 export：
+# $env:LLM_API_KEY = "<your key>"
 py scripts/evaluation/run_eval_suite.py --suite real_external_smoke
 ```
+
+若 key 已写在 `backend/config/env.txt`（gitignored），通常**无需**再手动 export `LLM_API_KEY`；但若会话里残留 `LIGHT_MAQA_FAKE_LLM=1`，`llm_real_minimal` 仍会 `skipped`（符合 spec）。
 
 可选：
 
@@ -60,6 +72,7 @@ py scripts/evaluation/run_eval_suite.py --suite real_external_smoke
 | LLM key | `llm_real_minimal` |
 | 网络 | `web_static_real` |
 | PostgreSQL | `kb_real_roundtrip` |
+| 文档 fixtures | `document_fixture_real`（`.txt`→`parse_txt_document` 等 registry 名） |
 | Playwright Chromium | 动态网页能力边界（preflight） |
 | ffmpeg | 视频链（preflight） |
 | ASR key | `asr_real_short_audio` |

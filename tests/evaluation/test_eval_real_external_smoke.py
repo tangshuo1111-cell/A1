@@ -14,17 +14,21 @@ from tests.evaluation.runners.eval_real_external_runner import (
     load_real_external_cases,
     real_external_case_file,
     run_capability_cases,
+    run_capability_llm_real_minimal,
     run_dependency_preflight,
     run_optional_regression,
+    run_preflight_llm_key,
     run_real_external_smoke_suite,
 )
 from tests.evaluation.runners.eval_real_external_status import (
     REAL_EXTERNAL_STATUSES,
     aggregate_capability_summary,
+    build_environment_summary,
     build_sanitized_summary,
     compute_exit_code,
     dependency_missing_reason_from_errors,
     is_dependency_missing_error,
+    load_project_env_files,
     make_entry,
     resolve_product_failure,
     sanitize_text,
@@ -282,3 +286,146 @@ def test_document_fixture_tool_not_found_is_dependency_missing(monkeypatch) -> N
     assert result["configured"] is False
     assert result["reason"] == "tool_not_found"
     assert result["product_failure"] is False
+
+
+def test_document_fixture_txt_uses_registered_tool_name(monkeypatch) -> None:
+    from tests.evaluation.runners.eval_real_external_runner import (
+        _document_tool_name_for_path,
+        run_capability_document_fixture_real,
+    )
+
+    fixture_rel = "tests/fixtures/v16_materials/txt/sample_success.txt"
+    monkeypatch.setattr(
+        "tests.evaluation.runners.eval_real_external_runner._repo_root",
+        lambda: REPO_ROOT,
+    )
+    assert _document_tool_name_for_path(REPO_ROOT / fixture_rel) == "parse_txt_document"
+
+    called: list[str] = []
+    import tools.document.registry as registry
+
+    real_call_tool = registry.call_tool
+
+    def _spy_call_tool(tool_name: str, **kwargs):
+        called.append(tool_name)
+        return real_call_tool(tool_name, **kwargs)
+
+    monkeypatch.setattr(registry, "call_tool", _spy_call_tool)
+    result = run_capability_document_fixture_real({"fixtures": [fixture_rel]})
+    assert "parse_txt_document" in called
+    assert "parse_text" not in called
+    assert result["status"] == "configured_and_passed"
+    assert result["reason"] == "document_parsed"
+    assert result["product_failure"] is False
+
+
+def test_document_fixture_docx_failure_does_not_block_txt_pass(monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    from tests.evaluation.runners.eval_real_external_runner import run_capability_document_fixture_real
+
+    fixtures = [
+        "tests/fixtures/v16_materials/txt/sample_success.txt",
+        "tests/fixtures/v16_materials/docx/sample_success.docx",
+    ]
+    monkeypatch.setattr(
+        "tests.evaluation.runners.eval_real_external_runner._repo_root",
+        lambda: REPO_ROOT,
+    )
+    import tools.document.registry as registry
+
+    real_call_tool = registry.call_tool
+
+    def _selective_call_tool(tool_name: str, **kwargs):
+        if tool_name == "parse_docx":
+            return SimpleNamespace(
+                status="failed",
+                text="",
+                error_code="parser_dependency_missing",
+                failure_reason="python-docx missing",
+            )
+        return real_call_tool(tool_name, **kwargs)
+
+    monkeypatch.setattr(registry, "call_tool", _selective_call_tool)
+    result = run_capability_document_fixture_real({"fixtures": fixtures})
+    assert result["status"] == "configured_and_passed"
+    assert result["detail"]["parsed_count"] == 1
+    assert "parser_dependency_missing" in result["detail"]["errors"]
+
+
+def test_document_fixture_runner_does_not_call_parse_text() -> None:
+    runner_source = (REPO_ROOT / "tests" / "evaluation" / "runners" / "eval_real_external_runner.py").read_text(encoding="utf-8")
+    assert 'call_tool("parse_text"' not in runner_source
+
+
+def test_load_env_txt_detects_llm_key_for_preflight(tmp_path, monkeypatch) -> None:
+    env_file = tmp_path / "backend" / "config" / "env.txt"
+    env_file.parent.mkdir(parents=True)
+    env_file.write_text("LLM_API_KEY=sk-test-key-from-file\n", encoding="utf-8")
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("LIGHT_MAQA_FAKE_LLM", raising=False)
+
+    loaded = load_project_env_files(tmp_path, override=False)
+    assert "backend/config/env.txt" in loaded
+
+    result = run_preflight_llm_key()
+    assert result["status"] == "configured_and_passed"
+    assert result["reason"] == "llm_key_present"
+
+
+def test_process_env_overrides_env_txt_llm_key(tmp_path, monkeypatch) -> None:
+    env_file = tmp_path / "backend" / "config" / "env.txt"
+    env_file.parent.mkdir(parents=True)
+    env_file.write_text("LLM_API_KEY=file-key-value\n", encoding="utf-8")
+    monkeypatch.setenv("LLM_API_KEY", "session-key-value")
+
+    load_project_env_files(tmp_path, override=False)
+    assert os.environ.get("LLM_API_KEY") == "session-key-value"
+
+
+def test_fake_llm_skips_even_when_env_txt_has_key(tmp_path, monkeypatch) -> None:
+    env_file = tmp_path / "backend" / "config" / "env.txt"
+    env_file.parent.mkdir(parents=True)
+    env_file.write_text("LLM_API_KEY=sk-test-key-from-file\n", encoding="utf-8")
+    monkeypatch.setenv("LIGHT_MAQA_FAKE_LLM", "1")
+    monkeypatch.delenv("LLM_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+
+    load_project_env_files(tmp_path, override=False)
+    assert run_preflight_llm_key()["reason"] == "fake_llm_enabled"
+    assert run_capability_llm_real_minimal({"case_id": "llm_real_minimal", "user_input": "1+1=?"})["reason"] == "fake_llm_enabled"
+
+
+def test_environment_summary_masks_llm_key_without_leaking(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("LLM_API_KEY", "sk-abcdefghijklmnopqrstuvwxyz")
+    summary = build_environment_summary(env_files_loaded=["backend/config/env.txt"])
+    assert summary["LLM_API_KEY"]["present"] is True
+    assert summary["LLM_API_KEY"]["length"] == 29
+    assert "abcdefghijklmnopqrst" not in str(summary)
+    assert summary["LLM_API_KEY"]["masked"] == "sk****yz"
+
+    report = {
+        "suite_name": "real_external_smoke",
+        "final_verdict": "environment_ready",
+        "backend_base_url": "http://127.0.0.1:8000",
+        "environment_summary": summary,
+        "dependency_preflight": [],
+        "capability_cases": [],
+        "summary": {},
+    }
+    sanitized = build_sanitized_summary(report)
+    assert "sk-abcdefghijklmnopqrstuvwxyz" not in sanitized
+    assert sanitize_text(sanitized) == sanitized
+
+
+def test_backend_config_env_txt_is_gitignored() -> None:
+    import subprocess
+
+    result = subprocess.run(
+        ["git", "check-ignore", "-q", "backend/config/env.txt"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0

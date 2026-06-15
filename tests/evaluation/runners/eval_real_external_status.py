@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import os
 import re
+from pathlib import Path
 from typing import Any
 
 REAL_EXTERNAL_STATUSES = frozenset({
@@ -88,6 +90,76 @@ SANITIZE_PATTERNS = (
     (re.compile(r"[A-Za-z]:\\Users\\[^\\]+"), r"<USER_HOME>"),
     (re.compile(r"/Users/[^/]+"), r"<USER_HOME>"),
 )
+
+
+def candidate_project_env_files(repo_root: Path) -> list[Path]:
+    """Mirror backend/config/_helpers._candidate_env_files without importing settings."""
+    candidates: list[Path] = [
+        repo_root / ".env",
+        repo_root / "backend" / "config" / "env.txt",
+    ]
+    for parent in list(repo_root.parents)[:3]:
+        candidates.append(parent / ".env")
+    unique: list[Path] = []
+    seen: set[Path] = set()
+    for path in candidates:
+        resolved = path.resolve()
+        if resolved not in seen:
+            unique.append(path)
+            seen.add(resolved)
+    return unique
+
+
+def load_project_env_files(repo_root: Path, *, override: bool = False) -> list[str]:
+    """Load project env files into os.environ; returns relative paths loaded (no values)."""
+    try:
+        from dotenv import load_dotenv
+    except ImportError:
+        return []
+
+    loaded: list[str] = []
+    for path in candidate_project_env_files(repo_root):
+        if not path.exists():
+            continue
+        load_dotenv(path, override=override)
+        try:
+            loaded.append(path.relative_to(repo_root).as_posix())
+        except ValueError:
+            loaded.append(str(path))
+    return loaded
+
+
+def mask_secret_value(value: str) -> str:
+    val = str(value or "").strip()
+    if not val:
+        return ""
+    if len(val) < 4:
+        return "<set>"
+    return f"{val[:2]}****{val[-2:]}"
+
+
+def summarize_env_secret(name: str) -> dict[str, Any]:
+    raw = os.environ.get(name, "")
+    val = raw.strip() if isinstance(raw, str) else ""
+    if not val:
+        return {"present": False}
+    return {
+        "present": True,
+        "length": len(val),
+        "masked": mask_secret_value(val),
+    }
+
+
+def build_environment_summary(*, env_files_loaded: list[str]) -> dict[str, Any]:
+    return {
+        "env_files_loaded": list(env_files_loaded),
+        "LIGHT_MAQA_FAKE_LLM": "1" if os.environ.get("LIGHT_MAQA_FAKE_LLM", "").strip().lower() in {"1", "true", "yes", "on"} else "0",
+        "DATABASE_URL_set": bool(os.environ.get("DATABASE_URL", "").strip()),
+        "REAL_VIDEO_TEST_URL_set": bool(os.environ.get("REAL_VIDEO_TEST_URL", "").strip()),
+        "REAL_EXTERNAL_RUN_REGRESSION": os.environ.get("REAL_EXTERNAL_RUN_REGRESSION", "0"),
+        "LLM_API_KEY": summarize_env_secret("LLM_API_KEY"),
+        "OPENAI_API_KEY": summarize_env_secret("OPENAI_API_KEY"),
+    }
 
 
 def make_entry(
