@@ -11,6 +11,9 @@ from application.chat.response_builders.extra_builder import (
     is_complex_task,
     resolve_failure_reason_code,
 )
+from application.chat.insufficient_evidence_answer_contract import (
+    apply_insufficient_evidence_answer_contract,
+)
 from application.chat.response_builders.field_writer import (
     apply_decision_fields,
     apply_material_fields,
@@ -64,6 +67,8 @@ def apply_exit_envelope(
     extra = merge_compat_fields(canonical_extra, extra)
     apply_material_fields(extra, envelope)
     apply_timing_fields(out, extra)
-    extra["answer_char_count"] = len(str(result.get("answer") or ""))
+    if canonical_extra.get("insufficient_evidence") is True:
+        out["answer"] = apply_insufficient_evidence_answer_contract(str(out.get("answer") or ""))
+    extra["answer_char_count"] = len(str(out.get("answer") or ""))
     out["extra"] = extra
     return out

@@ -249,3 +249,45 @@
 - 扩展讲解型 cue 时继续在 `complexity_policy` 单点维护，勿在 `kb_fast_impl` 平行写判断
 - 回归方式：
 - `py scripts/evaluation/run_eval_suite.py --suite v3_complex_agent`
+
+---
+
+## KI-V3-003
+
+- Issue ID：`KI-V3-003`
+- 标题：`insufficient evidence answer contract 不稳定`
+- 来源版本：`V3：Complex / Agent Collaboration`
+- 来源 case：`complex_insufficient_evidence`
+- 问题类型：`insufficient evidence honesty / answer contract instability`
+- 当前状态：`Fixed`
+- 原始证据：
+- `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v3_complex_agent_20260615_151849.json`
+- `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v3_complex_agent_20260615_152512.json`
+- 修复证据：
+- `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v3_complex_agent_20260615_153727.json`
+- `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v3_complex_agent_20260615_154141.json`
+- 现象（修复前）：
+- push 前稳定性复核中 `v3_complex_agent` 出现 **2/3 为 7/8**，失败 case 均为 `complex_insufficient_evidence`
+- 三轮路由/出口态一致：`task_status=partial`、`lane=kb`、`mode=fast`、`winner_rule=pending_kind`、`insufficient_evidence=true`
+- 失败断言：`evidence insufficiency not honestly reflected in answer` / `absolute conclusion given under insufficient evidence`
+- LLM 回答偶发缺少稳定「证据不足 / 无法确认」表达，导致诚实性文本断言抖动
+- 修复摘要（2026-06-15）：
+- 在 `apply_exit_envelope`（`turn_response_builder` 出口组装层）对 `insufficient_evidence=true` 施加稳定回答契约前缀
+- 前缀强制包含「现有材料不足，无法确认」，保留原 answer 正文
+- 未改 eval、未改 `turn_exit_gate`、未改 V3-001/V3-002 路由
+- 修复后 E2E：`v3_complex_agent` 连跑 **3/3 为 8/8**；`complex_insufficient_evidence` 稳定通过
+- 为什么是真问题：
+- `insufficient_evidence` 事实已存在，但用户可见 answer 表达不稳定
+- 在证据不足场景下，回答契约应确定性表达「不能确认」，而非依赖 LLM 措辞侥幸
+- 影响范围：
+- KB / mixed 路径下 `insufficient_evidence=true` 的出口回答
+- V3 诚实性 case `complex_insufficient_evidence`
+- 当前处理策略：
+- 已于 2026-06-15 完成最小 answer contract 修复并冻结
+- `material_sufficiency=sufficient` 与 `insufficient_evidence=true` 可并存：表示「有检索材料，但不足以支持强结论」
+- 风险 / 观察项：
+- `complex_web_kb_compare` 仍作为稳定性观察项，非本轮修复目标
+- 后续建议：
+- 如需扩展不足表达模板，继续在 `insufficient_evidence_answer_contract.py` 单点维护
+- 回归方式：
+- `py scripts/evaluation/run_eval_suite.py --suite v3_complex_agent`
