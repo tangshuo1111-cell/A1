@@ -279,6 +279,7 @@ def finalize_bundle_after_v13(
     material_insufficient: bool,
     kb_sufficiency: KbSufficiencyResult | None,
     v14_trace_info: dict[str, Any] | None,
+    inline_document_text: str | None = None,
 ) -> MiddleV15BundleFacet:
     lines.append("v4:3_answer:agno_unified")
 
@@ -346,6 +347,13 @@ def finalize_bundle_after_v13(
                 f"[MCP视频待保存 pending_id={_pid} "
                 f"source_type=local_video committed=False]\n{_mcp_preview[:2000]}"
             )
+
+    from application.chat.inline_document_material import append_inline_document_temporary_material
+
+    append_inline_document_temporary_material(
+        _v15_temporary_materials,
+        inline_document_text=inline_document_text,
+    )
 
     _v15_commit_results: list[dict[str, Any]] = []
     if v13_commit_result_obj is not None:

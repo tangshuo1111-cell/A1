@@ -7,6 +7,7 @@ from collections import deque
 
 from application.chat.budget_clock import format_ms as _format_ms
 from application.chat.history_buffer import format_context as _format_context
+from application.chat.inline_document_material import promote_message_inline_document
 from application.chat.history_buffer import history_key as _history_key
 from application.chat.pipeline.pipeline_state import TurnPipelineState
 from application.chat.turn_cache import TurnCache, bind_turn_cache, turn_cache_active
@@ -66,5 +67,15 @@ def run_session_stage(state: TurnPipelineState) -> None:
             prev_video=state.prev_video_ref,
             pending_video_text=state.pending_video,
         )
+    if not (effective_v13_text or "").strip():
+        promoted = promote_message_inline_document(
+            state.message,
+            existing_v13_text=state.v13_text_content,
+            existing_file_content=state.v13_file_content,
+        )
+        if promoted:
+            effective_v13_text = promoted
+            state.inline_document_promoted = True
+
     state.timing["session_snapshot_ms"] = _format_ms((time.perf_counter() - ts) * 1000)
     state.v13_text_content = effective_v13_text

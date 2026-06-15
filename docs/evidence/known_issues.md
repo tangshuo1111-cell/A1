@@ -159,33 +159,44 @@
 - 标题：`complex_document_reasoning 内联文档复杂分析协作证据不足`
 - 来源版本：`V3：Complex / Agent Collaboration`
 - 来源 case：`complex_document_reasoning`
-- 问题类型：`complex material reasoning observability gap / 路由退化`
-- 当前状态：`Deferred`
+- 问题类型：`complex material reasoning observability gap / 内联文档未进入材料链`
+- 当前状态：`Fixed`
 - 原始证据：
 - `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v3_complex_agent_20260613_135505.json`
 - `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v3_complex_agent_20260613_135505.md`
-- 现象：
+- 修复证据：
+- `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v3_complex_agent_20260615_135404.json`
+- `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v3_complex_agent_20260615_135404.md`
+- 现象（修复前）：
 - 用户提供内联文档材料并要求复杂分析
-- 真实响应返回：
-- `task_status=succeeded`
-- `primary_path=agno_basic_v2_kb`
-- `lane=agno_basic_v2_kb`
-- 这没有稳定体现 `document / material reasoning / general-complex` 的协作证据
+- case 已进入 `mode=complex`，但内联文档只停留在 `message`，未进入 `v13_text_content` / `temporary_materials`
+- Middle / Answer 消费 KB benchmark 材料
+- 真实响应返回 `primary_path=agno_basic_v2_kb`，`temporary_materials=0`
+- 不能证明系统基于当前内联材料完成了复杂协作分析
+- 修复摘要（2026-06-15）：
+- `session_stage` 将 message 内联文档提升为 `v13_text_content`
+- complex 编排 handoff：`answer_mode=temporary_material`，`needs_retrieval=False`（不走 `prepare_text` pending）
+- `bundle_finalize` 注入 `[inline_document]` 至 `temporary_materials`
+- `path_labels` 在真实 inline document 消费后标 `document_complex`
+- 修复后 E2E：`v3_complex_agent` **7/8**；`complex_document_reasoning` **通过**
+- 关键行为：`task_status=succeeded`、`primary_path=document_complex`、`mode=complex`、`temporary_materials=1`、Answer 消费 `inline_document`
 - 为什么是真问题：
-- 该 case 要测的是“基于当前用户提供材料的复杂分析”
-- 真实路径更像 KB/basic path
-- 不能充分证明系统基于当前内联材料完成了复杂协作分析
+- 该 case 要测的是「基于当前用户提供材料的复杂分析」
+- 路径标签必须跟随真实材料消费，不能只改 label 骗过评测
 - 影响范围：
 - 内联文档复杂分析题
-- complex/document 路由可信度
-- V3 Main / Middle / Answer 协作可观测性
+- complex/document 材料 handoff 与路径标签诚实性
+- V3 Main / Middle / Answer 材料归属可观测性
 - 当前处理策略：
-- 当前不修业务主链
-- 保留为 known issue
-- 后续在 complex intent routing、inline material 标注、material reasoning 可观测性层统一治理
+- 已于 2026-06-15 完成最小 L5 材料 handoff + L10 路径标签修复并冻结
+- 未修改 eval runner / assertions / rule_catalog，未放宽 `allowed_primary_paths`
+- 风险 / 观察项：
+- 内联提取当前依赖强 cue（如「下面这段文档内容」）和末位冒号切分，其他写法可能未覆盖
+- `complex_web_kb_compare` 在本轮 E2E 从 timeout 转为通过（7/8 之一），**不是本轮修复目标**，不标记为 Fixed，仅作观察项
+- V3 整体尚未完成（`KI-V3-002` 仍 open）
 - 后续建议：
-- 增强 inline material 场景的复杂题识别与材料归属信号
-- 让 document/material reasoning 证据能稳定暴露到响应侧
+- 扩展内联文档 cue / 切分策略时保持「先修材料事实、再修路径标签」原则
+- 如需覆盖更多 inline 写法，另立专项轮次，勿回退 eval 标准
 - 回归方式：
 - `py scripts/evaluation/run_eval_suite.py --suite v3_complex_agent`
 
@@ -198,14 +209,18 @@
 - 来源版本：`V3：Complex / Agent Collaboration`
 - 来源 case：`complex_interview_explanation`
 - 问题类型：`complex agent collaboration degradation / kb_fast 接管`
-- 当前状态：`Deferred`
+- 当前状态：`Open`
 - 原始证据：
 - `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v3_complex_agent_20260613_135505.json`
 - `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v3_complex_agent_20260613_135505.md`
+- 最新复测证据（KI-V3-001 修复后，仍失败）：
+- `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v3_complex_agent_20260615_135404.json`
+- `D:\1\A1_publish\runtime_data\eval_sandbox\reports\eval_v3_complex_agent_20260615_135404.md`
 - 现象：
 - 项目面试讲解型复杂问题返回：
 - `task_status=succeeded`
 - `primary_path=kb_fast`
+- `mode=fast`（未进入 complex 三 Agent 协作链）
 - 没有稳定体现预期的 complex agent collaboration 路径
 - 为什么是真问题：
 - 面试讲解型问题不只是知识库问答
@@ -216,8 +231,7 @@
 - complex / kb_fast 边界
 - V3 协作证据可信度
 - 当前处理策略：
-- 当前不修业务主链
-- 保留为 known issue
+- 本轮（KI-V3-001）不修；保留为 open known issue
 - 后续在 complex intent routing、kb_fast fallback、answer grounding 可观测性层统一治理
 - 后续建议：
 - 减少复杂项目讲解题被 `kb_fast` 直接吞掉的概率

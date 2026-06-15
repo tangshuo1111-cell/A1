@@ -179,6 +179,11 @@ def build_material_bundle_after_gather(
         material_insufficient=g.material_insufficient,
         kb_sufficiency=g.kb_sufficiency,
         v14_trace_info=g.v14_trace_info,
+        inline_document_text=(
+            str(inputs.get("v13_text_content") or "").strip() or None
+            if str(getattr(plan, "answer_mode", "") or "") == "temporary_material"
+            else None
+        ),
     )
 
     trace(

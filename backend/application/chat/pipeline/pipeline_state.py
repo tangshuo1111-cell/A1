@@ -46,3 +46,4 @@ class TurnPipelineState:
     v13_text_content: str | None = None
     v13_title: str | None = None
     confirm_long_web_video_asr: bool = False
+    inline_document_promoted: bool = False

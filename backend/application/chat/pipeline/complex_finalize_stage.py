@@ -18,11 +18,15 @@ from application.chat.executors.complex_executor import (
 from application.chat.exit_signals import primary_path_signal_from_extra
 from application.chat.path_labels import resolve_complex_primary_path
 from application.chat.pending_kind import PendingKind
+from application.chat.pipeline.complex_session_writeback import writeback_complex_session
 from application.chat.pipeline.fast_stage import build_merge_turn_obs, finalize_turn_cache
 from application.chat.pipeline.pipeline_state import TurnPipelineState
 from application.chat.turn_exit_gate import apply_turn_exit_to_chat_turn
-from application.chat.turn_facts import build_complex_turn_facts, quality_gate_from_extra
-from domain.session_types import PrevVideoRef
+from application.chat.turn_facts import (
+    build_complex_turn_facts,
+    lift_background_task_exit,
+    quality_gate_from_extra,
+)
 from schemas import ChatTurnResult
 
 
@@ -41,22 +45,7 @@ def run_complex_finalize_stage(
     hard_deadline_limited: bool,
 ) -> ChatTurnResult:
     ts = time.perf_counter()
-    with state.deps.lock:
-        state.hist.append((state.message.strip(), answer_text))
-        _v13_video_pending = (
-            bundle.pending_item is not None
-            and getattr(bundle.pending_item, "source_type", "") in ("local_video", "web_video")
-        )
-        if bundle.v11_pending_video_text is not None and not _v13_video_pending:
-            state.deps.session_pending_video[state.key] = bundle.v11_pending_video_text  # type: ignore[assignment]
-        elif bundle.v11_saved_to_kb:
-            state.deps.session_pending_video.pop(state.key, None)
-        if bundle.v11_saved_to_kb and bundle.v11_saved_source_id:
-            state.deps.session_prev_video[state.key] = PrevVideoRef(
-                source_id=bundle.v11_saved_source_id,
-                basename=bundle.v11_saved_title,
-                path=None,
-            )
+    writeback_complex_session(state, bundle, answer_text)
     state.timing["session_update_ms"] = _format_ms((time.perf_counter() - ts) * 1000)
 
     from application.chat.answer_text_polish import polish_user_answer
@@ -81,6 +70,12 @@ def run_complex_finalize_stage(
         collab_trace=collab_trace,
         history_snapshot=state.history_snapshot,
     )
+    router_lane = str(getattr(state.ingress, "lane", "") or extra.get("router_lane") or "general")
+    extra["router_lane"] = router_lane
+    extra["lane"] = router_lane
+    temp_materials = list(getattr(bundle, "temporary_materials", []) or [])
+    if temp_materials:
+        extra["temporary_materials"] = temp_materials
     state.timing["extra_build_ms"] = _format_ms((time.perf_counter() - ts) * 1000)
     elapsed_ms = _format_ms((time.perf_counter() - state.t0) * 1000)
     extra = _finalize_complex_exit_extra(
@@ -123,14 +118,20 @@ def run_complex_finalize_stage(
     )
     if not complex_pending_kind_active():
         facts = replace(facts, pending_kind=PendingKind.NONE)
+    facts, extra, background_task_id = lift_background_task_exit(
+        facts=facts, extra=extra, bundle=bundle,
+    )
+    turn_result = _build_complex_turn_result(
+        answer_text=answer_text,
+        session_id=state.session_id,
+        request_id=state.request_id,
+        extra=extra,
+        elapsed_ms=elapsed_ms,
+    )
+    if background_task_id:
+        turn_result["task_id"] = background_task_id
     return apply_turn_exit_to_chat_turn(
-        _build_complex_turn_result(
-            answer_text=answer_text,
-            session_id=state.session_id,
-            request_id=state.request_id,
-            extra=extra,
-            elapsed_ms=elapsed_ms,
-        ),
+        turn_result,
         facts=facts,
         ingress=state.ingress,
         effective_mode=state.effective_mode,
