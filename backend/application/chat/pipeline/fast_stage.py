@@ -74,6 +74,7 @@ def run_fast_stage(state: TurnPipelineState) -> ChatTurnResult | None:
             ingress=state.ingress,
             effective_mode=state.effective_mode,
             user_message=state.message,
+            approval_hold=state.approval_hold,
         )
 
     if not ingress_router_active():
@@ -107,6 +108,7 @@ def run_fast_stage(state: TurnPipelineState) -> ChatTurnResult | None:
                 ingress=state.ingress,
                 effective_mode=state.effective_mode,
                 user_message=state.message,
+                approval_hold=state.approval_hold,
             )
 
     fast_result, state.effective_mode, state.timing = _maybe_return_lane_fast(
@@ -138,5 +140,6 @@ def run_fast_stage(state: TurnPipelineState) -> ChatTurnResult | None:
             ingress=state.ingress,
             effective_mode=state.effective_mode,
             user_message=state.message,
+            approval_hold=state.approval_hold,
         )
     return None

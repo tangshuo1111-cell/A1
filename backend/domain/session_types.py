@@ -67,6 +67,27 @@ class PendingVideoText:
 # ---------------------------------------------------------------------------
 # 仅用作"输入信号"，不替任何 agent 出主判断。
 # 命中后是否真的承接，要看 history.has_prev_video 等结构化条件。
+@dataclass(frozen=True)
+class SessionApprovalHold:
+    """Structured session fact: approval blocked without a real background task."""
+
+    blocked: bool = True
+    kind: str = ""
+    reason: str = ""
+    has_real_task: bool = False
+
+
+_TASK_STATUS_INQUIRY_PATTERNS: tuple[re.Pattern[str], ...] = (
+    re.compile(r"处理完成了吗"),
+    re.compile(r"完成了吗"),
+    re.compile(r"处理好了吗"),
+    re.compile(r"后台.*好了吗"),
+    re.compile(r"后台.*完成了吗"),
+    re.compile(r"现在.*完成了吗"),
+    re.compile(r"任务.*完成了吗"),
+)
+
+
 _FOLLOWUP_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"刚[才刚][那这]个?\s*(视频|内容|结果|文件|片段)?"),
     re.compile(r"上[一]?个?\s*(视频|内容|结果|回答|轮)"),
@@ -77,6 +98,17 @@ _FOLLOWUP_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"接着\s*(说|讲|分析|回答|总结)?"),
     re.compile(r"再说\s*一?次?\s*(刚才|那个|这个)"),
 )
+
+
+def looks_like_task_status_inquiry(message: str) -> bool:
+    """是否像在追问后台/异步任务是否已完成（仅输入信号，不做终态裁决）。"""
+    msg = (message or "").strip()
+    if not msg:
+        return False
+    for pat in _TASK_STATUS_INQUIRY_PATTERNS:
+        if pat.search(msg):
+            return True
+    return False
 
 
 def looks_like_followup_reference(message: str) -> bool:
@@ -180,6 +212,8 @@ class SessionHistorySnapshot:
 __all__ = [
     "PendingVideoText",
     "PrevVideoRef",
+    "SessionApprovalHold",
     "SessionHistorySnapshot",
     "looks_like_followup_reference",
+    "looks_like_task_status_inquiry",
 ]

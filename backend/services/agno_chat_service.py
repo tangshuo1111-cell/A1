@@ -190,6 +190,7 @@ def run_agno_chat_turn(
         histories=store.histories,
         session_prev_video=store.session_prev_video,
         session_pending_video=store.session_pending_video,
+        session_approval_hold=store.session_approval_hold,
         lock=store.lock,
         main_agent=_main_agent_inst,
         middle_agent=_middle_agent_inst,

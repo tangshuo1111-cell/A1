@@ -10,7 +10,7 @@ from typing import Any
 from application.chat.budget_clock import BudgetClock
 from application.chat.domain.context import TurnContext
 from application.chat.turn_state_machine import TurnStateBundle
-from domain.session_types import PendingVideoText, PrevVideoRef, SessionHistorySnapshot
+from domain.session_types import PendingVideoText, PrevVideoRef, SessionApprovalHold, SessionHistorySnapshot
 
 
 @dataclass
@@ -29,6 +29,7 @@ class TurnPipelineState:
     context_block: str | None = None
     prev_video_ref: PrevVideoRef | None = None
     pending_video: PendingVideoText | None = None
+    approval_hold: SessionApprovalHold | None = None
     history_snapshot: SessionHistorySnapshot | None = None
     ingress: Any = None
     turn_state: TurnStateBundle | None = None

@@ -42,6 +42,11 @@ def run_session_stage(state: TurnPipelineState) -> None:
         state.context_block = _format_context(state.hist)
         state.prev_video_ref = deps.session_prev_video.get(state.key)
         state.pending_video = deps.session_pending_video.get(state.key)
+        if state.confirm_long_web_video_asr:
+            deps.session_approval_hold.pop(state.key, None)
+            state.approval_hold = None
+        else:
+            state.approval_hold = deps.session_approval_hold.get(state.key)
         if turn_stitcher_active():
             stitch_slot = consume_stitch_slot(state.session_id)
             if stitch_slot is not None:

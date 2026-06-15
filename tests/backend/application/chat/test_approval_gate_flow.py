@@ -42,6 +42,9 @@ def test_long_video_requires_confirmation():
     )
     assert result.blocked is True
     assert result.kind == "long_video_asr"
+    answer = build_approval_blocked_answer(result)
+    assert "后台" not in answer
+    assert "尚未创建可追踪任务" in answer
 
 
 def test_long_video_confirmed_passes():

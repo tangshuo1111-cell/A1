@@ -6,6 +6,7 @@ from typing import Any
 
 from application.chat.approval_gate import (
     ApprovalGateResult,
+    ApprovalKind,
     approval_trace_extra,
     evaluate_heavy_processing_confirmation,
     evaluate_long_video_confirmation,
@@ -24,8 +25,65 @@ from application.chat.turn_exit_extra import build_common_exit_extra
 from application.chat.turn_exit_gate import apply_turn_exit_to_chat_turn
 from application.chat.turn_facts import TurnFacts
 from application.chat.turn_response_builder import build_chat_turn_result
+from domain.session_types import SessionApprovalHold
 from application.ingress.request_classifier import classify_request
 from config.feature_flags import approval_gate_active
+
+
+_APPROVAL_HOLD_KINDS: frozenset[ApprovalKind] = frozenset({"long_video_asr", "heavy_processing"})
+
+
+def _session_key(session_id: str | None) -> str:
+    from application.chat.history_buffer import history_key
+
+    return history_key(session_id)
+
+
+def persist_approval_blocked_session_hold(*, session_id: str | None, result: ApprovalGateResult) -> None:
+    """Write structured approval hold when blocked without a real background task."""
+    if not result.blocked or result.kind not in _APPROVAL_HOLD_KINDS:
+        return
+    from services.session_store import get_session_store
+
+    store = get_session_store()
+    key = _session_key(session_id)
+    with store.lock:
+        store.set_approval_hold(
+            key,
+            SessionApprovalHold(
+                blocked=True,
+                kind=str(result.kind or ""),
+                reason=str(result.reason or "await_user_confirm"),
+                has_real_task=False,
+            ),
+        )
+
+
+def clear_session_approval_hold(session_id: str | None) -> None:
+    from services.session_store import get_session_store
+
+    store = get_session_store()
+    key = _session_key(session_id)
+    with store.lock:
+        store.pop_approval_hold(key)
+
+
+def build_approval_hold_followup_answer(result: ApprovalGateResult | SessionApprovalHold) -> str:
+    kind = str(getattr(result, "kind", "") or "")
+    if kind == "long_video_asr":
+        return (
+            "当前没有可追踪的后台任务记录；上一轮长视频请求仍在等待确认，尚未创建后台处理任务，"
+            "无法确认是否已处理完成。请携带 confirm_long_web_video_asr=true 重新发起，或明确确认后再试。"
+        )
+    if kind == "heavy_processing":
+        return (
+            "当前没有可追踪的后台任务记录；上一轮重处理请求仍在等待确认，尚未创建后台处理任务，"
+            "无法确认是否已处理完成。请在消息中明确「后台/异步」或携带确认参数后重新发起。"
+        )
+    return (
+        "当前没有可追踪的后台任务记录，上一轮请求仍在等待确认，无法确认是否已处理完成。"
+        "请确认后重新发起。"
+    )
 
 
 def evaluate_turn_approval(
@@ -96,11 +154,15 @@ def build_approval_blocked_answer(result: ApprovalGateResult) -> str:
         return "当前会话没有可保存的 pending 资料。请先上传或解析资料，再确认入库。"
     if result.kind == "long_video_asr":
         return (
-            "该视频可能需较长 ASR 处理。请确认后继续"
-            "（请求体设置 confirm_long_web_video_asr=true），或改用后台异步处理。"
+            "该视频可能需要较长时间处理。当前尚未创建可追踪任务，也不能确认已经开始处理。"
+            "请先确认是否继续（请求体设置 confirm_long_web_video_asr=true）；"
+            "确认后系统才会进入后续处理流程。"
         )
     if result.kind == "heavy_processing":
-        return "该请求涉及重处理，请明确确认后台处理（消息中含「后台/异步」）或携带确认参数后再试。"
+        return (
+            "该请求涉及重处理。当前尚未创建可追踪任务，也不能确认已经开始处理。"
+            "请先在消息中明确确认意图，或携带确认参数后再试；确认后系统才会进入后续处理流程。"
+        )
     return "该操作需要用户确认后才能继续。"
 
 
@@ -147,6 +209,7 @@ def build_approval_blocked_turn_result(
         answer_type="approval_blocked",
         pipeline_ok=False,
     )
+    persist_approval_blocked_session_hold(session_id=session_id, result=result)
     return apply_turn_exit_to_chat_turn(
         build_chat_turn_result(
             answer=build_approval_blocked_answer(result),

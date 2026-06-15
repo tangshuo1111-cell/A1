@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from collections import deque
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from threading import Lock
 
 from agents.answer_agent import AnswerAgent
 from agents.main_agent import MainAgent
 from agents.middle_agent import MiddleAgent
-from domain.session_types import PendingVideoText, PrevVideoRef
+from domain.session_types import PendingVideoText, PrevVideoRef, SessionApprovalHold
 
 
 def history_key(session_id: str | None) -> str:
@@ -37,3 +37,4 @@ class ChatTurnDeps:
     path_fingerprint: Callable[..., str]
     nodes_contract: Callable[[list[str]], dict[str, str]]
     max_history_pairs: int = 6
+    session_approval_hold: dict[str, SessionApprovalHold] = field(default_factory=dict)

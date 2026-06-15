@@ -21,9 +21,10 @@ from application.chat.domain.events import mode_arbitrated_event
 from application.chat.domain.reason_codes import ARBITRATOR_INACTIVE
 from application.chat.trace_writer import append_arbitrator_trace
 from application.chat.turn_exit_gate import apply_turn_exit_to_chat_turn
+from application.chat.turn_facts import turn_facts_from_chat_result, lift_session_approval_hold
 from application.chat.turn_state_machine import TurnStateBundle, apply_event
 from config.feature_flags import is_enabled
-from domain.session_types import PendingVideoText, PrevVideoRef
+from domain.session_types import PendingVideoText, PrevVideoRef, SessionApprovalHold
 from schemas import ChatTurnResult
 
 
@@ -83,9 +84,35 @@ def with_turn_exit_gate(
     hard_deadline_limited: bool = False,
     bundle_pending_item_present: bool = False,
     user_message: str | None = None,
+    approval_hold: SessionApprovalHold | None = None,
 ) -> ChatTurnResult:
+    from application.chat.approval_gate_flow import build_approval_hold_followup_answer
+
+    out = dict(result)
+    extra = dict(out.get("extra") or {})
+    facts = turn_facts_from_chat_result(
+        out,
+        ingress=ingress,
+        effective_mode=effective_mode,
+        hard_deadline_limited=hard_deadline_limited,
+        bundle_pending_item_present=bundle_pending_item_present,
+    )
+    facts_before_lift = facts
+    facts, extra = lift_session_approval_hold(
+        facts=facts,
+        extra=extra,
+        approval_hold=approval_hold,
+        user_message=user_message or "",
+    )
+    if facts is not facts_before_lift and approval_hold is not None:
+        out["answer"] = build_approval_hold_followup_answer(approval_hold)
+        out["answer_type"] = "approval_blocked"
+        out["pipeline_ok"] = False
+        out["task_id"] = None
+    out["extra"] = extra
     return apply_turn_exit_to_chat_turn(
-        result,
+        out,
+        facts=facts,
         ingress=ingress,
         effective_mode=effective_mode,
         hard_deadline_limited=hard_deadline_limited,

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from application.chat.chat_contracts import (
@@ -191,4 +191,93 @@ def build_complex_turn_facts(
         answer_type="basic_agno",
         limitations=limitations,
         legacy_task_status=None,
+    )
+
+
+def lift_background_task_exit(
+    *,
+    facts: TurnFacts,
+    extra: dict[str, Any],
+    bundle: Any | None = None,
+) -> tuple[TurnFacts, dict[str, Any], str]:
+    """Promote background task id to async-pending exit facts (complex path only)."""
+    from application.chat.chat_contracts import resolve_background_task_id
+
+    background_task_id = resolve_background_task_id(extra=extra, bundle=bundle)
+    if not background_task_id:
+        return facts, extra, ""
+    extra_out = dict(extra)
+    extra_out.setdefault(
+        "next_action",
+        "后台任务处理中，请轮询 /tasks/{task_id}/result 获取完整结果。",
+    )
+    pending = (
+        facts.pending_kind
+        if facts.pending_kind != PendingKind.NONE
+        else PendingKind.PROCESSING_PENDING
+    )
+    return (
+        replace(
+            facts,
+            async_pending=True,
+            pending_kind=pending,
+            legacy_task_status="pending",
+            answer_type="async_pending",
+        ),
+        extra_out,
+        background_task_id,
+    )
+
+
+def _has_real_task_evidence(extra: dict[str, Any]) -> bool:
+    from application.chat.chat_contracts import resolve_background_task_id
+
+    if resolve_background_task_id(extra=extra):
+        return True
+    if str(extra.get("task_id") or "").strip():
+        return True
+    raw_pending = str(
+        pending_kind_signal_from_extra(extra) or extra.get("pending_kind") or ""
+    ).strip().lower()
+    return bool(raw_pending and raw_pending != PendingKind.NONE.value)
+
+
+def lift_session_approval_hold(
+    *,
+    facts: TurnFacts,
+    extra: dict[str, Any],
+    approval_hold: Any | None,
+    user_message: str,
+) -> tuple[TurnFacts, dict[str, Any]]:
+    """Promote session approval hold + task-status inquiry to approval-blocked facts."""
+    from domain.session_types import SessionApprovalHold, looks_like_task_status_inquiry
+
+    if not isinstance(approval_hold, SessionApprovalHold) or not approval_hold.blocked:
+        return facts, extra
+    if not looks_like_task_status_inquiry(user_message):
+        return facts, extra
+    if _has_real_task_evidence(extra):
+        return facts, extra
+
+    extra_out = dict(extra)
+    extra_out.update(
+        {
+            "approval_gate.blocked": True,
+            "approval_gate.kind": approval_hold.kind,
+            "approval_gate.reason": approval_hold.reason or "await_user_confirm",
+        }
+    )
+    return (
+        replace(
+            facts,
+            approval=ApprovalExitSignal(blocked=True),
+            answer_type="approval_blocked",
+            effective_mode="blocked",
+            public_mode="blocked",
+            executor_profile="blocked",
+            primary_path_candidate="approval_gate",
+            pipeline_ok=False,
+            async_pending=False,
+        ),
+        extra_out,
     )

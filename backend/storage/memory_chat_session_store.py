@@ -5,7 +5,7 @@ from __future__ import annotations
 import threading
 from collections import deque
 
-from domain.session_types import PendingVideoText, PrevVideoRef
+from domain.session_types import PendingVideoText, PrevVideoRef, SessionApprovalHold
 
 
 class MemoryChatSessionStore:
@@ -16,6 +16,7 @@ class MemoryChatSessionStore:
         self._histories: dict[str, deque[tuple[str, str]]] = {}
         self._prev_video: dict[str, PrevVideoRef] = {}
         self._pending_video: dict[str, PendingVideoText] = {}
+        self._approval_hold: dict[str, SessionApprovalHold] = {}
 
     @property
     def lock(self) -> threading.Lock:
@@ -32,6 +33,10 @@ class MemoryChatSessionStore:
     @property
     def session_pending_video(self) -> dict[str, PendingVideoText]:
         return self._pending_video
+
+    @property
+    def session_approval_hold(self) -> dict[str, SessionApprovalHold]:
+        return self._approval_hold
 
     def ensure_session(self, key: str) -> None:
         del key
@@ -61,8 +66,18 @@ class MemoryChatSessionStore:
     def pop_prev_video(self, key: str) -> None:
         self._prev_video.pop(key, None)
 
+    def get_approval_hold(self, key: str) -> SessionApprovalHold | None:
+        return self._approval_hold.get(key)
+
+    def set_approval_hold(self, key: str, hold: SessionApprovalHold) -> None:
+        self._approval_hold[key] = hold
+
+    def pop_approval_hold(self, key: str) -> None:
+        self._approval_hold.pop(key, None)
+
     def clear_all(self) -> None:
         with self._lock:
             self._histories.clear()
             self._prev_video.clear()
             self._pending_video.clear()
+            self._approval_hold.clear()

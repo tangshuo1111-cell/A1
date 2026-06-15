@@ -66,7 +66,12 @@ def run_ingress_stage(state: TurnPipelineState) -> ChatTurnResult | None:
             reset_turn_cache(state.turn_cache_token)
         from application.chat.pipeline.turn_helpers import with_turn_exit_gate
 
-        return with_turn_exit_gate(early_turn, ingress=state.ingress, user_message=state.message)
+        return with_turn_exit_gate(
+            early_turn,
+            ingress=state.ingress,
+            user_message=state.message,
+            approval_hold=state.approval_hold,
+        )
 
     state.effective_mode, state.arbitrator_reason, state.arbitrator_trace, state.turn_state = arbitrate_turn_mode(
         ingress=state.ingress,
