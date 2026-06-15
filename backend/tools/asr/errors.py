@@ -14,5 +14,5 @@ ASR_DEPENDENCY_MISSING = "asr_dependency_missing"
 ASR_MODEL_MISSING = "asr_model_missing"
 # 15–120min 中段须 user_confirmed，否则拒绝外部 API
 ASR_REQUIRES_USER_CONFIRMATION = "asr_requires_user_confirmation"
-# 腾讯云 CreateRecTask 异步路径尚未实现
+# 保留错误码：仅当 async control plane 不可用时回退
 ASR_ASYNC_NOT_IMPLEMENTED = "asr_async_not_implemented"

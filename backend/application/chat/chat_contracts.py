@@ -115,6 +115,59 @@ def normalize_task_status(value: str | None) -> TurnExitTaskStatus | None:
     return _TASK_STATUS_ALIASES.get(raw)
 
 
+def _background_task_id_from_mapping(mapping: dict[str, Any]) -> str:
+    for key in ("background_task_id", "task_id"):
+        value = str(mapping.get(key) or "").strip()
+        if value and not value.startswith("fast-"):
+            return value
+    return ""
+
+
+def _background_task_id_from_tool_call(tc: dict[str, Any]) -> str:
+    found = _background_task_id_from_mapping(tc)
+    if found:
+        return found
+    meta = tc.get("metadata") or tc.get("result_metadata") or {}
+    if isinstance(meta, dict):
+        found = _background_task_id_from_mapping(meta)
+        if found:
+            return found
+    result = tc.get("result")
+    if not isinstance(result, dict):
+        return ""
+    found = _background_task_id_from_mapping(result)
+    if found:
+        return found
+    nested = result.get("metadata") or {}
+    if isinstance(nested, dict):
+        return _background_task_id_from_mapping(nested)
+    return ""
+
+
+def resolve_background_task_id(
+    *,
+    extra: dict[str, Any] | None = None,
+    bundle: Any | None = None,
+) -> str:
+    """Resolve a real background task id for frontend polling (not fast-path placeholders)."""
+    extra = dict(extra or {})
+    found = _background_task_id_from_mapping(extra)
+    if found:
+        return found
+    if bundle is None:
+        return ""
+    for env in getattr(bundle, "evidence_envelopes", ()) or ():
+        tid = str(getattr(env, "task_id", "") or "").strip()
+        if tid:
+            return tid
+    for tc in list(getattr(bundle, "tool_calls", ()) or ()) + list(extra.get("v15_tool_calls") or ()):
+        if isinstance(tc, dict):
+            found = _background_task_id_from_tool_call(tc)
+            if found:
+                return found
+    return ""
+
+
 @dataclass(frozen=True)
 class ApprovalExitSignal:
     blocked: bool = False

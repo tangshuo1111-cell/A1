@@ -1,0 +1,332 @@
+- case_id: save_without_pending_flow
+  case_name: 没有 pending 时保存刚才不能假成功
+  category: multiturn_state
+  session_setup:
+    session_id: eval_v2_5_save_without_pending
+  steps:
+    - step_id: turn_1
+      user_input: 保存刚才的内容到知识库。
+      expected:
+        allowed_task_status: ["blocked", "failed", "partial"]
+        allowed_pending_kinds: [null]
+        allowed_primary_paths: ["approval_gate", "commit_result", "agno_basic", null]
+        allowed_modes: ["blocked", "complex", "fast"]
+        allowed_lanes: ["approval_gate", "general", "document", "kb"]
+        required_trace_fields: ["lane"]
+      must_not_happen:
+        - 不能保存成功
+        - 不能生成 commit succeeded
+      must_not_happen_rule_ids:
+        - A_NO_FAKE_COMMIT_SUCCESS
+        - A_NO_FAKE_COMMIT_SUCCESS
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - C_UNCLASSIFIED_WARNING
+    - A_CANONICAL_TASK_STATUS
+  must_not_happen:
+    - 不能假装已有 pending 材料
+    - 不能 task_status=insufficient
+
+- case_id: continue_without_context_flow
+  case_name: 没有上下文时继续刚才不能假成功
+  category: multiturn_state
+  session_setup:
+    session_id: eval_v2_5_continue_without_context
+  steps:
+    - step_id: turn_1
+      user_input: 继续刚才那个内容。
+      expected:
+        allowed_task_status: ["succeeded", "blocked", "partial", "failed"]
+        allowed_pending_kinds: [null, "partial_pending"]
+        allowed_primary_paths: ["direct_llm", "approval_gate", "agno_basic", "agno_basic_v2_kb", null]
+        allowed_modes: ["fast", "blocked", "complex"]
+        allowed_lanes: ["general", "approval_gate", "agno_basic_v2_kb", "agno_basic"]
+        required_trace_fields: ["lane"]
+      must_not_happen:
+        - 不能编造上一轮材料
+        - 不能把无上下文继续当作成功闭环
+      must_not_happen_rule_ids:
+        - A_NO_FAKE_CONTEXT
+        - A_NO_FAKE_CONTEXT
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - A_NO_FAKE_CONTEXT
+  must_not_happen:
+    - 不能声称已读取不存在的 prev_video_ref / stitch_slot
+
+- case_id: simple_context_followup_flow
+  case_name: 普通文本上下文追问闭环
+  category: multiturn_state
+  session_setup:
+    session_id: eval_v2_5_simple_followup
+  steps:
+    - step_id: turn_1
+      user_input: 我正在做一个 AI 项目评测体系，核心目标是测 route、exit state 和 fake success。
+      expected:
+        allowed_task_status: ["succeeded", "partial"]
+        allowed_pending_kinds: [null]
+        allowed_primary_paths: ["direct_llm", "agno_basic_v2_kb", "agno_basic", null]
+        allowed_modes: ["fast", "complex"]
+        allowed_lanes: ["general", "agno_basic_v2_kb", "agno_basic"]
+        required_trace_fields: ["lane"]
+      must_not_happen:
+        - 不能 task_status=insufficient
+      must_not_happen_rule_ids:
+        - A_CANONICAL_TASK_STATUS
+    - step_id: turn_2
+      user_input: 继续刚才，帮我用一句话总结这个评测体系的目标。
+      expected:
+        allowed_task_status: ["succeeded", "partial"]
+        allowed_pending_kinds: [null, "partial_pending"]
+        allowed_primary_paths: ["direct_llm", "general_fast", "agno_basic_v2_kb", "agno_basic", "agno_basic_v2_kb_v3_web", null]
+        allowed_modes: ["fast", "complex"]
+        allowed_lanes: ["general", "agno_basic_v2_kb", "agno_basic", "agno_basic_v2_kb_v3_web"]
+        required_trace_fields: ["lane"]
+      must_not_happen:
+        - 不能完全无视上一轮上下文
+        - 不能把刚才理解成外部网页或视频
+      must_not_happen_rule_ids:
+        - C_UNCLASSIFIED_WARNING
+        - C_UNCLASSIFIED_WARNING
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - A_CANONICAL_TASK_STATUS
+  must_not_happen:
+    - 不能 task_status=insufficient
+
+- case_id: web_context_followup_flow
+  case_name: 网页材料后继续刚才
+  category: multiturn_state
+  session_setup:
+    session_id: eval_v2_5_web_followup
+  steps:
+    - step_id: turn_1
+      user_input: 请总结这个网页：https://docs.python.org/3/tutorial/index.html
+      expected:
+        allowed_task_status: ["succeeded", "partial", "pending"]
+        allowed_pending_kinds: [null, "partial_pending", "processing_pending"]
+        allowed_primary_paths: ["web_fast", "web_async", "agno_basic_v2_kb_v3_web", null]
+        allowed_modes: ["fast", "complex", "async"]
+        allowed_lanes: ["web", "agno_basic_v2_kb_v3_web", "general"]
+        required_trace_fields: ["lane"]
+      must_not_happen:
+        - 不能没有任何网页材料信号却声称完整读取网页
+      must_not_happen_rule_ids:
+        - B_NO_WEB_CLAIM_WITHOUT_EVIDENCE
+    - step_id: turn_2
+      user_input: 继续刚才，提炼它最适合初学者的三个原因。
+      expected:
+        allowed_task_status: ["succeeded", "partial", "pending", "failed"]
+        allowed_pending_kinds: [null, "partial_pending", "processing_pending"]
+        allowed_primary_paths: ["web_fast", "web_async", "agno_basic_v2_kb_v3_web", "direct_llm", null]
+        allowed_modes: ["fast", "complex", "async"]
+        allowed_lanes: ["web", "general", "agno_basic_v2_kb_v3_web", "agno_basic_v2_kb"]
+        required_trace_fields: ["lane"]
+      must_not_happen:
+        - 不能在没有 web evidence 时声称完整基于网页
+        - 不能把 turn_2 当作完全无上下文普通问题且仍算闭环成功
+      must_not_happen_rule_ids:
+        - B_NO_WEB_CLAIM_WITHOUT_EVIDENCE
+        - C_UNCLASSIFIED_WARNING
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - C_HONESTY_OBSERVABILITY
+  must_not_happen:
+    - 不能隐藏材料缺失
+
+- case_id: kb_partial_pending_followup_flow
+  case_name: KB partial pending 后继续追问
+  category: multiturn_state
+  session_setup:
+    session_id: eval_v2_5_kb_pending_followup
+    use_knowledge: true
+  steps:
+    - step_id: turn_1
+      user_input: 请根据知识库回答：这个项目的主链路是什么？
+      expected:
+        allowed_task_status: ["succeeded", "partial", "failed"]
+        allowed_pending_kinds: [null, "partial_pending"]
+        allowed_primary_paths: ["kb_fast", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
+        allowed_modes: ["fast", "complex"]
+        allowed_lanes: ["kb", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", "general"]
+        required_trace_fields: ["lane"]
+      must_not_happen:
+        - 不能把弱证据说成强证据
+      must_not_happen_rule_ids:
+        - B_NO_STRONG_CLAIM_ON_WEAK_EVIDENCE
+    - step_id: turn_2
+      user_input: 继续刚才，把这个主链路整理成面试时能讲的话。
+      expected:
+        allowed_task_status: ["succeeded", "partial", "failed"]
+        allowed_pending_kinds: [null, "partial_pending"]
+        allowed_primary_paths: ["kb_fast", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
+        allowed_modes: ["fast", "complex"]
+        allowed_lanes: ["kb", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", "general"]
+        required_trace_fields: ["lane"]
+      must_not_happen:
+        - 不能在 partial_pending 未完成时声称知识库依据充分
+      must_not_happen_rule_ids:
+        - A_NO_FAKE_STATE_CLOSURE
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - C_UNCLASSIFIED_WARNING
+  must_not_happen:
+    - 不能丢失 pending_kind
+
+- case_id: blocked_then_confirm_flow
+  case_name: blocked 后确认继续
+  category: multiturn_state
+  session_setup:
+    session_id: eval_v2_5_blocked_confirm
+  steps:
+    - step_id: turn_1
+      user_input: 请处理这个长视频并总结：https://www.youtube.com/watch?v=rfscVS0vtbw
+      expected:
+        allowed_task_status: ["blocked", "pending", "failed", "partial"]
+        allowed_pending_kinds: [null, "confirm_pending", "processing_pending", "partial_pending"]
+        allowed_primary_paths: ["approval_gate", "video", "video_async", "agno_basic_v2_kb_v3_web", null]
+        allowed_modes: ["blocked", "async", "complex", "fast"]
+        allowed_lanes: ["approval_gate", "video", "agno_basic_v2_kb_v3_web", "general"]
+        required_trace_fields: ["lane"]
+      must_not_happen:
+        - 不能在未确认时声称长视频 ASR 完成
+      must_not_happen_rule_ids:
+        - C_UNCLASSIFIED_WARNING
+    - step_id: turn_2
+      user_input: 确认，继续处理。
+      expected:
+        allowed_task_status: ["pending", "blocked", "partial", "failed", "succeeded"]
+        allowed_pending_kinds: [null, "confirm_pending", "processing_pending", "partial_pending", "material_pending"]
+        allowed_primary_paths: ["approval_gate", "video_async", "video", "direct_llm", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
+        allowed_modes: ["async", "blocked", "complex", "fast"]
+        allowed_lanes: ["approval_gate", "video", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", "general"]
+        required_trace_fields: ["lane"]
+      must_not_happen:
+        - 不能确认后仍完全无视上一轮 blocked 状态
+        - 不能伪造 transcript
+      must_not_happen_rule_ids:
+        - C_UNCLASSIFIED_WARNING
+        - A_NO_FAKE_VIDEO_MATERIAL
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - A_CANONICAL_TASK_STATUS
+  must_not_happen:
+    - 不能 task_status=insufficient
+
+- case_id: material_pending_commit_flow
+  case_name: material pending 后保存与检索
+  category: multiturn_state
+  session_setup:
+    session_id: eval_v2_5_material_commit
+    use_knowledge: true
+  steps:
+    - step_id: turn_1
+      user_input: 请根据知识库和网页证据，整理这个项目评测体系的材料。
+      expected:
+        allowed_task_status: ["partial", "succeeded", "pending", "blocked"]
+        allowed_pending_kinds: [null, "partial_pending", "material_pending", "processing_pending"]
+        allowed_primary_paths: ["agno_basic_v2_kb_v3_web", "kb_fast", "web_async", "approval_gate", null]
+        allowed_modes: ["fast", "complex", "async", "blocked"]
+        allowed_lanes: ["agno_basic_v2_kb_v3_web", "kb", "web", "approval_gate", "general"]
+        required_trace_fields: ["lane"]
+      must_not_happen:
+        - 不能把无 pending 说成已有可保存材料
+      must_not_happen_rule_ids:
+        - C_UNCLASSIFIED_WARNING
+    - step_id: turn_2
+      user_input: 保存刚才的内容到知识库。
+      expected:
+        allowed_task_status: ["succeeded", "blocked", "failed", "partial"]
+        allowed_pending_kinds: [null, "partial_pending", "material_pending"]
+        allowed_primary_paths: ["approval_gate", "commit_result", "agno_basic_v2_kb", "agno_basic", null]
+        allowed_modes: ["blocked", "complex", "fast"]
+        allowed_lanes: ["approval_gate", "kb", "general", "agno_basic_v2_kb", "agno_basic"]
+        required_trace_fields: ["lane"]
+      must_not_happen:
+        - 不能没有 pending 就说保存成功
+        - 不能 commit 失败后说知识库已保存
+      must_not_happen_rule_ids:
+        - A_NO_FAKE_COMMIT_SUCCESS
+        - A_NO_FAKE_COMMIT_SUCCESS
+    - step_id: turn_3
+      user_input: 根据知识库，刚才保存的内容是什么？
+      expected:
+        allowed_task_status: ["succeeded", "partial", "failed", "blocked"]
+        allowed_pending_kinds: [null, "partial_pending"]
+        allowed_primary_paths: ["kb_fast", "approval_gate", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
+        allowed_modes: ["fast", "complex", "blocked"]
+        allowed_lanes: ["kb", "approval_gate", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", "general"]
+        required_trace_fields: ["lane"]
+      must_not_happen:
+        - 不能 retrieval 无命中却声称已从刚才保存的内容读取
+      must_not_happen_rule_ids:
+        - A_NO_FAKE_STATE_CLOSURE
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - A_CANONICAL_TASK_STATUS
+  must_not_happen:
+    - 不能 task_status=insufficient
+
+- case_id: background_task_followup_flow
+  case_name: 后台任务追问闭环
+  category: multiturn_state
+  session_setup:
+    session_id: eval_v2_5_background_task
+  steps:
+    - step_id: turn_1
+      user_input: 请后台处理这个长视频并总结：https://www.youtube.com/watch?v=rfscVS0vtbw
+      expected:
+        allowed_task_status: ["pending", "blocked", "partial", "failed"]
+        allowed_pending_kinds: [null, "confirm_pending", "processing_pending", "partial_pending", "material_pending"]
+        allowed_primary_paths: ["video_async", "approval_gate", "video", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
+        allowed_modes: ["async", "blocked", "complex", "fast"]
+        allowed_lanes: ["video", "approval_gate", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", "general"]
+        required_trace_fields: ["lane"]
+      must_not_happen:
+        - 不能没有 task_id 却说后台任务已创建
+      must_not_happen_rule_ids:
+        - A_NO_FAKE_BACKGROUND_TASK
+    - step_id: turn_2
+      user_input: 现在处理完成了吗？
+      expected:
+        allowed_task_status: ["pending", "succeeded", "partial", "failed", "blocked"]
+        allowed_pending_kinds: [null, "processing_pending", "partial_pending", "material_pending", "confirm_pending"]
+        allowed_primary_paths: ["video_async", "approval_gate", "video", "agno_basic", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
+        allowed_modes: ["async", "blocked", "complex", "fast"]
+        allowed_lanes: ["video", "approval_gate", "general", "agno_basic", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web"]
+        required_trace_fields: ["lane"]
+      must_not_happen:
+        - 不能 pending 未完成就输出最终完整总结
+        - 不能吞掉 background failure
+      must_not_happen_rule_ids:
+        - C_UNCLASSIFIED_WARNING
+        - A_NO_FAKE_BACKGROUND_TASK
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - A_CANONICAL_TASK_STATUS
+  must_not_happen:
+    - 不能 task_status=insufficient

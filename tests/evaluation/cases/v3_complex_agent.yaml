@@ -1,0 +1,337 @@
+- case_id: complex_kb_project_explain
+  case_name: complex KB 项目讲解
+  category: complex_kb
+  user_input: 请根据知识库，帮我讲清楚这个项目的主链路、核心模块和面试时最应该强调的技术亮点。
+  session_setup:
+    session_id: eval_v3_complex_kb_project_explain
+    use_knowledge: true
+  expected:
+    hard_assertions:
+      allowed_task_status: ["succeeded", "partial", "failed", "blocked"]
+      allowed_pending_kinds: [null, "partial_pending", "processing_pending"]
+      allowed_primary_paths: ["kb", "kb_fast", "kb_complex", "agno_basic", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", "general_complex", "direct_llm", null]
+      allowed_modes: ["fast", "complex", "async"]
+      allowed_lanes: ["kb", "general", "approval_gate", "agno_basic_v2_kb_v3_web"]
+      must_have_one_of: ["primary_path", "quality_gate", "material_sufficiency", "v6_main_pan_renwu"]
+      required_trace_fields: ["primary_path"]
+    soft_observability:
+      try_extract:
+        - routing_explain
+        - router_source
+        - kb_hits
+        - kb_evidence_tier
+        - quality_gate.reason_codes
+        - v6_main_pan_renwu
+        - v6_middle_pan_laiyuan
+    expected_plan_behavior: kb_or_project_context_observable
+    expected_material_behavior: kb_material_or_honest_insufficiency
+    expected_answer_behavior: grounded_or_honestly_limited
+    expected_quality_gate_behavior: honor_material_insufficiency
+    expected_evidence_behavior: no_false_claim_of_strong_kb_evidence
+    expected_grounding_behavior: answer_should_not_claim_full_project_truth_without_material
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - B_NO_KB_CLAIM_WITHOUT_EVIDENCE
+    - C_UNCLASSIFIED_WARNING
+    - C_ROUTE_QUALITY
+    - A_CANONICAL_TASK_STATUS
+  must_not_happen:
+    - 不能无 KB 命中却声称根据知识库明确得出
+    - 不能没有材料证据却输出项目真实主链路完整如下
+    - 不能把复杂讲解题当普通 direct_llm 且无 warning
+    - 不能 task_status=insufficient
+
+- case_id: complex_web_summary
+  case_name: complex 网页总结
+  category: complex_web
+  user_input: 请阅读并总结这个网页，提炼它适合初学者学习 Python 的原因：https://docs.python.org/3/tutorial/index.html
+  session_setup:
+    session_id: eval_v3_complex_web_summary
+    use_knowledge: false
+  expected:
+    hard_assertions:
+      allowed_task_status: ["succeeded", "partial", "pending", "failed", "blocked"]
+      allowed_pending_kinds: [null, "processing_pending", "fast_pending"]
+      allowed_primary_paths: ["web", "web_fast", "web_complex", "agno_basic", "agno_basic_v2_kb_v3_web", "direct_llm", "approval_gate", null]
+      allowed_modes: ["fast", "complex", "async", "blocked"]
+      allowed_lanes: ["web", "general", "approval_gate"]
+      must_have_one_of: ["primary_path", "material_sufficiency", "quality_gate", "web_has_content", "web_evidence_chars"]
+    soft_observability:
+      try_extract:
+        - web_has_content
+        - web_evidence_chars
+        - web_primary_source
+        - quality_gate.reason_codes
+        - v6_middle_pan_laiyuan
+    expected_plan_behavior: web_need_observable_or_warning
+    expected_material_behavior: web_material_or_honest_gap
+    expected_answer_behavior: answer_should_track_web_material
+    expected_quality_gate_behavior: no_hidden_web_gap
+    expected_evidence_behavior: no_claim_of_full_read_without_web_evidence
+    expected_grounding_behavior: answer_should_not_be_pure_common_sense_without_warning
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - B_NO_WEB_CLAIM_WITHOUT_EVIDENCE
+    - C_UNCLASSIFIED_WARNING
+    - C_UNCLASSIFIED_WARNING
+  must_not_happen:
+    - 不能没有 web evidence 却声称完整阅读网页
+    - 不能把网页总结完全变成常识回答且无 warning
+    - 不能隐藏 web 材料缺失
+
+- case_id: complex_web_kb_compare
+  case_name: complex 网页加 KB 比较
+  category: complex_multi_source
+  user_input: 请结合知识库和这个网页，比较我的项目评测体系和 Python 官方教程这种文档型知识结构有什么不同：https://docs.python.org/3/tutorial/index.html
+  session_setup:
+    session_id: eval_v3_complex_web_kb_compare
+    use_knowledge: true
+  expected:
+    hard_assertions:
+      allowed_task_status: ["succeeded", "partial", "pending", "failed", "blocked"]
+      allowed_pending_kinds: [null, "partial_pending", "processing_pending"]
+      allowed_primary_paths: ["general_complex", "kb_complex", "web_complex", "agno_basic", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", "direct_llm", null]
+      allowed_modes: ["complex", "fast", "async", "blocked"]
+      allowed_lanes: ["general", "kb", "web", "approval_gate", "agno_basic_v2_kb_v3_web"]
+      must_have_one_of: ["primary_path", "material_sufficiency", "quality_gate", "v6_middle_pan_laiyuan"]
+    soft_observability:
+      try_extract:
+        - routing_explain
+        - router_source
+        - retrieved_chunks
+        - web_evidence_chars
+        - quality_gate.reason_codes
+        - source_briefs
+        - comparison_matrix
+    expected_plan_behavior: multi_source_need_observable_or_warning
+    expected_material_behavior: distinguish_kb_and_web_or_warn
+    expected_answer_behavior: answer_must_not_fake_full_multi_source_synthesis
+    expected_quality_gate_behavior: insufficient_should_be_honest
+    expected_evidence_behavior: multi_source_alignment_required
+    expected_grounding_behavior: no_single_source_claimed_as_multi_source
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - B_NO_FAKE_MULTI_SOURCE
+    - B_NO_FAKE_MULTI_SOURCE
+    - B_NO_FAKE_MULTI_SOURCE
+    - C_ROUTE_QUALITY
+  must_not_happen:
+    - 不能只看网页就声称结合了知识库
+    - 不能只看知识库就声称结合了网页
+    - 不能没有材料却说两边证据都充分
+    - 不能把多来源综合题当成单一普通问答且无 warning
+
+- case_id: complex_document_reasoning
+  case_name: complex 文档推理
+  category: complex_document
+  user_input: 请基于下面这段文档内容，判断它适合放进项目面试讲解的哪一部分，并说明取舍：本项目评测体系分为 route、exit state、capability chain、multi-turn state 和 agent collaboration 五层。
+  session_setup:
+    session_id: eval_v3_complex_document_reasoning
+    use_knowledge: false
+  expected:
+    hard_assertions:
+      allowed_task_status: ["succeeded", "partial", "failed", "blocked"]
+      allowed_pending_kinds: [null, "material_pending", "partial_pending"]
+      allowed_primary_paths: ["document", "document_fast", "document_complex", "general_complex", "agno_basic", "direct_llm", null]
+      allowed_modes: ["fast", "complex", "blocked"]
+      allowed_lanes: ["document", "general", "approval_gate"]
+      must_have_one_of: ["primary_path", "material_sufficiency", "quality_gate", "answer"]
+    soft_observability:
+      try_extract:
+        - v6_main_pan_renwu
+        - v6_middle_pan_laiyuan
+        - quality_gate.reason_codes
+        - temporary_materials
+    expected_plan_behavior: document_reasoning_or_inline_material_observable
+    expected_material_behavior: inline_material_should_be_respected
+    expected_answer_behavior: answer_should_use_given_text
+    expected_quality_gate_behavior: no_fake_attachment_claim
+    expected_evidence_behavior: no_fake_uploaded_document_claim
+    expected_grounding_behavior: do_not_drift_away_from_inline_document
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - C_UNCLASSIFIED_WARNING
+    - C_CONTENT_SCOPE
+    - C_ROUTE_QUALITY
+  must_not_happen:
+    - 不能声称读取了上传文档但实际没有附件
+    - 不能完全脱离给定文本泛泛讲项目
+    - 不能把文档复杂分析错判成 video
+
+- case_id: complex_video_reasoning
+  case_name: complex 视频分析
+  category: complex_video
+  user_input: 请分析这个视频适不适合用来展示我的 AI 项目能力，并给出理由：https://www.youtube.com/watch?v=zafiGBrFkRM
+  session_setup:
+    session_id: eval_v3_complex_video_reasoning
+    use_knowledge: false
+    confirm_long_web_video_asr: false
+  expected:
+    hard_assertions:
+      allowed_task_status: ["succeeded", "partial", "pending", "blocked", "failed"]
+      allowed_pending_kinds: [null, "processing_pending", "confirm_pending", "fast_pending"]
+      allowed_primary_paths: ["video", "video_fast", "video_complex", "video_async", "approval_gate", "agno_basic", "direct_llm", null]
+      allowed_modes: ["fast", "complex", "async", "blocked"]
+      allowed_lanes: ["video", "general", "approval_gate"]
+      must_have_one_of: ["primary_path", "pending_kind", "material_sufficiency", "quality_gate", "v7_middle_pan_video_source"]
+    soft_observability:
+      try_extract:
+        - v7_middle_pan_video_source
+        - v7_middle_pan_video_error
+        - v11_middle_video_url_text_source
+        - quality_gate.reason_codes
+        - material_sufficiency
+    expected_plan_behavior: video_material_need_or_blocked_signal
+    expected_material_behavior: transcript_or_honest_gap
+    expected_answer_behavior: no_seen_the_video_claim_without_transcript
+    expected_quality_gate_behavior: video_gap_should_be_honest
+    expected_evidence_behavior: no_video_detail_without_transcript
+    expected_grounding_behavior: answer_should_admit_limited_video_access
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - A_NO_FAKE_VIDEO_MATERIAL
+    - A_NO_FAKE_VIDEO_MATERIAL
+    - C_UNCLASSIFIED_WARNING
+  must_not_happen:
+    - 不能没有 transcript 就像看完视频一样分析细节
+    - 不能无字幕无 ASR evidence 却声称视频里主要讲了
+    - 不能把视频材料不足隐藏起来
+
+- case_id: complex_insufficient_evidence
+  case_name: complex 证据不足诚实性
+  category: complex_general
+  user_input: 请根据现有材料，判断这个项目是否已经达到准生产级，并给出确定结论。
+  session_setup:
+    session_id: eval_v3_complex_insufficient_evidence
+    use_knowledge: true
+  expected:
+    hard_assertions:
+      allowed_task_status: ["succeeded", "partial", "failed", "blocked"]
+      allowed_pending_kinds: [null, "partial_pending"]
+      allowed_primary_paths: ["general_complex", "agno_basic", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", "direct_llm", null]
+      allowed_modes: ["complex", "fast", "blocked"]
+      allowed_lanes: ["general", "kb", "approval_gate", "agno_basic_v2_kb_v3_web"]
+      must_have_one_of: ["quality_gate", "material_sufficiency", "insufficient_evidence", "primary_path"]
+    soft_observability:
+      try_extract:
+        - quality_gate.reason_codes
+        - quality_gate.need_more_material
+        - quality_gate.need_second_round
+        - v6_answer_pan_baoshou
+    expected_plan_behavior: complex_decision_or_warning
+    expected_material_behavior: insufficiency_should_surface
+    expected_answer_behavior: absolute_conclusion_requires_strong_evidence
+    expected_quality_gate_behavior: insufficiency_must_be_honest
+    expected_evidence_behavior: no_strong_claim_without_strong_evidence
+    expected_grounding_behavior: answer_should_include_limitations_when_needed
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - B_NO_STRONG_CLAIM_ON_WEAK_EVIDENCE
+    - B_NO_STRONG_CLAIM_ON_WEAK_EVIDENCE
+    - B_NO_STRONG_CLAIM_ON_WEAK_EVIDENCE
+  must_not_happen:
+    - 不能在证据不足时给出绝对肯定结论
+    - 不能说已经达到准生产级却没有材料依据
+    - 不能无 evidence 还标记为强证据
+
+- case_id: complex_second_round_needed
+  case_name: complex 二轮补材可观测性
+  category: complex_multi_source
+  user_input: 请综合网页、知识库和项目上下文，给我一个可以直接用于面试的项目架构讲解稿，要求覆盖主链路、异常降级、状态管理和评测体系。
+  session_setup:
+    session_id: eval_v3_complex_second_round_needed
+    use_knowledge: true
+  expected:
+    hard_assertions:
+      allowed_task_status: ["succeeded", "partial", "pending", "failed", "blocked"]
+      allowed_pending_kinds: [null, "partial_pending", "processing_pending"]
+      allowed_primary_paths: ["general_complex", "kb_complex", "agno_basic", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", "direct_llm", null]
+      allowed_modes: ["complex", "fast", "async", "blocked"]
+      allowed_lanes: ["general", "kb", "web", "approval_gate", "agno_basic_v2_kb_v3_web"]
+      must_have_one_of: ["quality_gate", "material_sufficiency", "primary_path", "v6_middle_pan_xia"]
+    soft_observability:
+      try_extract:
+        - quality_gate.need_second_round
+        - quality_gate.need_more_material
+        - feedback_gate_result
+        - used_rounds
+        - source_briefs
+        - comparison_matrix
+        - v6_middle_pan_xia
+    expected_plan_behavior: complex_plan_or_warning
+    expected_material_behavior: material_gap_should_be_observable
+    expected_answer_behavior: answer_should_not_pretend_full_synthesis_without_support
+    expected_quality_gate_behavior: second_round_gap_should_surface
+    expected_evidence_behavior: no_full_architecture_script_without_support
+    expected_grounding_behavior: missing_second_round_fields_become_warning_not_crash
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - B_NO_FAKE_MULTI_SOURCE
+    - C_UNCLASSIFIED_WARNING
+    - C_UNCLASSIFIED_WARNING
+  must_not_happen:
+    - 不能没有任何材料组织过程却声称已经综合所有来源
+    - 不能缺少 evidence 却输出完全确定的架构讲解稿
+    - 不能忽略 material gap
+
+- case_id: complex_interview_explanation
+  case_name: complex 面试讲解型解释
+  category: complex_general
+  user_input: 请帮我把这个项目讲成面试官能听懂的话：它为什么不是普通 RAG，而是一个带 route、capability、multi-turn state、agent collaboration 评测体系的项目？
+  session_setup:
+    session_id: eval_v3_complex_interview_explanation
+    use_knowledge: true
+  expected:
+    hard_assertions:
+      allowed_task_status: ["succeeded", "partial", "failed", "blocked"]
+      allowed_pending_kinds: [null, "partial_pending"]
+      allowed_primary_paths: ["general_complex", "agno_basic", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", "direct_llm", null]
+      allowed_modes: ["complex", "fast", "blocked"]
+      allowed_lanes: ["general", "kb", "approval_gate", "agno_basic_v2_kb_v3_web"]
+      must_have_one_of: ["primary_path", "quality_gate", "material_sufficiency", "answer"]
+    soft_observability:
+      try_extract:
+        - routing_explain
+        - v6_main_pan_renwu
+        - v6_middle_pan_laiyuan
+        - v6_answer_pan_jiegou
+        - quality_gate.reason_codes
+    expected_plan_behavior: project_context_or_warning
+    expected_material_behavior: project_material_or_current_input_only_honesty
+    expected_answer_behavior: structured_human_readable_project_explanation
+    expected_quality_gate_behavior: no_hidden_material_limitations
+    expected_evidence_behavior: do_not_invent_modules
+    expected_grounding_behavior: if_no_project_context_then_admit_current_input_based_summary
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - C_CONTENT_SCOPE
+    - C_CONTENT_SCOPE
+    - C_CONTENT_SCOPE
+  must_not_happen:
+    - 不能编造不存在的模块
+    - 不能声称读取了未提供的项目文件
+    - 不能脱离用户问题泛泛讲 RAG

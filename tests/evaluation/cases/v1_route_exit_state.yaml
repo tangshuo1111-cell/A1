@@ -1,0 +1,191 @@
+- case_id: general_simple_explain
+  case_name: general 简单问题
+  category: route_exit_state
+  user_input: 请用一句话解释什么是 RAG。
+  expected:
+    allowed_lanes: ["general"]
+    allowed_modes: ["fast", "complex"]
+    allowed_task_status: ["succeeded", "partial"]
+    allowed_pending_kinds: [null]
+    allowed_primary_paths: ["direct_llm", "canned", "general_fast", "general_complex", "agno_basic", "general"]
+    expected_insufficient_evidence: false
+    required_trace_fields: ["lane"]
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - A_CANONICAL_TASK_STATUS
+  must_not_happen:
+    - 不能返回 insufficient 这种非 canonical 状态
+- case_id: general_complex_compare
+  case_name: general 复杂比较
+  category: route_exit_state
+  user_input: 请比较 OCR、ASR 和网页抓取在资料处理中的适用边界，并给一个方案。
+  expected:
+    allowed_lanes: ["general", "agno_basic_v2_kb"]
+    allowed_modes: ["complex", "fast"]
+    allowed_task_status: ["succeeded", "partial"]
+    allowed_pending_kinds: [null]
+    allowed_primary_paths: ["agno_basic_v2_kb", "general_complex", "agno_basic", "general"]
+    required_trace_fields: ["lane", "mode"]
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - A_CANONICAL_TASK_STATUS
+  must_not_happen:
+    - 不能返回 insufficient 这种非 canonical 状态
+- case_id: web_url_basic
+  case_name: web URL 基础链路
+  category: route_exit_state
+  user_input: 请读取这个网页并总结重点：https://example.com
+  expected:
+    allowed_lanes: ["web", "general"]
+    allowed_modes: ["fast", "complex", "async"]
+    allowed_task_status: ["succeeded", "pending", "partial", "failed"]
+    allowed_pending_kinds: [null, "fast_pending", "processing_pending", "material_pending"]
+    allowed_primary_paths: ["web", "web_fast", "web_complex", "agno_basic", null]
+    required_trace_fields: ["lane"]
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - B_NO_WEB_CLAIM_WITHOUT_EVIDENCE
+  must_not_happen:
+    - 不能在没有网页正文时假装完整读取网页
+- case_id: document_text_upload_like
+  case_name: document 文本上传类请求
+  category: route_exit_state
+  user_input: 我贴一段文档内容给你，你先整理重点并告诉我是否适合保存到知识库：项目目标是支持文档、网页、视频多来源资料处理，并统一进入 pending 后再 commit。
+  expected:
+    allowed_lanes: ["document", "general", "approval_gate"]
+    allowed_modes: ["fast", "complex", "blocked"]
+    allowed_task_status: ["succeeded", "partial", "pending", "blocked"]
+    allowed_pending_kinds: [null, "material_pending", "processing_pending"]
+    allowed_primary_paths: ["document", "document_fast", "document_complex", "agno_basic", "approval_gate", null]
+    required_trace_fields: ["lane"]
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - A_CANONICAL_TASK_STATUS
+  must_not_happen:
+    - 不能返回 insufficient 这种非 canonical 状态
+- case_id: video_url_basic
+  case_name: video URL 基础链路
+  category: route_exit_state
+  user_input: 请总结这个视频：https://www.youtube.com/watch?v=dQw4w9WgXcQ
+  expected:
+    allowed_lanes: ["video", "general", "approval_gate"]
+    allowed_modes: ["fast", "async", "complex", "blocked"]
+    allowed_task_status: ["succeeded", "pending", "blocked", "partial", "failed"]
+    allowed_pending_kinds: [null, "fast_pending", "processing_pending", "confirm_pending"]
+    allowed_primary_paths: ["video", "video_fast", "video_complex", "agno_basic", "approval_gate", null]
+    required_trace_fields: ["lane"]
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - C_UNCLASSIFIED_WARNING
+  must_not_happen:
+    - 不能在 ASR 失败时生成视频 transcript
+- case_id: kb_simple_question
+  case_name: kb 简单问题
+  category: route_exit_state
+  user_input: 根据知识库说明一下这个项目的资料处理主链。
+  expected:
+    allowed_lanes: ["kb", "general", "agno_basic_v2_kb_v3_web"]
+    allowed_modes: ["fast", "complex"]
+    allowed_task_status: ["succeeded", "partial", "failed"]
+    allowed_pending_kinds: [null, "partial_pending"]
+    allowed_primary_paths: ["kb", "kb_fast", "kb_complex", "agno_basic", "agno_basic_v2_kb_v3_web", null]
+    required_trace_fields: ["lane"]
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - B_NO_KB_CLAIM_WITHOUT_EVIDENCE
+  must_not_happen:
+    - 不能在 KB 无命中时说根据知识库得出
+- case_id: mixed_evidence_complex
+  case_name: mixed evidence 综合复杂问题
+  category: route_exit_state
+  user_input: 结合网页、视频和文档三种资料，给我一个项目评测方案草案。
+  expected:
+    allowed_lanes: ["general", "kb", "agno_basic_v2_kb_v3_web"]
+    allowed_modes: ["complex", "async", "fast"]
+    allowed_task_status: ["succeeded", "partial", "pending", "blocked"]
+    allowed_pending_kinds: [null, "processing_pending", "fast_pending", "partial_pending"]
+    allowed_primary_paths: ["general_complex", "kb_complex", "agno_basic", "agno_basic_v2_kb_v3_web", null]
+    required_trace_fields: ["lane", "mode"]
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - A_CANONICAL_TASK_STATUS
+  must_not_happen:
+    - 不能返回 insufficient 这种非 canonical 状态
+- case_id: save_without_pending
+  case_name: 无 pending 时保存刚才
+  category: route_exit_state
+  user_input: 保存刚才。
+  expected:
+    allowed_lanes: ["general", "document", "video", "web", "kb", "approval_gate"]
+    allowed_modes: ["fast", "complex", "blocked"]
+    allowed_task_status: ["blocked", "failed", "partial"]
+    allowed_pending_kinds: [null]
+    allowed_primary_paths: ["commit_result", "general", "agno_basic", "approval_gate", null]
+    required_trace_fields: ["lane"]
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - A_CANONICAL_TASK_STATUS
+  must_not_happen:
+    - 不能返回 insufficient 这种非 canonical 状态
+- case_id: long_video_confirm_required
+  case_name: 长视频需确认
+  category: route_exit_state
+  user_input: 请总结这个长视频：https://www.youtube.com/watch?v=longvideoexample123
+  expected:
+    allowed_lanes: ["video", "general", "approval_gate"]
+    allowed_modes: ["async", "complex", "fast", "blocked"]
+    allowed_task_status: ["blocked", "pending", "partial"]
+    allowed_pending_kinds: [null, "confirm_pending", "processing_pending", "fast_pending"]
+    allowed_primary_paths: ["video", "video_complex", "agno_basic", "approval_gate", null]
+    required_trace_fields: ["lane"]
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - C_UNCLASSIFIED_WARNING
+  must_not_happen:
+    - 不能在 ASR 失败时生成视频 transcript
+- case_id: ocr_required_honesty
+  case_name: OCR required 诚实性
+  category: route_exit_state
+  user_input: 我有一份扫描版 PDF，先按扫描 PDF 场景告诉我接下来会怎么处理。
+  expected:
+    allowed_lanes: ["document", "general", "agno_basic_v2_kb_v3_web"]
+    allowed_modes: ["async", "complex", "fast"]
+    allowed_task_status: ["pending", "blocked", "partial", "failed"]
+    allowed_pending_kinds: [null, "processing_pending", "material_pending", "fast_pending", "partial_pending"]
+    allowed_primary_paths: ["document", "document_complex", "agno_basic", "agno_basic_v2_kb_v3_web", null]
+    required_trace_fields: ["lane"]
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - A_NO_FAKE_DOC_PARSE
+  must_not_happen:
+    - 不能在 OCR 未完成时生成扫描 PDF 摘要

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "eval_result.schema.json",
+  "title": "Evaluation Result",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "case_id",
+    "passed",
+    "failed_assertions",
+    "actual",
+    "expected",
+    "notes"
+  ],
+  "properties": {
+    "case_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "passed": {
+      "type": "boolean"
+    },
+    "failed_assertions": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "actual": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "expected": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "notes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

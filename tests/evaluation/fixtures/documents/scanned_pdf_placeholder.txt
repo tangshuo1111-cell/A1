@@ -1,0 +1,2 @@
+Placeholder for scanned PDF fixture.
+V2 baseline does not require a real OCR-success PDF; this file marks the future fixture slot.

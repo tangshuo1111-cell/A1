@@ -62,12 +62,12 @@ class ToolsAndMediaSettings:
         default_factory=lambda: _env_bool("ASR_ENABLED", True)
     )
     asr_provider: str = field(
-        default_factory=lambda: _env_str("ASR_PROVIDER", "siliconflow").lower()
-        or "siliconflow"
+        default_factory=lambda: _env_str("ASR_PROVIDER", "dashscope").lower()
+        or "dashscope"
     )
     asr_model: str = field(
-        default_factory=lambda: _env_str("ASR_MODEL", "FunAudioLLM/SenseVoiceSmall")
-        or "FunAudioLLM/SenseVoiceSmall"
+        default_factory=lambda: _env_str("ASR_MODEL", "paraformer-v2")
+        or "paraformer-v2"
     )
     asr_base_url: str = field(
         default_factory=lambda: _env_str("ASR_BASE_URL", "")
@@ -223,10 +223,10 @@ class ToolsAndMediaSettings:
         default_factory=lambda: _env_str("V16_VIDEO_TASK_QUEUE_KEY", "light_maqa:video_tasks").strip()
     )
     v16_web_video_asr_provider_chain: str = field(
-        default_factory=lambda: _env_str("V16_WEB_VIDEO_ASR_PROVIDER_CHAIN", "tencent_flash,siliconflow").strip()
+        default_factory=lambda: _env_str("V16_WEB_VIDEO_ASR_PROVIDER_CHAIN", "dashscope,siliconflow").strip()
     )
     v16_local_video_asr_provider_chain: str = field(
-        default_factory=lambda: _env_str("V16_LOCAL_VIDEO_ASR_PROVIDER_CHAIN", "tencent_flash,siliconflow").strip()
+        default_factory=lambda: _env_str("V16_LOCAL_VIDEO_ASR_PROVIDER_CHAIN", "dashscope,siliconflow").strip()
     )
     v16_ocr_provider: str = field(
         default_factory=lambda: _env_str("V16_OCR_PROVIDER", "").strip().lower()

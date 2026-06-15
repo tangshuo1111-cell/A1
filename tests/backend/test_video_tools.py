@@ -79,7 +79,7 @@ def test_web_video_sync_asr_uses_provider_chain_fallback(monkeypatch):
     from services.capabilities.video.parallel_asr_service import ParallelAsrResult
     from tools.video.web_video_providers import WebVideoSubtitleOutcome
 
-    # 显式锁定 provider 链，避免依赖运行环境的 .env 默认值（CI 默认是 tencent_flash）。
+    # 显式锁定 provider 链，避免被本地 .env 覆盖。
     monkeypatch.setattr(_settings, "v16_web_video_asr_provider_chain", "dashscope,siliconflow")
     monkeypatch.setattr(mod, "create_task_record", lambda **kwargs: "web-task-2")
     monkeypatch.setattr(mod.task_job_store, "mark_task_running", lambda *a, **k: None)
@@ -268,7 +268,7 @@ def test_web_and_local_video_share_parallel_asr_service(monkeypatch, tmp_path):
 
     from config.settings import settings as _settings
 
-    # 显式锁定 provider 链，避免依赖运行环境的 .env 默认值（CI 默认是 tencent_flash）。
+    # 显式锁定 provider 链，避免被本地 .env 覆盖。
     monkeypatch.setattr(_settings, "v16_web_video_asr_provider_chain", "dashscope,siliconflow")
     monkeypatch.setattr(_settings, "v16_local_video_asr_provider_chain", "dashscope,siliconflow")
     monkeypatch.setattr(web_mod, "create_task_record", lambda **kwargs: "web-par-1")

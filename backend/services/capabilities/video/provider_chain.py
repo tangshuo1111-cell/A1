@@ -33,8 +33,8 @@ def resolve_video_asr_provider_chain(*, source_type: str) -> tuple[str, ...]:
     raw = settings.v16_web_video_asr_provider_chain if source_type == "web_video" else settings.v16_local_video_asr_provider_chain
     parts = [p.strip().lower() for p in str(raw or "").split(",") if p.strip()]
     if not parts:
-        base = (getattr(settings, "v16_asr_provider", None) or settings.asr_provider or "siliconflow").strip().lower()
-        return (base,) if base else ("siliconflow",)
+        base = (getattr(settings, "v16_asr_provider", None) or settings.asr_provider or "dashscope").strip().lower()
+        return (base,) if base else ("dashscope",)
     return tuple(parts)
 
 

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from entry.task_dispatcher import (  # noqa: F401 — re-export 稳定入口路径
     dispatch_task,
+    issue_task_id,
 )
 
-__all__ = ["dispatch_task"]
+__all__ = ["dispatch_task", "issue_task_id"]

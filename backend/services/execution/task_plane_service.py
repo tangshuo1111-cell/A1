@@ -140,6 +140,42 @@ def enqueue_video_background_task(
     return task_id, backend
 
 
+def enqueue_asr_mid_background_task(
+    *,
+    task_id: str,
+    file_path: str,
+    session_id: str = "",
+    duration_sec: float = 0.0,
+) -> str:
+    """Enqueue confirmed mid-duration (15min–2h) standalone ASR; task record must already exist."""
+    backend = enqueue_async_task(
+        AsyncTaskMessage(
+            task_id=task_id,
+            task_type="asr_mid_background",
+            lane="asr",
+            source_type="asr_transcript",
+            source_ref=file_path,
+            session_id=session_id,
+            metadata={"duration_sec": float(duration_sec or 0.0)},
+        )
+    )
+    task_job_store.mark_task_running(task_id, stage="asr_mid_queued", progress=0.05)
+    task_job_store.update_task_async_metadata(
+        task_id,
+        metadata={
+            "queue_backend": backend,
+            "payload_version": 1,
+            "lane": "asr",
+            "task_type": "asr_mid_background",
+            "duration_sec": float(duration_sec or 0.0),
+            "enqueued_at_ms": int(__import__("time").time() * 1000),
+            "retry_count": 0,
+        },
+    )
+    ensure_async_workers_started()
+    return backend
+
+
 def enqueue_multi_source_research_task(
     *,
     user_query: str,

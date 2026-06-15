@@ -1,0 +1,104 @@
+- case_id: kb_strong_or_available_baseline
+  case_name: KB 可用基线
+  category: kb
+  user_input: 根据知识库说明项目主链。
+  attachments: []
+  session_setup:
+    use_knowledge: true
+  expected:
+    allowed_lanes: ["kb", "general", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web"]
+    allowed_modes: ["fast", "complex"]
+    allowed_task_status: ["succeeded", "partial", "failed"]
+    allowed_pending_kinds: [null, "partial_pending"]
+    allowed_primary_paths: ["kb", "kb_fast", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
+    required_trace_fields: ["lane"]
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - B_NO_KB_CLAIM_WITHOUT_EVIDENCE
+    - C_HONESTY_OBSERVABILITY
+    - A_CANONICAL_TASK_STATUS
+  must_not_happen:
+    - 不能无命中时声称根据知识库明确得出
+    - 不能忽略 insufficient_evidence
+    - 不能 task_status=insufficient
+- case_id: kb_no_hit_honesty
+  case_name: KB 无命中诚实性
+  category: kb
+  user_input: 根据知识库说明 SSC_SEM99 是什么。
+  attachments: []
+  session_setup:
+    use_knowledge: true
+  expected:
+    allowed_lanes: ["kb", "general", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web"]
+    allowed_modes: ["fast", "complex"]
+    allowed_task_status: ["succeeded", "partial", "failed"]
+    allowed_pending_kinds: [null, "partial_pending"]
+    allowed_primary_paths: ["kb", "kb_fast", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
+    required_trace_fields: ["lane"]
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - B_NO_KB_CLAIM_WITHOUT_EVIDENCE
+    - B_NO_KB_CLAIM_WITHOUT_EVIDENCE
+    - C_OBSERVABILITY_QUALITY
+  must_not_happen:
+    - 不能在无命中时说知识库显示
+    - 不能把无命中当强证据
+    - 不能没有 warning 就通过 no-hit case
+- case_id: kb_complex_insufficient_honesty
+  case_name: KB 复杂题证据不足诚实性
+  category: kb
+  user_input: 根据知识库，这个项目面试时最该强调什么？
+  attachments: []
+  session_setup:
+    use_knowledge: true
+  expected:
+    allowed_lanes: ["kb", "general", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web"]
+    allowed_modes: ["fast", "complex"]
+    allowed_task_status: ["succeeded", "partial", "failed"]
+    allowed_pending_kinds: [null, "partial_pending"]
+    allowed_primary_paths: ["kb", "kb_fast", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
+    required_trace_fields: ["lane"]
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - B_NO_KB_CLAIM_WITHOUT_EVIDENCE
+    - C_UNCLASSIFIED_WARNING
+    - C_HONESTY_OBSERVABILITY
+  must_not_happen:
+    - 不能在证据不足时声称结论完全来自知识库
+    - 不能把 usable/weak 证据当作复杂题充分证据
+    - 不能隐藏 kb_insufficient
+- case_id: kb_retrieval_fallback_observability
+  case_name: KB 检索策略可观测性
+  category: kb
+  user_input: 根据知识库说明检索策略会不会走 hybrid、semantic 或 keyword。
+  attachments: []
+  session_setup:
+    use_knowledge: true
+  expected:
+    allowed_lanes: ["kb", "general", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web"]
+    allowed_modes: ["fast", "complex"]
+    allowed_task_status: ["succeeded", "partial", "failed"]
+    allowed_pending_kinds: [null, "partial_pending"]
+    allowed_primary_paths: ["kb", "kb_fast", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
+    required_trace_fields: ["lane"]
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - C_UNCLASSIFIED_WARNING
+    - C_OBSERVABILITY_QUALITY
+    - B_NO_KB_CLAIM_WITHOUT_EVIDENCE
+  must_not_happen:
+    - 不能伪造 hybrid/semantic/keyword fallback
+    - 不能缺少策略字段却声称 fallback 已验证
+    - 不能无证据判断检索成功

@@ -68,7 +68,10 @@ class TaskInput(BaseModel):
         default_factory=list,
         description="从用户输入中提取的 HTTP(S) 链接列表",
     )
-    is_followup: bool = Field(False, description="是否判为追问（仅规则，非语义）")
+    is_followup: bool = Field(
+        False,
+        description="compat 只读追问启发式；主链以 ingress / session history 为准",
+    )
     session_id: str | None = Field(None, description="会话 ID，可选")
     created_at: datetime = Field(..., description="任务创建时间")
     context_snippet: str = Field(

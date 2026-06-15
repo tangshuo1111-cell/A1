@@ -140,44 +140,6 @@ def _failed(
     )
 
 
-def _queued_async(
-    task_id: str,
-    *,
-    duration_sec: float,
-    session_id: str = "",
-) -> DocumentToolResult:
-    short_thr = int(getattr(settings, "v16_asr_short_threshold_sec", 900) or 900)
-    long_thr = int(getattr(settings, "v16_asr_long_threshold_sec", 7200) or 7200)
-    md = {
-        "source_type": "asr_transcript",
-        "provider": "tencent_async",
-        "provider_type": "tencent_async",
-        "production_ready": False,
-        "external_processing": True,
-        "estimated_cost": 0.0,
-        "segments": [],
-        "duration_sec": float(duration_sec or 0.0),
-        "v16_asr_short_threshold_sec": short_thr,
-        "v16_asr_long_threshold_sec": long_thr,
-        "decision": "queued_async",
-        "async_mode": "create_rec_task_pending",
-        "user_confirmed": True,
-        "session_id": session_id,
-    }
-    return DocumentToolResult(
-        tool_name="asr_transcribe",
-        source_type="asr_transcript",
-        task_id=task_id,
-        status="queued",
-        error_code="",
-        failure_reason="",
-        next_action_hint="长音频已确认，等待异步 ASR 任务完成后再生成 transcript / pending。",
-        metadata=md,
-        quality={"quality_level": "queued", "text_length": 0},
-        trace=["v16:asr queued_async awaiting_provider_task"],
-    )
-
-
 def _asr_transcribe(
     file_path: str,
     *,
@@ -270,10 +232,43 @@ def _asr_transcribe(
     short_thr = int(getattr(settings, "v16_asr_short_threshold_sec", 900) or 900)
     long_thr = int(getattr(settings, "v16_asr_long_threshold_sec", 7200) or 7200)
     if duration_sec > short_thr and duration_sec <= long_thr and user_confirmed and not force_sync:
-        return _queued_async(
-            task_id,
-            duration_sec=duration_sec,
+        from services.execution.task_plane_service import enqueue_asr_mid_background_task
+
+        queue_backend = enqueue_asr_mid_background_task(
+            task_id=task_id,
+            file_path=str(path),
             session_id=session_id,
+            duration_sec=duration_sec,
+        )
+        return DocumentToolResult(
+            tool_name="asr_transcribe",
+            source_type="asr_transcript",
+            task_id=task_id,
+            status="queued",
+            error_code="",
+            failure_reason="",
+            next_action_hint="长音频已入队后台转写；完成后可通过任务结果或下一轮会话继续查看。",
+            duration_ms=(time.perf_counter() - t0) * 1000.0,
+            metadata={
+                "source_type": "asr_transcript",
+                "provider": "asr_mid_background",
+                "provider_type": "asr_mid_background",
+                "production_ready": False,
+                "external_processing": True,
+                "estimated_cost": 0.0,
+                "segments": [],
+                "duration_sec": float(duration_sec or 0.0),
+                "v16_asr_short_threshold_sec": short_thr,
+                "v16_asr_long_threshold_sec": long_thr,
+                "decision": "queued_async",
+                "async_mode": "asr_mid_background",
+                "queue_backend": queue_backend,
+                "user_confirmed": True,
+                "session_id": session_id,
+                "background_task_id": task_id,
+            },
+            quality={"quality_level": "queued", "text_length": 0},
+            trace=["v16:asr mid_background enqueued"],
         )
 
     # 旧的 v16_asr_max_duration_sec / v16_max_video_duration_sec 仍作为可选硬限保留。
@@ -295,8 +290,8 @@ def _asr_transcribe(
             error_code=asr_errors.ASR_NOT_CONFIGURED,
             failure_reason="未配置可用的 V16 ASR provider",
             next_action_hint=(
-                "设置 V16_ASR_PROVIDER=tencent_flash / tencent / generic_http / "
-                "local_whisper / mock，并确认相关 key 已写入 .env"
+                "设置 V16_ASR_PROVIDER=dashscope（DASHSCOPE_API_KEY）或 provider 链 "
+                "V16_*_ASR_PROVIDER_CHAIN；腾讯仅显式配置时生效"
             ),
             duration_ms=(time.perf_counter() - t0) * 1000.0,
         )

@@ -1,0 +1,2 @@
+This is a small evaluation document fixture.
+It describes a multi-source RAG and agent workflow.

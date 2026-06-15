@@ -1,6 +1,9 @@
 """
-输入层：轻量清洗、链接检测、追问规则、封装 TaskInput。
-不做复杂语义判断。
+TaskInput 包装与 task_id 发放。
+
+主链 complex / MainAgent 仅使用 ``issue_task_id()`` 作关联 ID，不做路由判断。
+``dispatch_task`` 为 compat / rule_router 保留完整 TaskInput（含链接提取）；
+``is_followup`` 仅 compat 只读提示，追问语义以 ingress 与 session history 为准。
 """
 
 from __future__ import annotations
@@ -16,8 +19,13 @@ from schemas import TaskInput
 
 logger = logging.getLogger("light_maqa")
 
-# 简单 URL 检测（骨架）
+# 简单 URL 检测
 _URL_RE = re.compile(r"https?://\S+", re.IGNORECASE)
+
+
+def issue_task_id() -> str:
+    """为主链一次 agent/tool 调用分配关联 ID（非路由、非判断）。"""
+    return str(uuid.uuid4())
 
 
 def _extract_has_link(text: str) -> bool:
@@ -26,7 +34,6 @@ def _extract_has_link(text: str) -> bool:
 
 def _extract_link_urls(text: str) -> list[str]:
     found = _URL_RE.findall(text)
-    # 去掉常见尾部标点
     cleaned: list[str] = []
     for u in found:
         u = u.rstrip(").,;，。；）】」")
@@ -36,7 +43,6 @@ def _extract_link_urls(text: str) -> list[str]:
 
 
 def _clean_query(user_query: str) -> str:
-    # TODO: 按需扩展清洗规则（全角空格、多余空白等）
     return " ".join(user_query.strip().split())
 
 
@@ -44,10 +50,7 @@ def _is_followup_rule(
     session_id: str | None,
     clean_query: str,
 ) -> bool:
-    """
-    轻规则追问判断：有会话且问句较短时标为可能追问。
-    TODO: 与真实产品规则对齐。
-    """
+    """compat 只读启发式；主链追问由 SessionHistorySnapshot / ingress 承担。"""
     if not session_id:
         return False
     return len(clean_query) < 80
@@ -58,15 +61,13 @@ def dispatch_task(
     *,
     session_id: str | None = None,
 ) -> TaskInput:
-    """
-    将用户原始输入包装为 TaskInput。
-    """
+    """将用户原始输入包装为 TaskInput（compat / rule_router 入口）。"""
     try:
         clean = _clean_query(user_query)
         urls = _extract_link_urls(user_query)
         now = datetime.now(UTC)
         task = TaskInput(
-            task_id=str(uuid.uuid4()),
+            task_id=issue_task_id(),
             user_query=user_query,
             clean_query=clean,
             has_link=_extract_has_link(user_query),

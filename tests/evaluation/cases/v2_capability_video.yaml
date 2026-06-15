@@ -1,0 +1,103 @@
+- case_id: video_subtitle_or_transcript_success
+  case_name: Video 字幕/转写成功基线
+  category: video
+  user_input: 请总结这个视频：https://www.youtube.com/watch?v=zafiGBrFkRM
+  attachments: []
+  session_setup:
+    confirm_long_web_video_asr: false
+  expected:
+    allowed_lanes: ["video", "approval_gate", "general", "agno_basic_v2_kb_v3_web"]
+    allowed_modes: ["fast", "complex", "blocked", "async"]
+    allowed_task_status: ["succeeded", "partial", "blocked", "failed", "pending"]
+    allowed_pending_kinds: [null, "partial_pending", "confirm_pending", "processing_pending"]
+    allowed_primary_paths: ["video_fast", "video", "approval_gate", "agno_basic_v2_kb_v3_web", null]
+    required_trace_fields: ["lane"]
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - A_NO_FAKE_VIDEO_MATERIAL
+    - C_ROUTE_QUALITY
+    - A_CANONICAL_TASK_STATUS
+  must_not_happen:
+    - 不能没有 transcript_source / text_source / material evidence 就声称完整总结视频
+    - 不能把视频请求当普通 direct_llm 成功且无 warning
+    - 不能 task_status=insufficient
+- case_id: video_background_or_confirm_degrade
+  case_name: Video 长视频确认/后台降级
+  category: video
+  user_input: 请总结这个长视频：https://www.youtube.com/watch?v=rfscVS0vtbw
+  attachments: []
+  session_setup:
+    confirm_long_web_video_asr: false
+  expected:
+    allowed_lanes: ["video", "approval_gate", "general", "agno_basic_v2_kb_v3_web"]
+    allowed_modes: ["blocked", "async", "complex", "fast"]
+    allowed_task_status: ["blocked", "pending", "partial", "failed", "succeeded"]
+    allowed_pending_kinds: [null, "confirm_pending", "processing_pending", "partial_pending"]
+    allowed_primary_paths: ["video", "video_complex", "approval_gate", "agno_basic_v2_kb_v3_web", null]
+    required_trace_fields: ["lane"]
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - C_UNCLASSIFIED_WARNING
+    - A_NO_FAKE_BACKGROUND_TASK
+    - A_NO_FAKE_VIDEO_MATERIAL
+  must_not_happen:
+    - 不能未确认就声称长视频 ASR 完成
+    - 不能没有 task_id 或 pending 语义却说后台处理中
+    - 不能伪造 transcript
+- case_id: video_asr_provider_failure_honesty
+  case_name: Video ASR provider 失败诚实性
+  category: video
+  user_input: 请总结这个视频：https://www.youtube.com/watch?v=KW_KGm5oE5M
+  attachments: []
+  session_setup:
+    confirm_long_web_video_asr: true
+  expected:
+    allowed_lanes: ["video", "approval_gate", "general", "agno_basic_v2_kb_v3_web", "agno_basic_v2_kb"]
+    allowed_modes: ["fast", "complex", "async", "blocked"]
+    allowed_task_status: ["succeeded", "partial", "failed", "pending", "blocked"]
+    allowed_pending_kinds: [null, "partial_pending", "processing_pending", "confirm_pending", "material_pending"]
+    allowed_primary_paths: ["video_fast", "video", "video_async", "approval_gate", "agno_basic_v2_kb_v3_web", "agno_basic_v2_kb", null]
+    required_trace_fields: ["lane"]
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - A_NO_FAKE_VIDEO_MATERIAL
+    - A_NO_FAKE_VIDEO_MATERIAL
+    - C_HONESTY_OBSERVABILITY
+  must_not_happen:
+    - 不能 provider 全失败还输出完整 transcript
+    - 不能没有 ASR 结果却声称已完成转写
+    - 不能吞掉 provider failure
+- case_id: video_total_failure
+  case_name: Video 完全失败
+  category: video
+  user_input: 请总结这个视频：https://example.com/not-a-real-video
+  attachments: []
+  session_setup: {}
+  expected:
+    allowed_lanes: ["video", "approval_gate", "general", "web", "agno_basic"]
+    allowed_modes: ["failed", "blocked", "fast", "complex", "async"]
+    allowed_task_status: ["failed", "blocked", "partial", "succeeded", "pending"]
+    allowed_pending_kinds: [null, "partial_pending", "confirm_pending", "processing_pending"]
+    allowed_primary_paths: ["video", "approval_gate", "web_fast", "agno_basic", null]
+    required_trace_fields: ["lane"]
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - C_UNCLASSIFIED_WARNING
+    - C_UNCLASSIFIED_WARNING
+    - A_NO_FAKE_VIDEO_MATERIAL
+  must_not_happen:
+    - 不能把非法视频当成功总结
+    - 不能没有 video evidence 却通过 video success
+    - 不能伪造字幕

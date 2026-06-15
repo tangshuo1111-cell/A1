@@ -16,7 +16,10 @@ _project_root = Path(__file__).resolve().parent.parent.parent
 
 def _candidate_env_files() -> list[Path]:
     """按优先级返回可加载的 .env 路径。"""
-    candidates: list[Path] = [_project_root / ".env"]
+    candidates: list[Path] = [
+        _project_root / ".env",
+        _project_root / "backend" / "config" / "env.txt",
+    ]
     for parent in _project_root.parents[:3]:
         candidates.append(parent / ".env")
     unique: list[Path] = []

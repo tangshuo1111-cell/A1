@@ -47,5 +47,6 @@ frontend_surface,task_poll_get_tasks_by_id,S5,S11,retired,frontend,G3
 
 
 frontend_surface,pending_kind_material_banner,S7,S11,retired,frontend,G3
+eval_compat,eval_case_text_rule_fallback,S14,S16,active,evaluation,
 
 

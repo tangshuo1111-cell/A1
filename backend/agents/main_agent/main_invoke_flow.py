@@ -18,7 +18,7 @@ from application.chat.complexity_policy import (
     is_save_request,
 )
 from debug_trace import trace
-from entry.task_dispatcher import dispatch_task
+from entry.task_dispatcher import issue_task_id
 from services.capabilities.web import web_orchestration_service as agno_web_service
 
 from .main_fallback_rules import (
@@ -369,8 +369,7 @@ def run_main_invoke_executor(rt: Any, frame: AgentRunFrame) -> AgnoCollaboration
     msg = message.strip()
     has_explicit_web = agno_web_service.user_requests_web_search(msg)
 
-    task = dispatch_task(message, session_id=inputs.get("session_id"))
-    task_id = task.task_id
+    task_id = issue_task_id()
 
     # --- Stage 1: routing decisions ---
     intent = rt.shibie_yitu(

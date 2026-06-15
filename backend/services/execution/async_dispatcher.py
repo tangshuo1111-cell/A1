@@ -27,6 +27,15 @@ def process_async_task(message: AsyncTaskMessage) -> None:
             )
         )
         return
+    if message.task_type == "asr_mid_background":
+        from services.capabilities.asr.asr_background_executor import run_asr_mid_background_task
+
+        run_asr_mid_background_task(
+            message.task_id,
+            message.source_ref,
+            message.session_id,
+        )
+        return
     if message.task_type == "web_heavy_fetch":
         from services.capabilities.web.async_web_pipeline import run_web_heavy_fetch_task
 

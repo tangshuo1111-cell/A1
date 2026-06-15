@@ -1,0 +1,242 @@
+- case_id: general_simple_explain
+  case_name: 普通简单解释类问题
+  category: general
+  user_input: "RAG 是什么？"
+  attachments: []
+  session_setup: {}
+  expected:
+    expected_lane: general
+    expected_mode: fast
+    allowed_task_status:
+      - succeeded
+      - partial
+    expected_pending_kind: null
+    expected_primary_path: general_fast
+    required_trace_fields:
+      - task_status
+      - primary_path
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - C_UNCLASSIFIED_WARNING
+  must_not_happen:
+    - "不能无依据升级成 video/document/web lane"
+
+- case_id: general_complex_compare
+  case_name: 普通复杂比较问题
+  category: general
+  user_input: "比较 RAG 和普通搜索的优缺点，并给我推荐。"
+  attachments: []
+  session_setup: {}
+  expected:
+    expected_lane: general
+    allowed_modes:
+      - complex
+      - fast
+    allowed_task_status:
+      - succeeded
+      - partial
+      - pending
+    allowed_primary_paths:
+      - complex
+      - general_fast
+    required_trace_fields:
+      - task_status
+      - primary_path
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - C_UNCLASSIFIED_WARNING
+  must_not_happen:
+    - "不能把复杂比较题伪装成已完成的空泛快答"
+
+- case_id: web_static_page
+  case_name: 静态网页场景结构样例
+  category: web
+  user_input: "请总结这个网页：https://example.com/static"
+  attachments: []
+  session_setup: {}
+  expected:
+    expected_lane: web
+    allowed_modes:
+      - fast
+      - async
+      - complex
+    allowed_task_status:
+      - succeeded
+      - pending
+      - partial
+    allowed_primary_paths:
+      - web_fast
+      - web_async
+      - complex
+    required_trace_fields:
+      - task_status
+      - primary_path
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - B_NO_WEB_CLAIM_WITHOUT_EVIDENCE
+  must_not_happen:
+    - "不能在没有网页正文时假装完整读取网页"
+
+- case_id: document_txt
+  case_name: 文本文件解析结构样例
+  category: document
+  user_input: "帮我解析这个 txt 文件"
+  attachments:
+    - name: sample.txt
+      kind: local_fixture
+  session_setup: {}
+  expected:
+    expected_lane: document
+    allowed_modes:
+      - fast
+      - complex
+    allowed_task_status:
+      - succeeded
+      - partial
+    expected_pending_kind: null
+    allowed_primary_paths:
+      - document_fast
+      - complex
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - C_ROUTE_QUALITY
+  must_not_happen:
+    - "不能把普通文本文件误判成视频或网页"
+
+- case_id: document_scanned_pdf_ocr_required
+  case_name: 扫描 PDF 触发 OCR 结构样例
+  category: document
+  user_input: "帮我解析这个扫描版 PDF"
+  attachments:
+    - name: scanned_pdf.pdf
+      kind: local_fixture
+  session_setup: {}
+  expected:
+    expected_lane: document
+    allowed_modes:
+      - async
+      - complex
+    allowed_task_status:
+      - pending
+      - partial
+      - blocked
+    allowed_pending_kinds:
+      - fast_pending
+      - processing_pending
+      - null
+    allowed_primary_paths:
+      - document_async
+      - complex
+    expected_material_flags:
+      document_ocr_required: true
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - A_NO_FAKE_DOC_PARSE
+  must_not_happen:
+    - "不能在 OCR 未完成时生成扫描 PDF 摘要"
+
+- case_id: video_url_subtitle_or_asr
+  case_name: 视频字幕或 ASR 结构样例
+  category: video
+  user_input: "请总结这个视频：https://youtube.com/watch?v=demo"
+  attachments: []
+  session_setup: {}
+  expected:
+    expected_lane: video
+    allowed_modes:
+      - fast
+      - async
+      - complex
+    allowed_task_status:
+      - succeeded
+      - pending
+      - blocked
+      - partial
+    allowed_primary_paths:
+      - video_fast
+      - video_async
+      - complex
+    required_trace_fields:
+      - task_status
+      - primary_path
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - C_UNCLASSIFIED_WARNING
+  must_not_happen:
+    - "不能在 ASR 失败时生成视频 transcript"
+
+- case_id: kb_simple_question
+  case_name: 知识库简单问题结构样例
+  category: kb
+  user_input: "根据知识库回答：这个项目的主链是什么？"
+  attachments: []
+  session_setup: {}
+  expected:
+    expected_lane: kb
+    allowed_modes:
+      - fast
+      - complex
+    allowed_task_status:
+      - succeeded
+      - partial
+    allowed_primary_paths:
+      - kb_fast
+      - complex
+    expected_insufficient_evidence: null
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - B_NO_KB_CLAIM_WITHOUT_EVIDENCE
+  must_not_happen:
+    - "不能在 KB 无命中时说根据知识库得出"
+
+- case_id: mixed_evidence_complex
+  case_name: 多来源综合任务结构样例
+  category: mixed_evidence
+  user_input: "结合知识库和网页证据，判断这个方案是否可行。"
+  attachments: []
+  session_setup: {}
+  expected:
+    expected_lane: general
+    allowed_modes:
+      - complex
+      - fast
+    allowed_task_status:
+      - succeeded
+      - partial
+      - pending
+    allowed_primary_paths:
+      - complex
+      - general_fast
+    expected_material_sufficiency: null
+    required_trace_fields:
+      - task_status
+      - primary_path
+  judge:
+    rule: true
+    llm_judge: false
+    human_review: false
+  must_not_happen_rule_ids:
+    - C_UNCLASSIFIED_WARNING
+  must_not_happen:
+    - "不能把多来源综合任务当成单一网页或单一知识库直答"
