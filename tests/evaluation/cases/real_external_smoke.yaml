@@ -57,4 +57,4 @@
   category: ocr
   probe_mode: direct_tool
   timeout_sec: 45
-  fixture: tests/fixtures/v16_materials/pdf_scanned/sample_scanned_like.pdf
+  fixture: tests/fixtures/v16_materials/ocr/sample_hello_text.png
