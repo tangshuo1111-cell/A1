@@ -1,7 +1,8 @@
 # Real External Smoke 脱敏样例报告
 
-> **说明**：本报告为脱敏样例，基于 staging 稳定运行结果整理；不是原始 JSON。  
-> 原始报告路径：`runtime_data/eval_sandbox/reports/eval_real_external_smoke_*.json/md`（不入库）。
+> **说明**：本报告为脱敏样例，基于 2026-06-16 正式 capability 主报告整理；不是原始 JSON。  
+> 原始报告路径：`runtime_data/eval_sandbox/reports/eval_real_external_smoke_*.json/md`（不入库）。  
+> **optional regression 未纳入本次 capability 主报告结论。**
 
 ## Environment Summary
 
@@ -9,7 +10,7 @@
 - LIGHT_MAQA_FAKE_LLM: `0`
 - DATABASE_URL_set: `true`
 - REAL_VIDEO_TEST_URL_set: `false`
-- REAL_EXTERNAL_RUN_REGRESSION: `0`
+- REAL_EXTERNAL_RUN_REGRESSION: `0`（未启用 optional regression）
 - LLM_API_KEY: present=true, length=51, masked=`sk****gg`
 
 ## Dependency Preflight
@@ -21,7 +22,7 @@
 | playwright | configured_and_passed | true | false | playwright_available |
 | ffmpeg | configured_and_passed | true | false | ffmpeg_available |
 | llm_key | configured_and_passed | true | false | llm_key_present |
-| asr_key | not_configured | false | false | missing_asr_key |
+| asr_key | configured_and_passed | true | false | asr_key_present |
 | ocr_key | configured_and_passed | true | false | ocr_key_present |
 
 ## Capability Cases
@@ -33,38 +34,33 @@
 | document_fixture_real | configured_and_passed | true | false | document_parsed |
 | kb_real_roundtrip | configured_and_passed | true | false | kb_roundtrip_ok |
 | video_subtitle_probe_real | configured_and_passed | true | false | subtitle_found |
-| asr_real_short_audio | not_configured | false | false | missing_asr_key |
-| ocr_real_sample | configured_and_failed | true | false | ocr_no_text |
+| asr_real_short_audio | configured_and_passed | true | false | asr_ok |
+| ocr_real_sample | configured_and_passed | true | false | ocr_ok |
+
+**capability 7/7 passed**
 
 ## Optional Regression
 
-- enabled: `true`
-- reason: `regression_executed`
-- failed_unknown: `true`（V1 有 2 个 unknown failure；V3 有 1 个 case_timeout）
-- suite 摘要：
-  - v1_route_exit_state → failed_unknown
-  - v2_5_multiturn_state → passed
-  - v3_complex_agent → case_timeout
-- V4 overview 报告：`runtime_data/eval_sandbox/reports/eval_v4_regression_overview_*.json/md`（不入库）
-- note: optional regression 不计入 capability `passed_configured_cases_count`；exit_code=4 仅表示 regression gate 信号
+- enabled: `false`
+- reason: `REAL_EXTERNAL_RUN_REGRESSION not set`
+- note: optional regression 是附加回归，不属于 capability 主报告；本次正式 capability 主报告未启用。
 
 ## Summary Counts
 
-- configured_cases_count: 6
-- passed_configured_cases_count: 5
-- not_configured_cases_count: 1
+- configured_cases_count: 7
+- passed_configured_cases_count: 7
+- not_configured_cases_count: 0
 - dependency_missing_cases_count: 0
 - external_timeout_cases_count: 0
 - skipped_cases_count: 0
 - failed_cases_count: 0
-- product_failure_cases_count: 0
+- **product_failure_cases_count: 0**
 
 ## Final Verdict
 
-`environment_ready`（exit_code=0；5/6 configured capability 通过；ASR 未配置；OCR 凭证/样本环境问题，非 product_failure）
+`environment_ready`（exit_code=0；capability 7/7 passed；product_failure_cases_count=0）
 
 ## Recommendations
 
-- 配置 ASR provider/key 以覆盖 `asr_real_short_audio`。
-- OCR 样本无文本时属环境/样本问题；换有效扫描件或检查 OCR 凭证后再测。
-- 可选：`REAL_EXTERNAL_RUN_REGRESSION=1` 叠加精简回归（不计入 capability passed count）。
+- Environment smoke completed; review configured_and_passed cases for staging evidence.
+- 若需叠加 V1/V2.5/V3/V4 optional regression，请单独设置 `REAL_EXTERNAL_RUN_REGRESSION=1` 并单独归因（如 V1 unknown / V3 timeout），不计入 capability 主报告。
