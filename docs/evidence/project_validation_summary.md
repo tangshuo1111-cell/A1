@@ -103,7 +103,7 @@ py scripts/evaluation/run_project_validation.py --profile full-staging --execute
 | --- | --- | --- | --- |
 | **`.github/workflows/ci.yml`** | push / PR | gitleaks、ruff、架构 guard、pytest（**fake LLM**，`-m "not real_external"`）、OpenAPI 快照、前端 lint/e2e | **默认 CI**：轻量安全 + 单测/集成；**不跑** `regression_all` E2E、**不跑** `real_external_smoke` |
 | **`.github/workflows/real_external.yml`** | **workflow_dispatch**（手动） | `pytest -m real_external`（需 secrets） | **真实外部能力**可选自动化；**不是**每次 merge 默认 |
-| **`.github/workflows/nightly_benchmark.yml`** | cron / 手动 | KB benchmark、agent smoke（fake LLM） | 夜间基准；**不是** 42/42 regression；**当前 kb-benchmark 因缺少 `docs/current/20–25_KB补强_*.md` 文档包而失败**（见 §5.1） |
+| **`.github/workflows/nightly_benchmark.yml`** | cron / 手动 | KB benchmark ingest + eval、agent smoke（fake LLM） | 夜间 KB 基准；**不是** 42/42 regression；fixture 位于 `docs/history/current/20–25_KB补强_*.md` |
 
 **必须对外如实表述**：
 
@@ -112,15 +112,15 @@ py scripts/evaluation/run_project_validation.py --profile full-staging --execute
 - 真实外部能力依赖：**secret / env / provider / staging backend / PG**；应放在 **workflow_dispatch / scheduled / protected staging**，不应塞进默认 CI。
 - **无 scheduled regression_all / scheduled real_external_smoke**；复现 42/42 + 7/7 依赖本地/staging 手动执行或 `full-staging --execute`。
 
-### 5.1 Nightly KB Benchmark 归因（2026-06-15 最近一次失败）
+### 5.1 Nightly KB Benchmark（2026-06-16 修复说明）
 
 | 项 | 结论 |
 | --- | --- |
-| 失败 job | `kb-benchmark`（`agent-smoke` 成功） |
-| 失败步骤 | `Ingest KB benchmark strengthening pack` |
-| 根因 | **fixture/文档缺失**：`ingest_kb_strengthening_pack.py` 期望 `docs/current/20–25_KB补强_*.md`，仓库中**不存在**这些文件 |
-| 归类 | workflow 配置与仓库内容不一致（**非**业务主链 bug；**非** 42/42 regression） |
-| 本轮处理 | 文档记录 + workflow 注释；**不**改业务代码 |
+| 定位 | KB agent eval 夜间基准（`benchmarks/kb_agent_eval`）；**独立于** regression_all / real_external_smoke |
+| 历史失败 | `kb-benchmark` ingest 步骤 FileNotFoundError |
+| 根因 | ingest 默认读 `docs/current/`，但 benchmark fixture 已归档在 **`docs/history/current/`**（路径未同步） |
+| 修复 | `ingest_kb_strengthening_pack.py` 默认改为 `docs/history/current`；**未编造文档、未改业务主链** |
+| 与 42/42、7/7 关系 | **无**；Nightly 绿 **不等于** staging 42/42 或 7/7 |
 
 ---
 
@@ -136,7 +136,7 @@ py scripts/evaluation/run_project_validation.py --profile full-staging --execute
 | 统一入口 | `run_project_validation.py`（默认 `summary`） |
 | 一键总验收 | **`--profile full-staging`**（dry-run 默认；`--execute` 跑 regression + external） |
 | 最强验证 CI 自动化 | **未进默认 CI**（by design）；复现依赖 staging / manual / `full-staging --execute` |
-| Nightly KB 红 | **已归因**（§5.1）；本轮不修 ingest 脚本 |
+| Nightly KB 红 | **P0.5 已修**（ingest 路径对齐 `docs/history/current`）；push 后待 Nightly 复验 |
 | 工作区卫生 | 见 §6；本地 txt / 无关 fixture 二进制 **不得 stage** |
 
 ### P1（本轮不修，仅记录）

@@ -13,6 +13,19 @@ DEFAULT_DOCS = [
     "25_KB补强_基准题直答材料_B.md",
 ]
 
+# Benchmark fixtures live under docs/history/current (see benchmarks/kb_agent_eval/README.md).
+DEFAULT_DOCS_ROOT = Path("docs") / "history" / "current"
+
+
+def resolve_docs_root(project_root: Path, docs_root: str | None) -> Path:
+    if docs_root:
+        return Path(docs_root)
+    return project_root / DEFAULT_DOCS_ROOT
+
+
+def missing_pack_files(docs_root: Path) -> list[Path]:
+    return [docs_root / name for name in DEFAULT_DOCS if not (docs_root / name).is_file()]
+
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -26,7 +39,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--docs-root",
         default=None,
-        help="Optional docs/current root. Defaults to project docs/current.",
+        help="Optional docs root. Defaults to docs/history/current (KB benchmark fixtures).",
+    )
+    parser.add_argument(
+        "--check-only",
+        action="store_true",
+        help="Only verify fixture files exist; do not ingest.",
     )
     return parser
 
@@ -36,10 +54,24 @@ def main() -> None:
     args = parser.parse_args()
 
     project_root = Path(__file__).resolve().parents[2]
+    docs_root = resolve_docs_root(project_root, args.docs_root)
+    missing = missing_pack_files(docs_root)
+    if missing:
+        print("ERROR: KB benchmark strengthening pack incomplete:", file=sys.stderr)
+        for path in missing:
+            try:
+                rel = path.relative_to(project_root)
+            except ValueError:
+                rel = path
+            print(f"  missing: {rel}", file=sys.stderr)
+        raise SystemExit(1)
+
+    if args.check_only:
+        print(f"OK: {len(DEFAULT_DOCS)} fixture files present under {docs_root.relative_to(project_root)}")
+        return
+
     sys.path.insert(0, str(project_root / "backend"))
     from services.capabilities.knowledge.ingest_service import ingest_text
-
-    docs_root = Path(args.docs_root) if args.docs_root else project_root / "docs" / "current"
 
     for filename in DEFAULT_DOCS:
         path = docs_root / filename
