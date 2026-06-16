@@ -35,6 +35,14 @@ def test_expected_field_exists() -> None:
         assert "expected" in case
 
 
+def test_v0_cases_use_allowed_lanes_for_source_aware_routing() -> None:
+    for case in load_eval_cases():
+        expected = case["expected"]
+        assert "allowed_lanes" in expected, case["case_id"]
+        assert "expected_lane" not in expected, case["case_id"]
+        assert expected["allowed_lanes"], case["case_id"]
+
+
 def test_judge_field_exists() -> None:
     for case in load_eval_cases():
         assert "judge" in case

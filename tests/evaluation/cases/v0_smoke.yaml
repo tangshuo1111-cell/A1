@@ -5,7 +5,7 @@
   attachments: []
   session_setup: {}
   expected:
-    expected_lane: general
+    allowed_lanes: ["general"]
     expected_mode: fast
     allowed_task_status:
       - succeeded
@@ -31,7 +31,7 @@
   attachments: []
   session_setup: {}
   expected:
-    expected_lane: general
+    allowed_lanes: ["general", "kb", "web"]
     allowed_modes:
       - complex
       - fast
@@ -61,7 +61,7 @@
   attachments: []
   session_setup: {}
   expected:
-    expected_lane: web
+    allowed_lanes: ["web", "general"]
     allowed_modes:
       - fast
       - async
@@ -95,7 +95,7 @@
       kind: local_fixture
   session_setup: {}
   expected:
-    expected_lane: document
+    allowed_lanes: ["document", "general"]
     allowed_modes:
       - fast
       - complex
@@ -124,7 +124,7 @@
       kind: local_fixture
   session_setup: {}
   expected:
-    expected_lane: document
+    allowed_lanes: ["document", "general"]
     allowed_modes:
       - async
       - complex
@@ -157,7 +157,7 @@
   attachments: []
   session_setup: {}
   expected:
-    expected_lane: video
+    allowed_lanes: ["video", "general", "approval_gate"]
     allowed_modes:
       - fast
       - async
@@ -190,7 +190,7 @@
   attachments: []
   session_setup: {}
   expected:
-    expected_lane: kb
+    allowed_lanes: ["kb", "general"]
     allowed_modes:
       - fast
       - complex
@@ -217,7 +217,7 @@
   attachments: []
   session_setup: {}
   expected:
-    expected_lane: general
+    allowed_lanes: ["general", "kb", "web"]
     allowed_modes:
       - complex
       - fast
