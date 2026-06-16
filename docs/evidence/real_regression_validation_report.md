@@ -112,14 +112,15 @@ real_external_smoke capability：**7/7 passed**，`product_failure_cases_count=0
 
 两者**不是同一个东西**；V1 allowed_lanes 口径对齐不改变 capability smoke 结论，capability 通过也不自动等价于 regression 全绿。
 
-### v0_smoke 扫描结论（本轮只读）
+### v0_smoke 扫描结论（已同步，2026-06-16）
 
-| case_id | v0_smoke 是否存在 | 口径 | 是否会造成当前 regression failed_unknown |
-| ------- | ----------------- | ---- | ---------------------------------------- |
-| `general_complex_compare` | 是（同名，不同 user_input） | 使用 `expected_lane: general`，**无 `allowed_lanes`** | **否** — v0 未接入 `run_eval_suite` / regression 主链 |
-| `mixed_evidence_complex` | 是（同名，不同 user_input） | 使用 `expected_lane: general`，**无 `allowed_lanes`** | **否** — 同上 |
+| case_id | 变更 |
+| ------- | ---- |
+| 全部 8 case | `expected_lane` → `allowed_lanes`（source-aware ingress lane 语义） |
+| `general_complex_compare` | `["general", "kb", "web"]` |
+| `mixed_evidence_complex` | `["general", "kb", "web"]` |
 
-**建议**：若未来将 v0_smoke 接入 live runner，应另开一轮统一 `expected_lane` → `allowed_lanes` 语义；**本轮不擅自修改 v0_smoke.yaml**。
+v0 仍为 schema/loader 结构样例，未接入 `run_eval_suite` 主链；口径与 V1 对齐，便于未来接入 runner。
 
 ---
 
@@ -136,4 +137,4 @@ real_external_smoke capability：**7/7 passed**，`product_failure_cases_count=0
 ### 可以暂不处理
 
 - V4 总览 `final_verdict`「已完成」表示报告门禁完成，非产品零缺陷声明。
-- v0_smoke.yaml 同名 case 使用 `expected_lane` 旧 schema，未接入 regression 主链；若未来接入 runner 再单开一轮口径同步（见上文「验收口径合法性说明」）。
+- `complex_web_kb_compare` 仍作为 V3 稳定性观察项（非 KI）。

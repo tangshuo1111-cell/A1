@@ -38,6 +38,21 @@
 
 ---
 
+## 复测摘要（2026-06-16）
+
+真实环境复跑（`LIGHT_MAQA_FAKE_LLM=0`）：
+
+| 套件 | 结果 | 说明 |
+| ---- | ---- | ---- |
+| `regression_all` | **42/42 passed** | V1 10/10、V2 16/16、V2.5 8/8、V3 8/8 |
+| `real_external_smoke` | **7/7 capability passed** | 与 regression 独立 |
+
+总览证据：`runtime_data/eval_sandbox/reports/eval_v4_regression_overview_20260616_112055.json`（不入库）
+
+下文 KI-V2-001 / KI-V2.5-001 / KI-V2.5-002 / KI-V3-001 / KI-V3-002 / KI-V3-003 均为 **`Fixed`**；本轮复测未再命中对应 case 失败。
+
+---
+
 ## KI-V2-001
 
 - Issue ID：`KI-V2-001`
@@ -75,6 +90,7 @@
 - 禁止无 transcript / 无 video evidence 时被 document fast 成功接管
 - 回归方式：
 - `py scripts/evaluation/run_eval_suite.py --suite v2_capability_all`
+- 复测（2026-06-16）：`regression_all` 42/42；`video_total_failure` case 通过
 
 ---
 
@@ -114,10 +130,7 @@
 - PG 模式下 `approval_hold` 跨重启持久化如需生产级保障，另立 migration 轮次
 - 回归方式：
 - `py scripts/evaluation/run_eval_suite.py --suite v2_5_multiturn_state`
-
----
-
-## KI-V2.5-002
+- 复测（2026-06-16）：`regression_all` 42/42；`background_task_followup_flow` 通过
 
 - Issue ID：`KI-V2.5-002`
 - 标题：`continue_without_context_flow 空上下文继续请求被 succeeded + direct_llm 处理`
@@ -154,6 +167,7 @@
 - 禁止把空上下文继续请求记为成功闭环
 - 回归方式：
 - `py scripts/evaluation/run_eval_suite.py --suite v2_5_multiturn_state`
+- 复测（2026-06-16）：`regression_all` 42/42；`continue_without_context_flow` 通过
 
 ---
 
@@ -203,6 +217,7 @@
 - 如需覆盖更多 inline 写法，另立专项轮次，勿回退 eval 标准
 - 回归方式：
 - `py scripts/evaluation/run_eval_suite.py --suite v3_complex_agent`
+- 复测（2026-06-16）：`regression_all` 42/42；`complex_document_reasoning` 通过
 
 ---
 
@@ -249,6 +264,7 @@
 - 扩展讲解型 cue 时继续在 `complexity_policy` 单点维护，勿在 `kb_fast_impl` 平行写判断
 - 回归方式：
 - `py scripts/evaluation/run_eval_suite.py --suite v3_complex_agent`
+- 复测（2026-06-16）：`regression_all` 42/42；`complex_interview_explanation` 通过
 
 ---
 
@@ -291,3 +307,4 @@
 - 如需扩展不足表达模板，继续在 `insufficient_evidence_answer_contract.py` 单点维护
 - 回归方式：
 - `py scripts/evaluation/run_eval_suite.py --suite v3_complex_agent`
+- 复测（2026-06-16）：`regression_all` 42/42；`complex_insufficient_evidence` 通过
