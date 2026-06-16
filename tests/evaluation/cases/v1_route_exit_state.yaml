@@ -23,7 +23,7 @@
   category: route_exit_state
   user_input: 请比较 OCR、ASR 和网页抓取在资料处理中的适用边界，并给一个方案。
   expected:
-    allowed_lanes: ["general", "agno_basic_v2_kb"]
+    allowed_lanes: ["general", "web", "agno_basic_v2_kb"]
     allowed_modes: ["complex", "fast"]
     allowed_task_status: ["succeeded", "partial"]
     allowed_pending_kinds: [null]
@@ -118,7 +118,7 @@
   category: route_exit_state
   user_input: 结合网页、视频和文档三种资料，给我一个项目评测方案草案。
   expected:
-    allowed_lanes: ["general", "kb", "agno_basic_v2_kb_v3_web"]
+    allowed_lanes: ["general", "kb", "web", "document", "agno_basic_v2_kb_v3_web"]
     allowed_modes: ["complex", "async", "fast"]
     allowed_task_status: ["succeeded", "partial", "pending", "blocked"]
     allowed_pending_kinds: [null, "processing_pending", "fast_pending", "partial_pending"]

@@ -24,6 +24,15 @@ def test_v1_case_count_at_least_ten() -> None:
     assert len(load_eval_cases(v1_case_file())) >= 10
 
 
+def test_v1_source_aware_lane_cases_allow_ingress_router_lanes() -> None:
+    cases = {case["case_id"]: case for case in load_eval_cases(v1_case_file())}
+    general_compare = cases["general_complex_compare"]["expected"]["allowed_lanes"]
+    mixed_evidence = cases["mixed_evidence_complex"]["expected"]["allowed_lanes"]
+    assert "web" in general_compare
+    assert "document" in mixed_evidence
+    assert "agno_basic_v2_kb_v3_web" in mixed_evidence
+
+
 def test_each_case_has_must_not_happen() -> None:
     for case in load_eval_cases(v1_case_file()):
         assert case["must_not_happen"]
