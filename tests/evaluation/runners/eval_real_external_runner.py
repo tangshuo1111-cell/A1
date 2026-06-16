@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-
 from tests.evaluation.runners.eval_http_client import (
     BackendUnavailableError,
     CaseTimeoutError,
@@ -76,10 +75,7 @@ def _env_truthy(name: str) -> bool:
 
 
 def _llm_key_present() -> bool:
-    for key in ("LLM_API_KEY", "OPENAI_API_KEY"):
-        if os.environ.get(key, "").strip():
-            return True
-    return False
+    return any(os.environ.get(key, "").strip() for key in ("LLM_API_KEY", "OPENAI_API_KEY"))
 
 
 def _asr_configured() -> bool:
@@ -149,10 +145,9 @@ def run_preflight_postgres() -> dict[str, Any]:
     try:
         import psycopg
 
-        with psycopg.connect(db_url, connect_timeout=5) as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT 1")
-                cur.fetchone()
+        with psycopg.connect(db_url, connect_timeout=5) as conn, conn.cursor() as cur:
+            cur.execute("SELECT 1")
+            cur.fetchone()
         return _finalize(make_entry(
             case_id="postgres",
             status="configured_and_passed",
@@ -347,6 +342,7 @@ def run_capability_llm_real_minimal(case: dict[str, Any]) -> dict[str, Any]:
     _ensure_backend_path()
     try:
         from openai import OpenAI  # type: ignore[import-untyped]
+
         from config.settings import settings
 
         if settings.fake_llm_enabled:
@@ -459,7 +455,7 @@ def run_capability_web_static_real(case: dict[str, Any], client: EvalHttpClient,
         return _finalize(make_entry(
             case_id="web_static_real",
             status="backend_unavailable" if isinstance(exc, BackendUnavailableError) else "external_unavailable",
-            configured=False if isinstance(exc, BackendUnavailableError) else True,
+            configured=not isinstance(exc, BackendUnavailableError),
             reason="backend_unreachable" if isinstance(exc, BackendUnavailableError) else "network_unreachable",
             detail={"error": type(exc).__name__},
             duration_ms=int((time.perf_counter() - t0) * 1000),
@@ -620,7 +616,7 @@ def run_capability_kb_real_roundtrip(case: dict[str, Any], client: EvalHttpClien
         return _finalize(make_entry(
             case_id="kb_real_roundtrip",
             status="backend_unavailable" if isinstance(exc, BackendUnavailableError) else "external_unavailable",
-            configured=False if isinstance(exc, BackendUnavailableError) else True,
+            configured=not isinstance(exc, BackendUnavailableError),
             reason="backend_unreachable" if isinstance(exc, BackendUnavailableError) else "network_unreachable",
             detail={"error": type(exc).__name__},
             duration_ms=int((time.perf_counter() - t0) * 1000),
@@ -694,7 +690,7 @@ def run_capability_video_subtitle_probe_real(case: dict[str, Any], client: EvalH
         return _finalize(make_entry(
             case_id="video_subtitle_probe_real",
             status="backend_unavailable" if isinstance(exc, BackendUnavailableError) else "external_unavailable",
-            configured=False if isinstance(exc, BackendUnavailableError) else True,
+            configured=not isinstance(exc, BackendUnavailableError),
             reason="network_unreachable",
             detail={"error": type(exc).__name__},
             duration_ms=int((time.perf_counter() - t0) * 1000),
@@ -892,8 +888,11 @@ def run_optional_regression(*, backend_ok: bool) -> dict[str, Any]:
         return {"enabled": True, "reason": "backend_unavailable", "regression_overview": None}
     try:
         from scripts.evaluation.render_eval_overview import render_regression_overview
-        from tests.evaluation.runners.eval_complex_agent_runner import run_v3_suite, v3_case_file
-        from tests.evaluation.runners.eval_multiturn_runner import run_multiturn_suite, v2_5_case_file
+        from tests.evaluation.runners.eval_complex_agent_runner import v3_case_file
+        from tests.evaluation.runners.eval_multiturn_runner import (
+            run_multiturn_suite,
+            v2_5_case_file,
+        )
         from tests.evaluation.runners.eval_runner import run_suite, v1_case_file
 
         client = EvalHttpClient()

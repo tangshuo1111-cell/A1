@@ -41,7 +41,7 @@ def run_summary() -> int:
     print("  - tests/evaluation: 112 passed (framework guardrails)")
     print()
     print("Evidence docs (committed, sanitized):")
-    for key, path in EVIDENCE.items():
+    for _key, path in EVIDENCE.items():
         status = "ok" if path.exists() else "missing"
         print(f"  - [{status}] {path.relative_to(REPO_ROOT)}")
     print()

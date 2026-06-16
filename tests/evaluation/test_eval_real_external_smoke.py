@@ -6,16 +6,12 @@ import os
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from scripts.evaluation import run_eval_suite
 from scripts.evaluation.render_eval_overview import KNOWN_ISSUE_CASE_MAP
 from tests.evaluation.runners.eval_real_external_runner import (
     load_real_external_cases,
-    real_external_case_file,
     run_capability_cases,
     run_capability_llm_real_minimal,
-    run_dependency_preflight,
     run_optional_regression,
     run_preflight_llm_key,
     run_real_external_smoke_suite,
@@ -36,7 +32,6 @@ from tests.evaluation.runners.eval_real_external_status import (
     sanitize_text,
 )
 from tests.evaluation.runners.eval_result_writer import write_real_external_smoke_report
-
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -268,7 +263,9 @@ def test_dependency_error_codes_map_to_dependency_missing_status() -> None:
 def test_document_fixture_tool_not_found_is_dependency_missing(monkeypatch) -> None:
     from types import SimpleNamespace
 
-    from tests.evaluation.runners.eval_real_external_runner import run_capability_document_fixture_real
+    from tests.evaluation.runners.eval_real_external_runner import (
+        run_capability_document_fixture_real,
+    )
 
     fixture_rel = "tests/evaluation/fixtures/documents/sample.txt"
     monkeypatch.setattr(
@@ -324,7 +321,9 @@ def test_document_fixture_txt_uses_registered_tool_name(monkeypatch) -> None:
 def test_document_fixture_docx_failure_does_not_block_txt_pass(monkeypatch) -> None:
     from types import SimpleNamespace
 
-    from tests.evaluation.runners.eval_real_external_runner import run_capability_document_fixture_real
+    from tests.evaluation.runners.eval_real_external_runner import (
+        run_capability_document_fixture_real,
+    )
 
     fixtures = [
         "tests/fixtures/v16_materials/txt/sample_success.txt",

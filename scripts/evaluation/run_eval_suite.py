@@ -18,12 +18,14 @@ from tests.evaluation.runners.eval_multiturn_runner import (  # noqa: E402
     run_multiturn_suite,
     v2_5_case_file,
 )
+from tests.evaluation.runners.eval_real_external_runner import (  # noqa: E402
+    run_real_external_smoke_suite,
+)
 from tests.evaluation.runners.eval_runner import (  # noqa: E402
     run_suite,
     v1_case_file,
     v2_suite_case_files,
 )
-from tests.evaluation.runners.eval_real_external_runner import run_real_external_smoke_suite  # noqa: E402
 
 
 def main() -> int:
