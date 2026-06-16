@@ -41,6 +41,8 @@ NON_PRODUCT_FAILURE_REASONS = frozenset({
     "backend_unreachable",
     "dependency_not_installed",
     "tool_not_found",
+    "ocr_no_text",
+    "ocr_provider_error",
 })
 
 DEPENDENCY_MISSING_ERROR_CODES = frozenset({
@@ -82,6 +84,61 @@ def dependency_missing_reason_from_errors(errors: list[str]) -> str | None:
             return lowered
         return "dependency_not_installed"
     return None
+
+
+OCR_NO_TEXT_ERROR_CODES = frozenset({
+    "ocr_empty_result",
+})
+
+
+def is_credential_error(error_code: str) -> bool:
+    lowered = str(error_code or "").strip().lower()
+    if not lowered:
+        return False
+    markers = (
+        "unauthorized",
+        "invalidapikey",
+        "invalid_api_key",
+        "authentication",
+        "accessdenied",
+        "access_denied",
+        "signature",
+        "token expired",
+        "invalidtoken",
+        "invalid_token",
+        "authfail",
+        "forbidden",
+        "incorrect api key",
+        "api key invalid",
+    )
+    return any(marker in lowered for marker in markers)
+
+
+def is_ocr_no_text_error(error_code: str) -> bool:
+    code = str(error_code or "").strip()
+    lowered = code.lower()
+    if code in OCR_NO_TEXT_ERROR_CODES:
+        return True
+    return "imagenotext" in lowered or "no_text" in lowered or "empty_result" in lowered
+
+
+def ocr_failure_reason_from_error_code(error_code: str) -> str:
+    err = str(error_code or "").strip()
+    if is_ocr_no_text_error(err):
+        return "ocr_no_text"
+    if "timeout" in err.lower():
+        return "provider_timeout"
+    if is_credential_error(err):
+        return "credential_invalid"
+    return "ocr_provider_error"
+
+
+def ocr_failure_status_from_error_code(error_code: str) -> tuple[str, str]:
+    reason = ocr_failure_reason_from_error_code(error_code)
+    if reason == "provider_timeout":
+        return "external_timeout", reason
+    return "configured_and_failed", reason
+
 
 SANITIZE_PATTERNS = (
     (re.compile(r"sk-[A-Za-z0-9]{8,}", re.I), "<REDACTED_API_KEY>"),

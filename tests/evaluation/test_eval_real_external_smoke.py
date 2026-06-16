@@ -30,6 +30,8 @@ from tests.evaluation.runners.eval_real_external_status import (
     is_dependency_missing_error,
     load_project_env_files,
     make_entry,
+    ocr_failure_reason_from_error_code,
+    ocr_failure_status_from_error_code,
     resolve_product_failure,
     sanitize_text,
 )
@@ -429,3 +431,48 @@ def test_backend_config_env_txt_is_gitignored() -> None:
         check=False,
     )
     assert result.returncode == 0
+
+
+def test_ocr_imagenotext_maps_to_ocr_no_text_not_credential_invalid() -> None:
+    err = "FailedOperation.ImageNoText"
+    assert ocr_failure_reason_from_error_code(err) == "ocr_no_text"
+    status, reason = ocr_failure_status_from_error_code(err)
+    assert status == "configured_and_failed"
+    assert reason == "ocr_no_text"
+    assert resolve_product_failure(status=status, reason=reason) is False
+
+
+def test_ocr_auth_error_maps_to_credential_invalid() -> None:
+    err = "Unauthorized: invalid api key"
+    assert ocr_failure_reason_from_error_code(err) == "credential_invalid"
+    assert resolve_product_failure(status="configured_and_failed", reason="credential_invalid") is False
+
+
+def test_ocr_real_sample_imagenotext_report_reason(monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    from tests.evaluation.runners.eval_real_external_runner import run_capability_ocr_real_sample
+
+    fixture_rel = "tests/fixtures/v16_materials/pdf_scanned/sample_scanned_like.pdf"
+    monkeypatch.setattr(
+        "tests.evaluation.runners.eval_real_external_runner._repo_root",
+        lambda: REPO_ROOT,
+    )
+    monkeypatch.setattr(
+        "tests.evaluation.runners.eval_real_external_runner._ocr_configured",
+        lambda: True,
+    )
+
+    def _fake_call_tool(tool_name: str, **kwargs):
+        return SimpleNamespace(
+            status="failed",
+            text="",
+            error_code="FailedOperation.ImageNoText",
+            failure_reason="no text",
+        )
+
+    monkeypatch.setattr("tools.ocr.registry.call_tool", _fake_call_tool)
+    result = run_capability_ocr_real_sample({"fixture": fixture_rel})
+    assert result["status"] == "configured_and_failed"
+    assert result["reason"] == "ocr_no_text"
+    assert result["product_failure"] is False

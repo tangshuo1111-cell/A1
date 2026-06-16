@@ -92,7 +92,8 @@ py scripts/evaluation/run_eval_suite.py --suite real_external_smoke
 | `skipped` | 主动跳过（如 `fake_llm_enabled`） |
 | `external_timeout` | 外部超时 |
 | `external_unavailable` | 网络不可达 |
-| `configured_and_failed` + `credential_invalid` | 凭证无效（环境问题） |
+| `configured_and_failed` + `credential_invalid` | 凭证无效（鉴权/权限类错误） |
+| `configured_and_failed` + `ocr_no_text` | OCR 已调用但样本/provider 未检出文本（非鉴权失败） |
 
 ## 5. 哪些情况算产品失败（`product_failure=true`）
 

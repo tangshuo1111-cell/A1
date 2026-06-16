@@ -30,6 +30,7 @@ from tests.evaluation.runners.eval_real_external_status import (
     is_dependency_missing_error,
     load_project_env_files,
     make_entry,
+    ocr_failure_status_from_error_code,
     resolve_product_failure,
 )
 from tests.evaluation.runners.eval_result_writer import write_real_external_smoke_report
@@ -826,20 +827,26 @@ def run_capability_ocr_real_sample(case: dict[str, Any]) -> dict[str, Any]:
                 detail={"error_code": err},
                 duration_ms=int((time.perf_counter() - t0) * 1000),
             ))
+        status, reason = ocr_failure_status_from_error_code(err)
         return _finalize(make_entry(
             case_id="ocr_real_sample",
-            status="configured_and_failed",
+            status=status,
             configured=True,
-            reason="credential_invalid",
+            reason=reason,
             detail={"error_code": err},
             duration_ms=int((time.perf_counter() - t0) * 1000),
         ))
     except Exception as exc:  # noqa: BLE001
+        err_text = str(exc)
+        if "timeout" in err_text.lower():
+            status, reason = "external_timeout", "provider_timeout"
+        else:
+            status, reason = ocr_failure_status_from_error_code(type(exc).__name__)
         return _finalize(make_entry(
             case_id="ocr_real_sample",
-            status="external_timeout" if "timeout" in str(exc).lower() else "configured_and_failed",
+            status=status,
             configured=True,
-            reason="provider_timeout" if "timeout" in str(exc).lower() else "credential_invalid",
+            reason=reason,
             detail={"error": type(exc).__name__},
             duration_ms=int((time.perf_counter() - t0) * 1000),
         ))
@@ -918,7 +925,7 @@ def run_optional_regression(*, backend_ok: bool) -> dict[str, Any]:
                 })
         from scripts.evaluation.render_eval_overview import build_regression_overview
 
-        overview = build_regression_overview(regression_results, "ok")
+        overview = build_regression_overview(regression_results, backend_status="ok")
         overview_paths = render_regression_overview(
             regression_results=regression_results,
             backend_status="ok",
@@ -929,8 +936,22 @@ def run_optional_regression(*, backend_ok: bool) -> dict[str, Any]:
             "enabled": True,
             "reason": "regression_executed",
             "failed_unknown": failed_unknown,
-            "regression_overview": overview,
-            "report_paths": overview_paths,
+            "regression_overview": {
+                "overall_status": overview.get("final_verdict"),
+                "suite_results": [
+                    {
+                        "suite_name": item.get("suite_name"),
+                        "status": item.get("status"),
+                        "passed_cases": item.get("passed_cases"),
+                        "failed_cases": item.get("failed_cases"),
+                        "known_issue_matches_count": len(item.get("known_issue_matches") or []),
+                        "unknown_failures_count": len(item.get("unknown_failures") or []),
+                    }
+                    for item in overview.get("suite_results") or []
+                ],
+                "unknown_failures_count": len(overview.get("unknown_failures") or []),
+            },
+            "report_paths": {key: str(path) for key, path in overview_paths.items()},
         }
     except Exception as exc:  # noqa: BLE001
         return {"enabled": True, "reason": "regression_error", "error": type(exc).__name__, "regression_overview": None}

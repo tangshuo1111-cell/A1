@@ -34,12 +34,19 @@
 | kb_real_roundtrip | configured_and_passed | true | false | kb_roundtrip_ok |
 | video_subtitle_probe_real | configured_and_passed | true | false | subtitle_found |
 | asr_real_short_audio | not_configured | false | false | missing_asr_key |
-| ocr_real_sample | configured_and_failed | true | false | credential_invalid |
+| ocr_real_sample | configured_and_failed | true | false | ocr_no_text |
 
 ## Optional Regression
 
-- enabled: `false`
-- reason: `REAL_EXTERNAL_RUN_REGRESSION not set`
+- enabled: `true`
+- reason: `regression_executed`
+- failed_unknown: `true`（V1 有 2 个 unknown failure；V3 有 1 个 case_timeout）
+- suite 摘要：
+  - v1_route_exit_state → failed_unknown
+  - v2_5_multiturn_state → passed
+  - v3_complex_agent → case_timeout
+- V4 overview 报告：`runtime_data/eval_sandbox/reports/eval_v4_regression_overview_*.json/md`（不入库）
+- note: optional regression 不计入 capability `passed_configured_cases_count`；exit_code=4 仅表示 regression gate 信号
 
 ## Summary Counts
 
