@@ -1,5 +1,10 @@
 name: CI
 
+# Default CI = lightweight security + unit/integration guards.
+# Does NOT run regression_all (42 E2E cases) or the 7-capability external smoke suite.
+# Real staging validation: manual workflow_dispatch (real_external.yml) or local:
+#   py scripts/evaluation/run_project_validation.py --profile full-staging --execute
+
 on:
   push:
     branches: [main, master]

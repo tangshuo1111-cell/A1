@@ -1,5 +1,9 @@
 name: Nightly KB Benchmark
 
+# KB benchmark pack ingest expects docs/current/20–25_KB补强_*.md (benchmark fixtures).
+# If those files are absent from the repo, kb-benchmark fails at ingest (not a chat-chain bug).
+# This workflow is unrelated to regression_all 42/42 or real_external_smoke 7/7.
+
 on:
   schedule:
     # 每天 UTC 02:00（北京时间 10:00）
@@ -50,6 +54,7 @@ jobs:
           pip install -r requirements.lock
 
       - name: Ingest KB benchmark strengthening pack
+        # Requires docs/current/20–25_KB补强_*.md committed or provided via --docs-root override.
         run: python scripts/benchmarks/ingest_kb_strengthening_pack.py
 
       - name: Run KB agent eval (local runner)

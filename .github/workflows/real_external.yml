@@ -1,5 +1,9 @@
 name: Real External Validation
 
+# Manual-only staging validation (secrets required). NOT part of default push CI.
+# For bundled regression + external on a running backend, prefer local:
+#   py scripts/evaluation/run_project_validation.py --profile full-staging --execute
+
 on:
   workflow_dispatch:
     inputs:

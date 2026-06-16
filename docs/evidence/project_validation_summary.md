@@ -18,7 +18,7 @@
 
 补充：
 
-- `tests/evaluation` 单元/守卫测试：**112 passed**（含 eval 框架 guardrail，**不等于** 42 case 全量 E2E 自动在 CI 跑完）。
+- `tests/evaluation` 单元/守卫测试：**113 passed**（含 eval 框架 guardrail，**不等于** 42 case 全量 E2E 自动在 CI 跑完）。
 - 上述 **42/42、7/7** 来自 **本地/staging 真实 LLM 运行**（`LIGHT_MAQA_FAKE_LLM=0`），**不等于**默认 CI 每次 push 自动保证。
 
 **统一入口（只读摘要，默认不跑真实外部能力）**：
@@ -28,15 +28,25 @@ py scripts/evaluation/run_project_validation.py
 py scripts/evaluation/run_project_validation.py --profile summary
 ```
 
+**staging 一键总验收（需 `--execute`，可能产生外部调用与费用）**：
+
+```bash
+py scripts/evaluation/run_project_validation.py --profile full-staging
+py scripts/evaluation/run_project_validation.py --profile full-staging --execute
+```
+
+产物（gitignored）：`runtime_data/eval_sandbox/reports/project_validation_staging_*.json`
+
 ---
 
 ## 2. 三条验证线
 
 | 验证线 | 目的 | 入口 | 产物 | 当前结果 | 不代表什么 |
 | --- | --- | --- | --- | --- | --- |
-| **产品指标线** | 产品表现趋势（北极星/护栏/耗时） | `py scripts/run_metrics_sandbox_samples.py --report`<br>`py scripts/report_product_metrics.py --days 7 --html` | PG `turn_product_metrics`<br>`_local/reports/metrics/weekly_*.html` | 6 条代表题 + 周报框架已跑通 | **不是** pass/fail 回归；**不能**代表全量用户；N 小不可外推 |
-| **工程回归线** | 主链路由/出口/诚实性/能力链/多轮/复杂协作 | `py scripts/evaluation/run_eval_suite.py --suite regression_all` | `runtime_data/eval_sandbox/reports/eval_v4_regression_overview_*.json` | **42/42**（V1 10 + V2 16 + V2.5 8 + V3 8） | **不是** 任意复杂题稳定；**不是** 外部 provider 就绪 |
-| **真实能力线** | staging 外部能力探针（LLM/Web/Doc/KB/Video/ASR/OCR） | `py scripts/evaluation/run_eval_suite.py --suite real_external_smoke` | `runtime_data/eval_sandbox/reports/eval_real_external_smoke_*.json` | **7/7**，`environment_ready` | **不是** 所有网站/视频/OCR 样本；**不是** regression 全绿 |
+| **产品指标线** | 产品表现趋势（北极星/护栏/耗时） | `py scripts/run_metrics_sandbox_samples.py --report`<br>`py scripts/report_product_metrics.py --days 7 --html`<br>或 `run_project_validation.py --profile metrics --execute` | PG `turn_product_metrics`<br>`_local/reports/metrics/weekly_*.html` | 6 条代表题 + 周报框架已跑通 | **不是** pass/fail 回归；**不能**代表全量用户；N 小不可外推 |
+| **工程回归线** | 主链路由/出口/诚实性/能力链/多轮/复杂协作 | `py scripts/evaluation/run_eval_suite.py --suite regression_all`<br>或 `run_project_validation.py --profile regression` | `runtime_data/eval_sandbox/reports/eval_v4_regression_overview_*.json` | **42/42**（V1 10 + V2 16 + V2.5 8 + V3 8） | **不是** 任意复杂题稳定；**不是** 外部 provider 就绪 |
+| **真实能力线** | staging 外部能力探针（LLM/Web/Doc/KB/Video/ASR/OCR） | `py scripts/evaluation/run_eval_suite.py --suite real_external_smoke`<br>或 `run_project_validation.py --profile external` | `runtime_data/eval_sandbox/reports/eval_real_external_smoke_*.json` | **7/7**，`environment_ready` | **不是** 所有网站/视频/OCR 样本；**不是** regression 全绿 |
+| **staging 总验收** | 依次跑 regression + real_external，汇总可读摘要 | `py scripts/evaluation/run_project_validation.py --profile full-staging --execute` | `runtime_data/eval_sandbox/reports/project_validation_staging_*.json` | 依赖 staging 环境；**不入库** | **不是** 默认 CI；**不是** 产品指标线 |
 
 **脱敏证据文档（可入库）**：
 
@@ -93,13 +103,24 @@ py scripts/evaluation/run_project_validation.py --profile summary
 | --- | --- | --- | --- |
 | **`.github/workflows/ci.yml`** | push / PR | gitleaks、ruff、架构 guard、pytest（**fake LLM**，`-m "not real_external"`）、OpenAPI 快照、前端 lint/e2e | **默认 CI**：轻量安全 + 单测/集成；**不跑** `regression_all` E2E、**不跑** `real_external_smoke` |
 | **`.github/workflows/real_external.yml`** | **workflow_dispatch**（手动） | `pytest -m real_external`（需 secrets） | **真实外部能力**可选自动化；**不是**每次 merge 默认 |
-| **`.github/workflows/nightly_benchmark.yml`** | cron / 手动 | KB benchmark、agent smoke（fake LLM） | 夜间基准；**不是** 42/42 regression |
+| **`.github/workflows/nightly_benchmark.yml`** | cron / 手动 | KB benchmark、agent smoke（fake LLM） | 夜间基准；**不是** 42/42 regression；**当前 kb-benchmark 因缺少 `docs/current/20–25_KB补强_*.md` 文档包而失败**（见 §5.1） |
 
 **必须对外如实表述**：
 
 - ✅ 「项目提供真实验证套件，当前已在 staging 跑通 7/7 + 42/42」
 - ❌ 「每次 merge 自动保证 7/7 / 42/42」
 - 真实外部能力依赖：**secret / env / provider / staging backend / PG**；应放在 **workflow_dispatch / scheduled / protected staging**，不应塞进默认 CI。
+- **无 scheduled regression_all / scheduled real_external_smoke**；复现 42/42 + 7/7 依赖本地/staging 手动执行或 `full-staging --execute`。
+
+### 5.1 Nightly KB Benchmark 归因（2026-06-15 最近一次失败）
+
+| 项 | 结论 |
+| --- | --- |
+| 失败 job | `kb-benchmark`（`agent-smoke` 成功） |
+| 失败步骤 | `Ingest KB benchmark strengthening pack` |
+| 根因 | **fixture/文档缺失**：`ingest_kb_strengthening_pack.py` 期望 `docs/current/20–25_KB补强_*.md`，仓库中**不存在**这些文件 |
+| 归类 | workflow 配置与仓库内容不一致（**非**业务主链 bug；**非** 42/42 regression） |
+| 本轮处理 | 文档记录 + workflow 注释；**不**改业务代码 |
 
 ---
 
@@ -109,10 +130,14 @@ py scripts/evaluation/run_project_validation.py --profile summary
 
 | 项 | 状态 |
 | --- | --- |
-| 未 push commit | 待 push 前审查（见 §6） |
+| 远程同步（push） | **已解决**（`main` 与 `origin/main` 同步，最新 CI success） |
 | 三线验证说明 | 本文件收口 |
 | CI 边界说明 | 本文件 §4 + workflow 注释 |
-| 统一入口 | `scripts/evaluation/run_project_validation.py`（默认 `summary`） |
+| 统一入口 | `run_project_validation.py`（默认 `summary`） |
+| 一键总验收 | **`--profile full-staging`**（dry-run 默认；`--execute` 跑 regression + external） |
+| 最强验证 CI 自动化 | **未进默认 CI**（by design）；复现依赖 staging / manual / `full-staging --execute` |
+| Nightly KB 红 | **已归因**（§5.1）；本轮不修 ingest 脚本 |
+| 工作区卫生 | 见 §6；本地 txt / 无关 fixture 二进制 **不得 stage** |
 
 ### P1（本轮不修，仅记录）
 
@@ -134,12 +159,12 @@ py scripts/evaluation/run_project_validation.py --profile summary
 
 ## 6. push 前审查清单
 
-**未 push commit（相对 `origin/main`）应仅涉及**：
+**相对 `origin/main` 无未 push commit 时**，新 commit 应仅涉及：
 
 - `tests/evaluation/**`
 - `scripts/evaluation/**`
 - `docs/evidence/**`
-- `tests/fixtures/v16_materials/ocr/sample_hello_text.png`
+- `.github/workflows/**`（仅验证边界注释/说明）
 
 **不得包含**：
 
@@ -148,13 +173,26 @@ py scripts/evaluation/run_project_validation.py --profile summary
 - `runtime_data/eval_sandbox/reports/*`
 - `_local/reports/metrics/*`
 - 无关 v16 docx/pdf/xlsx 二进制
-- 本地临时 txt（如 `docs/pm/主链路.txt`、`项目审查说明.md`）
+- 本地临时 txt（如 `docs/pm/主链路.txt`、`项目审查说明.md`、`项目目录树.txt`）
+
+**工作区卫生（当前未提交项）**：
+
+| 文件 | 建议 |
+| --- | --- |
+| `docs/pm/主链路.txt` | 保留本地或归档；**不要 stage** |
+| `项目审查说明.md` | 保留本地或归档；**不要 stage** |
+| `项目目录树.txt` | 保留本地或归档；**不要 stage** |
+| `tests/fixtures/v16_materials/docx|pdf|xlsx/*`（已修改二进制） | 若与本轮无关：**git restore** 还原；**不要 stage** |
+| `backend/config/env.txt` | 已在 `.gitignore`；**绝对不要 stage** |
+| `runtime_data/eval_sandbox/reports/*` | gitignored；**不要 stage** |
+| `_local/reports/metrics/*` | gitignored；**不要 stage** |
 
 **push 前建议人工确认**：
 
 1. `git log origin/main..HEAD` 与 `git diff origin/main..HEAD --stat` 范围符合上表  
 2. staging 证据日期与本文 §3 一致（或更新本文）  
 3. 对外话术使用 §7、§8，不混报三线结论  
+4. 需要复现 42/42 + 7/7 时，用 `full-staging --execute`，不要声称默认 CI 已覆盖
 
 ---
 
