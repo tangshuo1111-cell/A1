@@ -80,6 +80,49 @@ real_external_smoke capability：**7/7 passed**，`product_failure_cases_count=0
 
 ---
 
+## 验收口径合法性说明
+
+本节说明 commit `3faa8dc` 为何属于**合理验收口径更新**，而非「为过测试放宽标准」。
+
+### 字段语义（当前产品）
+
+| 字段 | 含义 |
+| ---- | ---- |
+| **`lane` / `router_lane`** | ingress **来源/材料路由信号**（如 `web`、`document`、`kb`、`general`）；complex 出口在 finalize 阶段将 `extra.lane` 设为 `ingress.lane`（= `router_lane`）。 |
+| **`primary_path`** | `turn_exit_gate` 归一后的**执行/能力路径**（如 `agno_basic_v2_kb`、`agno_basic_v2_kb_v3_web`）；由 `_resolve_primary_path` 写入顶层与 extra。 |
+
+**两者不是同一概念**：同一响应可同时出现 `lane=web` + `primary_path=agno_basic_v2_kb`。
+
+### 本次 V1 修正范围
+
+- **仅扩展** `general_complex_compare`、`mixed_evidence_complex` 的 **`allowed_lanes`**。
+- **未修改**：`allowed_task_status`、`allowed_primary_paths`、`allowed_modes`、`must_not_happen` / rule_ids、runner、业务主链。
+- **未降低**：honesty / fake success 相关断言（`route_exit_state` 类别仍走通用 `must_not_happen`；`primary_path=direct_llm` 在 specialized lane 下仍会被 rule catalog 标记）。
+
+### 两例失败根因
+
+旧 V1 case 将 **source-aware lane**（ingress 输出的 `web` / `document`）误当作 **能力路径** 来验收——例如 `allowed_lanes` 含 `agno_basic_v2_kb`（实为 `primary_path` 命名），却未允许 `web` / `document` 来源 lane。失败时 **`task_status` / `primary_path` / `mode` 已在允许集合内**，仅 lane 断言与产品语义不一致。
+
+### 与 real_external_smoke 的关系（独立结论）
+
+| 验证项 | 结论 | 验证对象 |
+| ------ | ---- | -------- |
+| real_external_smoke | **7/7 passed**，`product_failure_cases_count=0` | 外部能力探针（LLM/Web/Document/KB/Video/ASR/OCR） |
+| regression_all | **42/42 passed** | 历史 V1–V3 `/chat/agno` 路由/出口/诚实性断言 |
+
+两者**不是同一个东西**；V1 allowed_lanes 口径对齐不改变 capability smoke 结论，capability 通过也不自动等价于 regression 全绿。
+
+### v0_smoke 扫描结论（本轮只读）
+
+| case_id | v0_smoke 是否存在 | 口径 | 是否会造成当前 regression failed_unknown |
+| ------- | ----------------- | ---- | ---------------------------------------- |
+| `general_complex_compare` | 是（同名，不同 user_input） | 使用 `expected_lane: general`，**无 `allowed_lanes`** | **否** — v0 未接入 `run_eval_suite` / regression 主链 |
+| `mixed_evidence_complex` | 是（同名，不同 user_input） | 使用 `expected_lane: general`，**无 `allowed_lanes`** | **否** — 同上 |
+
+**建议**：若未来将 v0_smoke 接入 live runner，应另开一轮统一 `expected_lane` → `allowed_lanes` 语义；**本轮不擅自修改 v0_smoke.yaml**。
+
+---
+
 ## 6. 后续建议
 
 ### 必须修
@@ -93,4 +136,4 @@ real_external_smoke capability：**7/7 passed**，`product_failure_cases_count=0
 ### 可以暂不处理
 
 - V4 总览 `final_verdict`「已完成」表示报告门禁完成，非产品零缺陷声明。
-- v0_smoke.yaml 中同名 case 若仍用旧 allowed_lanes，可在后续单独对齐（本轮仅改 V1）。
+- v0_smoke.yaml 同名 case 使用 `expected_lane` 旧 schema，未接入 regression 主链；若未来接入 runner 再单开一轮口径同步（见上文「验收口径合法性说明」）。
