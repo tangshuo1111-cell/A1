@@ -34,7 +34,7 @@ jobs:
       V16_WEB_SEARCH_API_KEY: ${{ secrets.V16_WEB_SEARCH_API_KEY }}
       PYTHONPATH: backend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v5
         with:
