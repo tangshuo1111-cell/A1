@@ -26,5 +26,6 @@ def run(
         v13_text_content=v13_text_content,
         v13_file_content=v13_file_content,
         v13_title=v13_title,
+        session_id=session_id,
         clock=clock,
     )

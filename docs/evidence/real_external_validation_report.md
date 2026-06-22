@@ -1,6 +1,6 @@
 # Real External 真实验证总结报告
 
-> 生成时间：2026-06-16  
+> 生成时间：2026-06-16；**最新复跑：2026-06-22 10:50**  
 > 套件：`real_external_smoke`（capability 主报告，非 optional regression）
 
 ## 1. 本次真实验证结论
@@ -13,7 +13,7 @@
 - 本次未启用 `REAL_EXTERNAL_RUN_REGRESSION`；optional regression 未纳入 capability 主结论。
 
 脱敏样例详见：`docs/evidence/real_external_smoke_sample.md`  
-原始 runtime 报告：`runtime_data/eval_sandbox/reports/eval_real_external_smoke_20260616_104454.json`（不入库）
+原始 runtime 报告：`runtime_data/eval_sandbox/reports/eval_real_external_smoke_20260622_105055.json`（不入库；历史：`eval_real_external_smoke_20260616_104454.json`）
 
 ## 2. 真实通过的能力
 

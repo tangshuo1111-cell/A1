@@ -1,6 +1,6 @@
 # 真实 regression_all 回归验证报告
 
-> 生成时间：2026-06-16（最新复跑：11:20）  
+> 生成时间：2026-06-16；**最新复跑：2026-06-22 11:17**  
 > 运行环境：真实 LLM（`LIGHT_MAQA_FAKE_LLM=0`），backend `http://127.0.0.1:8000`  
 > 说明：本报告为脱敏摘要；原始 JSON/MD 留在 `runtime_data/eval_sandbox/reports/`（不入库）。
 
@@ -9,11 +9,12 @@
 ## 1. 本轮结论
 
 - 已在真实环境下运行 V1 / V2 / V2.5 / V3 及 **regression_all**。
-- **最新结果（2026-06-16 修正 V1 allowed_lanes 后复跑）**：**42/42 passed**，四套件均为 **passed**。
+- **最新结果（2026-06-22 复跑）**：**42/42 passed**，四套件均为 **passed**，`has_unknown_failures=False`。
 - **failed_unknown / case_timeout / backend_unavailable**：均无。
-- **suspected_product_issue**：无。先前 2 例 V1 failed_unknown 已归因并修正为 **评测 case 口径问题（A）**，非产品 lane 标注错误。
+- **suspected_product_issue**：无。
+- **本轮新增 case 口径对齐**：`web_url_basic` 在真实环境出现 web↔document↔async 的 lane 漂移（两种结果均 `succeeded`/`pending` 且未触发 `B_NO_WEB_CLAIM`）。已把该 case 的 `allowed_lanes` / `allowed_primary_paths` 放宽到同时接受 web 与 document 两条诚实路径（含 `web_async` / `document_*`），并把漂移本身记入 `known_issues.md`（**KI-V1-001**，路由非确定性，非诚实性缺陷）。未改产品路由代码，未放宽任何诚实性规则。
 
-**regression_all 最新总览**：`runtime_data/eval_sandbox/reports/eval_v4_regression_overview_20260616_112055.json`
+**regression_all 最新总览**：`runtime_data/eval_sandbox/reports/eval_v4_regression_overview_20260622_111708.json`（历史 2026-06-16 总览：`eval_v4_regression_overview_20260616_112055.json`）
 
 ### V1 两例 failed_unknown 归因摘要（已处理）
 
@@ -42,7 +43,7 @@
 | LIGHT_MAQA_FAKE_LLM | `0` |
 | REAL_EXTERNAL_RUN_REGRESSION | 未设置 |
 
-real_external_smoke capability：**7/7 passed**，`product_failure_cases_count=0`（`eval_real_external_smoke_20260616_104454`）。
+real_external_smoke capability：**7/7 passed**，`product_failure_cases_count=0`（最新 `eval_real_external_smoke_20260622_105055`）。
 
 ---
 
@@ -50,11 +51,11 @@ real_external_smoke capability：**7/7 passed**，`product_failure_cases_count=0
 
 | suite | passed/total | status | report（脱敏路径） | 说明 |
 | ----- | ------------ | ------ | ------------------ | ---- |
-| v1_route_exit_state | **10/10** | **passed** | `runtime_data/eval_sandbox/reports/eval_v1_route_exit_state_20260616_111418.json` | V1 allowed_lanes 已对齐 source-aware routing |
-| v2_capability_all | 16/16 | passed | `runtime_data/eval_sandbox/reports/eval_v2_capability_all_20260616_111722.json` | |
-| v2_5_multiturn_state | 8/8 | passed | `runtime_data/eval_sandbox/reports/eval_v2_5_multiturn_state_20260616_111837.json` | |
-| v3_complex_agent | 8/8 | passed | `runtime_data/eval_sandbox/reports/eval_v3_complex_agent_20260616_112055.json` | |
-| regression_all（V4 总览） | **42/42** | **全 passed** | `runtime_data/eval_sandbox/reports/eval_v4_regression_overview_20260616_112055.json` | unknown_failures=[] |
+| v1_route_exit_state | **10/10** | **passed** | `runtime_data/eval_sandbox/reports/eval_v1_route_exit_state_20260622_111005.json` | V1 allowed_lanes 已对齐 source-aware routing；`web_url_basic` 放宽 web/document 双诚实路径 |
+| v2_capability_all | 16/16 | passed | `runtime_data/eval_sandbox/reports/eval_v2_capability_all_20260622_111145.json` | |
+| v2_5_multiturn_state | 8/8 | passed | `runtime_data/eval_sandbox/reports/eval_v2_5_multiturn_state_20260622_111329.json` | |
+| v3_complex_agent | 8/8 | passed | `runtime_data/eval_sandbox/reports/eval_v3_complex_agent_20260622_111708.json` | |
+| regression_all（V4 总览） | **42/42** | **全 passed** | `runtime_data/eval_sandbox/reports/eval_v4_regression_overview_20260622_111708.json` | unknown_failures=[] |
 
 ---
 

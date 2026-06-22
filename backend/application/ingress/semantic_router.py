@@ -17,11 +17,30 @@ from .lane_selector import select_lane
 from .main_plan_hints import MainPlanHints
 from .mode_selector import select_mode
 from .request_classifier import classify_request
+from .route_shadow import attach_route_shadow, should_skip_main_agent_escalation
 
 
-def _lane_from_main_plan(plan: Any, *, use_knowledge: bool, has_document_payload: bool) -> str:
+def _lane_from_main_plan(
+    plan: Any,
+    *,
+    use_knowledge: bool,
+    has_document_payload: bool,
+    signals: RequestSignals | None = None,
+) -> str:
     if getattr(plan, "video_url", None):
         return "video"
+    # KI-V1-001：显式网页读取意图且无文件 payload 时，MainAgent 若误标 text/text_file
+    # 仍保持 web lane，避免 web↔document 漂移（诚实性规则不变）。
+    if (
+        signals is not None
+        and signals.has_web_url
+        and signals.has_web_intent
+        and not has_document_payload
+    ):
+        prepare_intent = getattr(plan, "v13_prepare_intent", None)
+        source_type = str(getattr(prepare_intent, "source_type", "") or "")
+        if source_type in {"", "text", "text_file"}:
+            return "web"
     if has_document_payload:
         return "document"
     prepare_intent = getattr(plan, "v13_prepare_intent", None)
@@ -85,11 +104,23 @@ def route_chat_request(
     router_source = "rule"
     fallback = False
     escalated = False
+    rule_lane, rule_mode = lane, mode
 
     cached_hints: MainPlanHints | None = None
 
     if confidence < ROUTER_POLICY.low_confidence_threshold and main_agent is not None:
-        if is_enabled("ENABLE_MAIN_PLAN_CACHE"):
+        if should_skip_main_agent_escalation(
+            rule_lane=rule_lane,
+            rule_mode=rule_mode,
+            message=message,
+            signals=signals,
+            complex_reason_codes=tuple(complex_signal.reason_codes),
+        ):
+            router_source = "light_classifier"
+            confidence = max(confidence, 0.78)
+            fallback = False
+            escalated = False
+        elif is_enabled("ENABLE_MAIN_PLAN_CACHE"):
             cached_hints = MainPlanHints(router_reason="low_confidence_deferred_to_main")
             router_source = "main_agent"
             confidence = 0.62 if lane == "general" else 0.78
@@ -108,7 +139,12 @@ def route_chat_request(
                 )
             )
             plan = main_result.plan
-            lane = _lane_from_main_plan(plan, use_knowledge=use_knowledge, has_document_payload=signals.has_document_payload)
+            lane = _lane_from_main_plan(
+                plan,
+                use_knowledge=use_knowledge,
+                has_document_payload=signals.has_document_payload,
+                signals=signals,
+            )
             mode = _mode_from_main_plan(plan, default_mode=mode)
             router_source = "main_agent"
             confidence = 0.62 if lane == "general" else 0.78
@@ -118,7 +154,7 @@ def route_chat_request(
         router_source = "light_classifier"
         confidence = max(confidence, 0.72)
 
-    return LaneDecision(
+    decision = LaneDecision(
         request_id=str(request_id or ""),
         session_id=str(session_id or ""),
         lane=lane,
@@ -132,4 +168,11 @@ def route_chat_request(
         complex_candidate=complex_signal.complex_candidate,
         complex_triggers=list(complex_signal.triggers),
         complex_reason_codes=list(complex_signal.reason_codes),
+    )
+    return attach_route_shadow(
+        decision,
+        rule_lane=rule_lane,
+        rule_mode=rule_mode,
+        message=message,
+        signals=signals,
     )

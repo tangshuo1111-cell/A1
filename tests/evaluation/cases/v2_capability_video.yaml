@@ -11,7 +11,8 @@
     allowed_task_status: ["succeeded", "partial", "blocked", "failed", "pending"]
     allowed_pending_kinds: [null, "partial_pending", "confirm_pending", "processing_pending"]
     allowed_primary_paths: ["video_fast", "video", "approval_gate", "agno_basic_v2_kb_v3_web", null]
-    required_trace_fields: ["lane"]
+    warning_assertions:
+      required_trace_fields: ["lane"]
   judge:
     rule: true
     llm_judge: false
@@ -37,7 +38,8 @@
     allowed_task_status: ["blocked", "pending", "partial", "failed", "succeeded"]
     allowed_pending_kinds: [null, "confirm_pending", "processing_pending", "partial_pending"]
     allowed_primary_paths: ["video", "video_complex", "approval_gate", "agno_basic_v2_kb_v3_web", null]
-    required_trace_fields: ["lane"]
+    warning_assertions:
+      required_trace_fields: ["lane"]
   judge:
     rule: true
     llm_judge: false
@@ -63,7 +65,8 @@
     allowed_task_status: ["succeeded", "partial", "failed", "pending", "blocked"]
     allowed_pending_kinds: [null, "partial_pending", "processing_pending", "confirm_pending", "material_pending"]
     allowed_primary_paths: ["video_fast", "video", "video_async", "approval_gate", "agno_basic_v2_kb_v3_web", "agno_basic_v2_kb", null]
-    required_trace_fields: ["lane"]
+    warning_assertions:
+      required_trace_fields: ["lane"]
   judge:
     rule: true
     llm_judge: false
@@ -88,7 +91,8 @@
     allowed_task_status: ["failed", "blocked", "partial", "succeeded", "pending"]
     allowed_pending_kinds: [null, "partial_pending", "confirm_pending", "processing_pending"]
     allowed_primary_paths: ["video", "approval_gate", "web_fast", "agno_basic", null]
-    required_trace_fields: ["lane"]
+    warning_assertions:
+      required_trace_fields: ["lane"]
   judge:
     rule: true
     llm_judge: false

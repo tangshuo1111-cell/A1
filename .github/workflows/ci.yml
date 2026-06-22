@@ -104,6 +104,10 @@ jobs:
           python scripts/check_non_chat_module_size.py
           python scripts/check_observability_health.py
           python scripts/audit_legacy_entry_symbols.py
+          python scripts/check_test_db_isolation.py
+          python scripts/check_evidence_freshness.py
+          python scripts/check_eval_observability_fields.py
+          python scripts/check_safe_rule_surface.py
 
       - name: Mypy (core/config/storage)
         run: python -m mypy
@@ -116,7 +120,7 @@ jobs:
 
       - name: Pytest with coverage (--cov-fail-under=60)
         run: |
-          python -m pytest tests/smoke/ tests/integration/ tests/backend/ tests/unit/ tests/acceptance/ tests/migration/ tests/baselines/ \
+          python -m pytest tests/smoke/ tests/integration/ tests/backend/ tests/unit/ tests/acceptance/ tests/migration/ tests/baselines/ tests/evaluation/ \
             -q -m "not real_external" \
             --cov=backend --cov-fail-under=60 \
             --cov-report=xml --cov-report=term-missing:skip-covered

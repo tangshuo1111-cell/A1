@@ -271,6 +271,7 @@ def _record_product_metrics_snapshot(
             sample_label=_sample_label_from_session(out.get("session_id")),
             message_text=msg,
             answer_summary=_answer_summary(answer),
+            user_committed_retrieval_hit=bool(extra.get("user_committed_retrieval_hit")),
         )
         extra["_product_metrics_recorded"] = True
         out["extra"] = extra

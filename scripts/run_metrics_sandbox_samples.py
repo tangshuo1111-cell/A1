@@ -4,10 +4,7 @@
 用法（仓库根）:
   $env:PYTHONPATH = "backend"
   $env:DATABASE_URL = "postgresql://light_maqa:light_maqa_dev@127.0.0.1:5433/light_maqa_metrics_sandbox"
-  py -3.12 scripts/run_metrics_sandbox_samples.py --api http://127.0.0.1:8000 --report
-
-可选主库对照:
-  py -3.12 scripts/run_metrics_sandbox_samples.py --main-db postgresql://...@127.0.0.1:5432/light_maqa
+  py -3.12 scripts/run_metrics_sandbox_samples.py --api http://127.0.0.1:8001 --report
 """
 
 from __future__ import annotations
@@ -29,6 +26,8 @@ if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
 SAMPLES = REPO_ROOT / "scripts" / "metrics_sandbox_samples.yaml"
+REUSE_ASSET = REPO_ROOT / "scripts" / "metrics_sandbox_assets" / "phoenix_brief.md"
+REUSE_SOURCE_ID = "metrics_sandbox/phoenix_brief.md"
 
 
 def fetch_task_result(base: str, task_id: str) -> dict:
@@ -118,6 +117,55 @@ def post_chat(
         raise RuntimeError(f"HTTP {e.code}: {detail[:500]}") from e
 
 
+def _resolve_asset_path(item: dict) -> Path:
+    raw = str(item.get("asset_file") or REUSE_ASSET.relative_to(REPO_ROOT)).strip()
+    path = Path(raw)
+    if not path.is_absolute():
+        path = REPO_ROOT / path
+    if not path.is_file():
+        raise FileNotFoundError(str(path))
+    return path
+
+
+def run_commit_then_retrieve_flow(
+    base: str,
+    item: dict,
+    session_id: str,
+) -> tuple[dict, dict[str, bool]]:
+    """upload prepare → commit → retrieve（全 API，同 session）。"""
+    asset = _resolve_asset_path(item)
+    upload_name = str(item.get("upload_filename") or asset.name).strip()
+    prep = post_chat_upload(
+        base,
+        str(item.get("prepare_message") or "请先解析这份资料。"),
+        session_id,
+        asset,
+        upload_filename=upload_name,
+    )
+    prep_extra = prep.get("extra") or {}
+    prepare_ok = (
+        prep_extra.get("v13_material_status") == "pending"
+        or (
+            prep_extra.get("pending_kind") == "material_pending"
+            and bool(prep_extra.get("pending_source_id"))
+        )
+    )
+    commit = post_chat(base, str(item.get("commit_message") or "保存到知识库"), session_id)
+    commit_extra = commit.get("extra") or {}
+    commit_ok = commit_extra.get("commit_success") is True or (
+        commit.get("answer_type") == "commit_executed"
+        and commit.get("task_status") == "succeeded"
+        and commit_extra.get("approval_gate.executed") is True
+    )
+    retrieve = post_chat(
+        base,
+        str(item.get("retrieve_message") or item.get("message") or ""),
+        session_id,
+        use_knowledge=True,
+    )
+    return retrieve, {"flow_prepare_ok": prepare_ok, "flow_commit_ok": commit_ok}
+
+
 def _resolve_upload_path(item: dict) -> Path:
     raw = str(item.get("upload_file") or "").strip()
     if not raw:
@@ -188,10 +236,66 @@ def truncate_sandbox_metrics(database_url: str) -> None:
         conn.commit()
 
 
+def seed_committed_reuse_corpus() -> int:
+    """Seed 沙箱 KB：user_committed 代表资料（北极星1 分母/分子观测）。"""
+    if not REUSE_ASSET.is_file():
+        raise FileNotFoundError(f"reuse asset missing: {REUSE_ASSET}")
+    from rag.retrieval_provenance import SOURCE_KIND_USER_COMMITTED
+    from storage import knowledge_store
+
+    knowledge_store.ensure_ready()
+    text = REUSE_ASSET.read_text(encoding="utf-8")
+    chunks = knowledge_store.save_document_text(
+        text,
+        source_id=REUSE_SOURCE_ID,
+        source_type="text_file",
+        title="Phoenix Brief (metrics sandbox)",
+        extra_metadata={"source_kind": SOURCE_KIND_USER_COMMITTED},
+    )
+    return int(chunks)
+
+
+def expected_metric_rows(samples: list[dict]) -> int:
+    total = 0
+    for item in samples:
+        if str(item.get("flow") or "") == "commit_then_retrieve":
+            total += 3
+        else:
+            total += 1
+    return total
+
+
+def _row_from_response(item: dict, out: dict, *, ms: int) -> dict:
+    extra = out.get("extra") or {}
+    return {
+        "id": item["id"],
+        "tag": item.get("tag"),
+        "message": item.get("message") or item.get("retrieve_message") or "",
+        "ok": out.get("ok", True),
+        "task_status": out.get("task_status"),
+        "answer_summary": " ".join(str(out.get("answer") or "").split())[:320],
+        "ms": ms,
+        "mode": extra.get("mode"),
+        "executor_profile": extra.get("executor_profile"),
+        "is_complex_task": extra.get("is_complex_task"),
+        "insufficient_evidence": extra.get("insufficient_evidence"),
+        "quality_gate_passed": extra.get("quality_gate_passed"),
+        "failure_reason_code": extra.get("failure_reason_code"),
+        "complex_candidate": extra.get("complex_candidate"),
+        "complex_reason_codes": extra.get("complex_reason_codes"),
+        "pending_kind": extra.get("pending_kind"),
+        "video_task_id": extra.get("video_task_id"),
+        "web_task_id": extra.get("web_task_id") or extra.get("task_id"),
+        "upload_file": item.get("upload_file"),
+        "use_knowledge": bool(item.get("use_knowledge")),
+        "user_committed_retrieval_hit": bool(extra.get("user_committed_retrieval_hit")),
+        "v15_retrieved_chunks_count": int(extra.get("v15_retrieved_chunks_count") or 0),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--api", default="http://127.0.0.1:8000")
-    parser.add_argument("--main-db", default="", help="主库 URL，跑前后 COUNT 对照")
     parser.add_argument("--report", action="store_true", help="样本结束后生成周报 HTML")
     parser.add_argument(
         "--truncate-metrics",
@@ -200,22 +304,36 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    fake_llm = __import__("os").environ.get("LIGHT_MAQA_FAKE_LLM", "")
+    if str(fake_llm).strip().lower() in {"1", "true", "yes"}:
+        print(
+            "WARN: LIGHT_MAQA_FAKE_LLM=1 — 北极星2 有效完成率在 FAKE 下不可外推（见 KI-METRICS-001）",
+            file=sys.stderr,
+        )
+
     sandbox_url = __import__("os").environ.get("DATABASE_URL", "")
     if args.truncate_metrics and sandbox_url:
         truncate_sandbox_metrics(sandbox_url)
         print("SANDBOX turn_product_metrics truncated")
 
-    main_before = pg_counts(args.main_db) if args.main_db else None
-    if main_before is not None:
-        print("MAIN_DB before:", main_before)
+    try:
+        seeded = seed_committed_reuse_corpus()
+        print(f"SANDBOX reuse seed OK source_id={REUSE_SOURCE_ID} chunks={seeded}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"WARN: reuse seed failed: {exc}", file=sys.stderr)
 
     data = yaml.safe_load(SAMPLES.read_text(encoding="utf-8"))
+    samples: list[dict] = list(data["samples"])
     results: list[dict] = []
-    for item in data["samples"]:
+    for item in samples:
         sid = f"sandbox_{item['id']}_{uuid.uuid4().hex[:8]}"
         t0 = time.perf_counter()
         try:
-            if item.get("upload_file"):
+            flow = str(item.get("flow") or "")
+            flow_meta: dict[str, bool] = {}
+            if flow == "commit_then_retrieve":
+                out, flow_meta = run_commit_then_retrieve_flow(args.api, item, sid)
+            elif item.get("upload_file"):
                 upload_path = _resolve_upload_path(item)
                 out = post_chat_upload(
                     args.api,
@@ -228,30 +346,10 @@ def main() -> int:
                 use_kb = bool(item.get("use_knowledge"))
                 out = post_chat(args.api, item["message"], sid, use_knowledge=use_kb)
             ms = int((time.perf_counter() - t0) * 1000)
-            extra = out.get("extra") or {}
-            row = {
-                "id": item["id"],
-                "tag": item["tag"],
-                "message": item["message"],
-                "ok": out.get("ok", True),
-                "task_status": out.get("task_status"),
-                "answer_summary": " ".join(str(out.get("answer") or "").split())[:320],
-                "ms": ms,
-                "mode": extra.get("mode"),
-                "executor_profile": extra.get("executor_profile"),
-                "is_complex_task": extra.get("is_complex_task"),
-                "insufficient_evidence": extra.get("insufficient_evidence"),
-                "quality_gate_passed": extra.get("quality_gate_passed"),
-                "failure_reason_code": extra.get("failure_reason_code"),
-                "complex_candidate": extra.get("complex_candidate"),
-                "complex_reason_codes": extra.get("complex_reason_codes"),
-                "pending_kind": extra.get("pending_kind"),
-                "video_task_id": extra.get("video_task_id"),
-                "web_task_id": extra.get("web_task_id") or extra.get("task_id"),
-                "upload_file": item.get("upload_file"),
-                "use_knowledge": bool(item.get("use_knowledge")),
-            }
+            row = _row_from_response(item, out, ms=ms)
+            row.update(flow_meta)
             if item.get("tag") == "async":
+                extra = out.get("extra") or {}
                 task_id = str(out.get("task_id") or extra.get("web_task_id") or "").strip()
                 if task_id:
                     try:
@@ -307,21 +405,16 @@ def main() -> int:
         sandbox_counts = pg_counts(sandbox_url)
         print("SANDBOX counts:", sandbox_counts)
 
-    if main_before is not None and args.main_db:
-        main_after = pg_counts(args.main_db)
-        print("MAIN_DB after:", main_after)
-        polluted = any(main_after.get(k) != main_before.get(k) for k in main_before)
-        print("MAIN_DB polluted:", polluted)
-
-    sample_n = len(data["samples"])
+    sample_n = len(samples)
+    expected_rows = expected_metric_rows(samples)
     metrics_n = sandbox_counts.get("turn_product_metrics", -1) if sandbox_counts else -1
     if metrics_n >= 0:
-        print(f"METRICS rows vs samples: {metrics_n}/{sample_n}")
-        if metrics_n != sample_n:
-            print("WARN: turn_product_metrics count != sample count", file=sys.stderr)
+        print(f"METRICS rows vs samples: {metrics_n}/{expected_rows} (yaml cases={sample_n})")
+        if metrics_n != expected_rows:
+            print("WARN: turn_product_metrics count != expected metric turns", file=sys.stderr)
 
     tag_checks: list[str] = []
-    for item, row in zip(data["samples"], results, strict=False):
+    for item, row in zip(samples, results, strict=False):
         if row.get("error"):
             continue
         tag = item.get("tag")
@@ -331,6 +424,16 @@ def main() -> int:
             tag_checks.append(
                 f"{item['id']}: expected executor_profile=async got {row.get('executor_profile')!r}"
             )
+        if tag == "reuse":
+            if str(item.get("flow") or "") == "commit_then_retrieve":
+                if not row.get("flow_prepare_ok"):
+                    tag_checks.append(f"{item['id']}: expected flow_prepare_ok=true")
+                if not row.get("flow_commit_ok"):
+                    tag_checks.append(f"{item['id']}: expected flow_commit_ok=true")
+            if int(row.get("v15_retrieved_chunks_count") or 0) <= 0:
+                tag_checks.append(f"{item['id']}: expected retrieval hits for reuse sample")
+            elif not row.get("user_committed_retrieval_hit"):
+                tag_checks.append(f"{item['id']}: expected user_committed_retrieval_hit=true")
     if tag_checks:
         print("TAG validation failures:", file=sys.stderr)
         for line in tag_checks:

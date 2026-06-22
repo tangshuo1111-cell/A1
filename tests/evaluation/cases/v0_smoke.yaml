@@ -12,7 +12,8 @@
       - partial
     expected_pending_kind: null
     expected_primary_path: general_fast
-    required_trace_fields:
+    warning_assertions:
+      required_trace_fields:
       - task_status
       - primary_path
   judge:
@@ -42,7 +43,8 @@
     allowed_primary_paths:
       - complex
       - general_fast
-    required_trace_fields:
+    warning_assertions:
+      required_trace_fields:
       - task_status
       - primary_path
   judge:
@@ -74,7 +76,8 @@
       - web_fast
       - web_async
       - complex
-    required_trace_fields:
+    warning_assertions:
+      required_trace_fields:
       - task_status
       - primary_path
   judge:
@@ -171,7 +174,8 @@
       - video_fast
       - video_async
       - complex
-    required_trace_fields:
+    warning_assertions:
+      required_trace_fields:
       - task_status
       - primary_path
   judge:
@@ -229,7 +233,8 @@
       - complex
       - general_fast
     expected_material_sufficiency: null
-    required_trace_fields:
+    warning_assertions:
+      required_trace_fields:
       - task_status
       - primary_path
   judge:

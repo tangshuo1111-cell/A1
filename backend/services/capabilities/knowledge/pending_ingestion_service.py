@@ -464,13 +464,15 @@ def commit_pending(
     created_at = item.created_at
 
     try:
+        commit_meta = dict(item.metadata or {})
+        commit_meta["source_kind"] = "user_committed"
         chunk_count = ks.save_document_text(
             item.text,
             source_id=source_id,
             source_type=source_type,
             title=title,
             created_at=created_at,
-            extra_metadata=item.metadata,
+            extra_metadata=commit_meta,
         )
     except (OSError, ValueError, RuntimeError) as e:
         logger.warning("v13:commit_pending failed pending_id=%s err=%s", pending_id, e)

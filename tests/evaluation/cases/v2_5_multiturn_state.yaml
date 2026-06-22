@@ -12,7 +12,8 @@
         allowed_primary_paths: ["approval_gate", "commit_result", "agno_basic", null]
         allowed_modes: ["blocked", "complex", "fast"]
         allowed_lanes: ["approval_gate", "general", "document", "kb"]
-        required_trace_fields: ["lane"]
+        warning_assertions:
+          required_trace_fields: ["lane"]
       must_not_happen:
         - 不能保存成功
         - 不能生成 commit succeeded
@@ -44,7 +45,8 @@
         allowed_primary_paths: ["direct_llm", "approval_gate", "agno_basic", "agno_basic_v2_kb", null]
         allowed_modes: ["fast", "blocked", "complex"]
         allowed_lanes: ["general", "approval_gate", "agno_basic_v2_kb", "agno_basic"]
-        required_trace_fields: ["lane"]
+        warning_assertions:
+          required_trace_fields: ["lane"]
       must_not_happen:
         - 不能编造上一轮材料
         - 不能把无上下文继续当作成功闭环
@@ -74,7 +76,8 @@
         allowed_primary_paths: ["direct_llm", "agno_basic_v2_kb", "agno_basic", null]
         allowed_modes: ["fast", "complex"]
         allowed_lanes: ["general", "agno_basic_v2_kb", "agno_basic"]
-        required_trace_fields: ["lane"]
+        warning_assertions:
+          required_trace_fields: ["lane"]
       must_not_happen:
         - 不能 task_status=insufficient
       must_not_happen_rule_ids:
@@ -87,7 +90,8 @@
         allowed_primary_paths: ["direct_llm", "general_fast", "agno_basic_v2_kb", "agno_basic", "agno_basic_v2_kb_v3_web", null]
         allowed_modes: ["fast", "complex"]
         allowed_lanes: ["general", "agno_basic_v2_kb", "agno_basic", "agno_basic_v2_kb_v3_web"]
-        required_trace_fields: ["lane"]
+        warning_assertions:
+          required_trace_fields: ["lane"]
       must_not_happen:
         - 不能完全无视上一轮上下文
         - 不能把刚才理解成外部网页或视频
@@ -117,7 +121,8 @@
         allowed_primary_paths: ["web_fast", "web_async", "agno_basic_v2_kb_v3_web", null]
         allowed_modes: ["fast", "complex", "async"]
         allowed_lanes: ["web", "agno_basic_v2_kb_v3_web", "general"]
-        required_trace_fields: ["lane"]
+        warning_assertions:
+          required_trace_fields: ["lane"]
       must_not_happen:
         - 不能没有任何网页材料信号却声称完整读取网页
       must_not_happen_rule_ids:
@@ -130,7 +135,8 @@
         allowed_primary_paths: ["web_fast", "web_async", "agno_basic_v2_kb_v3_web", "direct_llm", null]
         allowed_modes: ["fast", "complex", "async"]
         allowed_lanes: ["web", "general", "agno_basic_v2_kb_v3_web", "agno_basic_v2_kb"]
-        required_trace_fields: ["lane"]
+        warning_assertions:
+          required_trace_fields: ["lane"]
       must_not_happen:
         - 不能在没有 web evidence 时声称完整基于网页
         - 不能把 turn_2 当作完全无上下文普通问题且仍算闭环成功
@@ -161,7 +167,8 @@
         allowed_primary_paths: ["kb_fast", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
         allowed_modes: ["fast", "complex"]
         allowed_lanes: ["kb", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", "general"]
-        required_trace_fields: ["lane"]
+        warning_assertions:
+          required_trace_fields: ["lane"]
       must_not_happen:
         - 不能把弱证据说成强证据
       must_not_happen_rule_ids:
@@ -174,7 +181,8 @@
         allowed_primary_paths: ["kb_fast", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
         allowed_modes: ["fast", "complex"]
         allowed_lanes: ["kb", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", "general"]
-        required_trace_fields: ["lane"]
+        warning_assertions:
+          required_trace_fields: ["lane"]
       must_not_happen:
         - 不能在 partial_pending 未完成时声称知识库依据充分
       must_not_happen_rule_ids:
@@ -202,7 +210,8 @@
         allowed_primary_paths: ["approval_gate", "video", "video_async", "agno_basic_v2_kb_v3_web", null]
         allowed_modes: ["blocked", "async", "complex", "fast"]
         allowed_lanes: ["approval_gate", "video", "agno_basic_v2_kb_v3_web", "general"]
-        required_trace_fields: ["lane"]
+        warning_assertions:
+          required_trace_fields: ["lane"]
       must_not_happen:
         - 不能在未确认时声称长视频 ASR 完成
       must_not_happen_rule_ids:
@@ -215,7 +224,8 @@
         allowed_primary_paths: ["approval_gate", "video_async", "video", "direct_llm", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
         allowed_modes: ["async", "blocked", "complex", "fast"]
         allowed_lanes: ["approval_gate", "video", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", "general"]
-        required_trace_fields: ["lane"]
+        warning_assertions:
+          required_trace_fields: ["lane"]
       must_not_happen:
         - 不能确认后仍完全无视上一轮 blocked 状态
         - 不能伪造 transcript
@@ -246,7 +256,8 @@
         allowed_primary_paths: ["agno_basic_v2_kb_v3_web", "kb_fast", "web_async", "approval_gate", null]
         allowed_modes: ["fast", "complex", "async", "blocked"]
         allowed_lanes: ["agno_basic_v2_kb_v3_web", "kb", "web", "approval_gate", "general"]
-        required_trace_fields: ["lane"]
+        warning_assertions:
+          required_trace_fields: ["lane"]
       must_not_happen:
         - 不能把无 pending 说成已有可保存材料
       must_not_happen_rule_ids:
@@ -259,7 +270,8 @@
         allowed_primary_paths: ["approval_gate", "commit_result", "agno_basic_v2_kb", "agno_basic", null]
         allowed_modes: ["blocked", "complex", "fast"]
         allowed_lanes: ["approval_gate", "kb", "general", "agno_basic_v2_kb", "agno_basic"]
-        required_trace_fields: ["lane"]
+        warning_assertions:
+          required_trace_fields: ["lane"]
       must_not_happen:
         - 不能没有 pending 就说保存成功
         - 不能 commit 失败后说知识库已保存
@@ -274,7 +286,8 @@
         allowed_primary_paths: ["kb_fast", "approval_gate", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
         allowed_modes: ["fast", "complex", "blocked"]
         allowed_lanes: ["kb", "approval_gate", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", "general"]
-        required_trace_fields: ["lane"]
+        warning_assertions:
+          required_trace_fields: ["lane"]
       must_not_happen:
         - 不能 retrieval 无命中却声称已从刚才保存的内容读取
       must_not_happen_rule_ids:
@@ -302,7 +315,8 @@
         allowed_primary_paths: ["video_async", "approval_gate", "video", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
         allowed_modes: ["async", "blocked", "complex", "fast"]
         allowed_lanes: ["video", "approval_gate", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", "general"]
-        required_trace_fields: ["lane"]
+        warning_assertions:
+          required_trace_fields: ["lane"]
       must_not_happen:
         - 不能没有 task_id 却说后台任务已创建
       must_not_happen_rule_ids:
@@ -315,7 +329,8 @@
         allowed_primary_paths: ["video_async", "approval_gate", "video", "agno_basic", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
         allowed_modes: ["async", "blocked", "complex", "fast"]
         allowed_lanes: ["video", "approval_gate", "general", "agno_basic", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web"]
-        required_trace_fields: ["lane"]
+        warning_assertions:
+          required_trace_fields: ["lane"]
       must_not_happen:
         - 不能 pending 未完成就输出最终完整总结
         - 不能吞掉 background failure

@@ -18,6 +18,9 @@ def build_common_exit_extra(
     extra["timing_total_ms"] = elapsed_ms
     if ingress is not None:
         extra["router_lane"] = getattr(ingress, "lane", "")
+        from application.ingress.route_shadow import route_shadow_extra
+
+        extra.update(route_shadow_extra(ingress))
     extra["mode"] = mode
     extra["executor_profile"] = executor_profile
     return extra

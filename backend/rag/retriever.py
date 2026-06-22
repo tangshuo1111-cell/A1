@@ -158,6 +158,7 @@ def _enrich_with_meta_pg(
     all_scores = [float(d["score"]) for d in sorted_dicts]
     max_score = max(all_scores, default=1.0) or 1.0
 
+    per_source_body_idx: dict[str, int] = {}
     chunks: list[RetrievedChunk] = []
     for d in sorted_dicts:
         sid = d["source_id"]
@@ -167,10 +168,11 @@ def _enrich_with_meta_pg(
 
         meta_list = meta_map.get(sid, [])
         meta_entry: dict[str, Any] | None = None
-        if meta_list:
-            body_idx = rowid - 2
+        if meta_list and not text.startswith("[doc_path]"):
+            body_idx = per_source_body_idx.get(sid, 0)
             if 0 <= body_idx < len(meta_list):
                 meta_entry = meta_list[body_idx]
+            per_source_body_idx[sid] = body_idx + 1
 
         if meta_entry:
             chunk_id = str(meta_entry["chunk_id"])

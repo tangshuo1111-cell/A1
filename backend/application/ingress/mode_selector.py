@@ -29,6 +29,11 @@ def select_mode(
         if complex_candidate and any(code in STRONG_COMPLEX_REASON_CODES for code in complex_reason_codes):
             return "complex", 0.92
         if complex_candidate:
+            # 弱信号但有佐证（多问 / 多个弱码）→ 判“不确定偏复杂”，升 complex；
+            # 镜像 is_complex_task_scope 的弱信号佐证口径，单一弱信号仍走 fast，
+            # 避免“含分析/评估就升复杂”的过触发，不改 fast/complex 默认分流面。
+            if "multi_question" in complex_reason_codes or len(complex_reason_codes) >= 2:
+                return "complex", 0.86
             return "fast", 0.91
         return "fast", 0.93
     if signals.has_complex_intent or len(msg) > 180:

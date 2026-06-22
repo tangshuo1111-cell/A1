@@ -1,6 +1,6 @@
 # 项目验证总说明（Final）
 
-> 生成口径：2026-06-16  
+> 生成口径：2026-06-16；**最新复跑：2026-06-22**  
 > 用途：push 前 / 对外讲解 / 评审答辩的**单一索引**  
 > 原则：三条验证线**职责分离**；结论**不混报**；原始报告不入库。
 
@@ -18,8 +18,9 @@
 
 补充：
 
-- `tests/evaluation` 单元/守卫测试：**113 passed**（含 eval 框架 guardrail，**不等于** 42 case 全量 E2E 自动在 CI 跑完）。
+- `tests/evaluation` 单元/守卫测试：**114 passed**（含 eval 框架 guardrail；纯进程内、不需 backend；已纳入 `pyproject` `testpaths` 与默认 CI）。**注意**：这只验证评测框架本身正确，**不等于** 42 case 全量 E2E 在 CI 跑完。
 - 上述 **42/42、7/7** 来自 **本地/staging 真实 LLM 运行**（`LIGHT_MAQA_FAKE_LLM=0`），**不等于**默认 CI 每次 push 自动保证。
+- **回答质量（answer 文本好不好）没有任何自动门禁**：CI / Nightly 均为 fake LLM；regression_all 验证的是路由 / 状态 / 契约 / 诚实性断言，capability smoke 验证的是外部 provider 连通性。回答质量目前**仅靠 staging 人工验收**。
 
 **统一入口（只读摘要，默认不跑真实外部能力）**：
 
@@ -75,7 +76,7 @@ py scripts/evaluation/run_project_validation.py --profile full-staging --execute
 | ASR | `asr_real_short_audio` | configured_and_passed |
 | OCR | `ocr_real_sample` | configured_and_passed |
 
-参考报告（不入库）：`runtime_data/eval_sandbox/reports/eval_real_external_smoke_20260616_104454.json`
+参考报告（不入库）：`runtime_data/eval_sandbox/reports/eval_real_external_smoke_20260622_105055.json`（历史 `..._20260616_104454.json`）
 
 ### 3.2 regression_all 42/42
 
@@ -86,7 +87,7 @@ py scripts/evaluation/run_project_validation.py --profile full-staging --execute
 | V2.5 `v2_5_multiturn_state` | 8/8 |
 | V3 `v3_complex_agent` | 8/8 |
 
-参考总览（不入库）：`runtime_data/eval_sandbox/reports/eval_v4_regression_overview_20260616_112055.json`
+参考总览（不入库）：`runtime_data/eval_sandbox/reports/eval_v4_regression_overview_20260622_111708.json`（历史 `..._20260616_112055.json`）
 
 ### 3.3 产品指标线
 
@@ -139,14 +140,16 @@ py scripts/evaluation/run_project_validation.py --profile full-staging --execute
 | Nightly KB 红 | **P0.5 已修**（ingest 路径对齐 `docs/history/current`）；push 后待 Nightly 复验 |
 | 工作区卫生 | 见 §6；本地 txt / 无关 fixture 二进制 **不得 stage** |
 
-### P1（本轮不修，仅记录）
+### P1（已知 backlog，本轮不修，仅记录）
 
-- 北极星「资料二次调用率」等未完全接线
-- 6 题指标样本量小，周报比率不可外推
+- ~~北极星「资料二次调用率」等未完全接线~~ → **2026-06-22 已最小接线 + reuse_flow 全 API**；线上真实流量与 hard SLO 仍待接量
+- 指标代表题样本量：complex 子集已扩至 **25** yaml case；北极星判定仍依赖 **真实 LLM 沙箱复跑**（FAKE 下见 **KI-METRICS-001**）
 - `eval_rule_fragility_audit.md` 中措辞/脆弱字段规则仍需治理
 - `complex_web_kb_compare` 仍为稳定性观察项
-- `lane` / `primary_path` 全库 case 语义需持续对齐
+- `lane` / `primary_path` 全库 case 语义需持续对齐（V0/V1 已修；**KI-V1-001 已 Fixed**）
 - 指标沙盒 vs `eval_sandbox` 命名易混
+- **staging 定时**：`.github/workflows/staging_full_validation.yml`（周一 02:00 UTC + manual；**不进 push CI**）
+- 真实 42/42 + 7/7 仍靠 `full-staging --execute` 或 staging workflow；不为 FAKE 加 nightly regression（永久变红 = 治理债）
 
 ### P2（本轮不修）
 
@@ -214,5 +217,7 @@ py scripts/evaluation/run_project_validation.py --profile full-staging --execute
 - **7/7** ≠ 所有网站 / 视频 / OCR 样本长期稳定  
 - **6 题周报** ≠ 全量线上用户表现  
 - **默认 CI 绿** ≠ 真实外部能力每次自动 7/7  
+- **任何自动化（CI / Nightly / 评测）** ≠ 回答文本质量已校验；回答质量仅靠 staging 人工验收  
+- **"三层 Agent"** ≠ 多个 Agent 自主对话；实为 LLM 增强的分层工作流编排，complex 才走三层  
 - **评测体系完成** ≠ 产品北极星已全部落地  
 - **当前阶段** = 可 demo / 可 staging 验证的原型，**不是** 生产 SaaS 1.0  

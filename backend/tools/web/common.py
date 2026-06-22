@@ -149,8 +149,10 @@ def looks_like_paywall_text(text: str, html: str) -> bool:
     return any(tok in sample for tok in tokens)
 
 
-def looks_like_access_wall(text: str, html: str) -> str:
-    sample = f"{text}\n{html[:2000]}".lower()
+def looks_like_access_wall(text: str, html: str) -> str:  # noqa: ARG001
+    # 只扫可见正文 text：访问墙的标志词会出现在正文；原始 html 头含框架样板
+    # （如 MediaWiki 注册的 hCaptcha 模块名），裸子串扫 html 会误判正常 MediaWiki/维基页。
+    sample = (text or "").lower()
     captcha_tokens = ("captcha", "verify you are human", "验证码", "人机验证", "anti-bot")
     login_tokens = ("login required", "please log in", "sign in", "请登录", "登录后", "cookie required")
     denied_tokens = ("access denied", "forbidden", "无权限", "拒绝访问")

@@ -1,14 +1,37 @@
-# 离线指标沙箱：6 条能力代表题（默认 use_knowledge=false，无 KB ingest）
-# A simple_01  Fast 快路径直答
-# B complex_01 Complex 主链（多维度推理）
-# C complex_03 CRAG 二轮 + Tavily 补网
-# D upgrade_01 Fast→Complex 升级 / partial 语义
-# F insufficiency_02 PDF 上传 + 材料链
-# G async_02     Async 网页后台抓取 + poll 终答
+# 离线指标沙箱代表题（默认 use_knowledge=false；reuse 段依赖跑前 seed 的 user_committed 资料）
+#
+# 用途：跑一轮真实/沙箱请求，落 turn_product_metrics，供周报北极星1/2 趋势观测。
+# 口径：当前为离线代表题，非全量线上请求；样本量未到有效区间时，
+#       周报判定标"样本不足"，只看趋势、不下达标结论（见 backend/config/metric_targets.py）。
+#
+# tag 分布（共 42 条）：
+#   simple        x6   Fast 快路径直答（不计入北极星分母）
+#   complex       x26  Complex 主链 → 北极星2 分母
+#   insufficiency x3   材料/证据不足场景
+#   async         x3   后台排队抓取 + poll 终答
+#   reuse         x4   北极星1：seed 检索 x3 + 全 API「upload→commit→检索」x1（reuse_flow_01）
 samples:
+  # ---------- simple x6 ----------
   - id: simple_01
     tag: simple
     message: "1+1 等于多少？请直接回答。"
+  - id: simple_02
+    tag: simple
+    message: "请用一句话解释什么是 RAG。"
+  - id: simple_03
+    tag: simple
+    message: "HTTP 和 HTTPS 最主要的区别是什么？一句话回答。"
+  - id: simple_04
+    tag: simple
+    message: "Python 里列表和元组最主要的区别是什么？简短回答即可。"
+  - id: simple_05
+    tag: simple
+    message: "什么是向量数据库？请用两句话说明。"
+  - id: simple_06
+    tag: simple
+    message: "请直接告诉我 token 在大语言模型里大概指什么。"
+
+  # ---------- complex x20（北极星分母）----------
   - id: complex_01
     tag: complex
     message: "请从成本、风险、交付速度三个维度对比微服务与单体架构，并给出团队选型建议和适用场景。"
@@ -18,11 +41,125 @@ samples:
   - id: upgrade_01
     tag: complex
     message: "这是一个需要多步推理的问题：如果系统默认先 fast 再 quality gate 升级 complex，请分析 partial 交付对用户体验的影响，并给出三条改进建议。"
+  - id: complex_04
+    tag: complex
+    message: "请从准确率、延迟、成本三个维度对比 BM25、稠密向量检索和重排序方案，并给出在中文长文档场景下的选型建议。"
+  - id: complex_05
+    tag: complex
+    message: "请比较 prompt engineering、RAG 和微调三种方式在企业知识问答落地中的适用边界，并说明分别在什么条件下优先选择哪一种。"
+  - id: complex_06
+    tag: complex
+    message: "请综合分析在多来源资料（网页、文档、视频）处理中，OCR、ASR 和网页抓取各自的失败模式，并给出一个统一的降级与诚实回退方案。"
+  - id: complex_07
+    tag: complex
+    message: "请从召回质量、可维护性和推理成本三个角度评估'纯向量检索'与'混合检索+重排'，并给出一个团队从 0 到 1 的演进路线。"
+  - id: complex_08
+    tag: complex
+    message: "请分别分析同步直答、complex 升级和 async 后台三种处理模式的取舍，并给出一个按任务复杂度分流的决策规则。"
+  - id: complex_09
+    tag: complex
+    message: "请比较 NotebookLM、Coze 和自建 RAG 三类方案在'长期知识沉淀与复盘'场景下的优势与局限，并给出选型建议。"
+  # KI-V1-002 已修复：is_commit_intent 现可区分「讨论入库/保存策略」与「执行保存命令」，
+  # 分析题含"保存/入库"字样不再被误判 blocked；分析样本无需再刻意避开这些词。
+  # （仍建议：真要触发保存用"保存到/存入知识库"等明确祈使措辞。）
+  - id: complex_10
+    tag: complex
+    message: "请综合评估在知识库问答里『全量自动沉淀所有资料』与『先解析、用户确认后再收录』两种产品策略，对数据质量、用户信任和长期复用率的影响，并给出推荐。"
+  - id: complex_11
+    tag: complex
+    message: "请从工程可控性、回答稳定性和可解释性三个维度，对比'规则编排+LLM 节点'与'完全自主多 Agent 循环'两种架构，并说明各自适用场景。"
+  - id: complex_12
+    tag: complex
+    message: "请分析在复杂任务里质量门（quality gate）应该在哪些环节介入，并比较'前置拦截'与'后置回退'两种设计的利弊。"
+  - id: complex_13
+    tag: complex
+    message: "请综合对比同步首响时间、后台终答完整度和用户感知三者之间的权衡，并给出一个 async 任务的体验优化方案。"
+  - id: complex_14
+    tag: complex
+    message: "请从证据充分性、诚实表达和可观测性三个角度，评估'材料不足时仍给强结论'的风险，并给出一个 insufficiency 场景的回答契约。"
+  - id: complex_15
+    tag: complex
+    message: "请比较关键词高亮、原文片段引用和结构化字段三种 grounding 呈现方式在可信度和实现成本上的差异，并给出推荐组合。"
+  - id: complex_16
+    tag: complex
+    message: "请综合分析多轮对话里 session 状态、pending 任务追踪和上下文承接三者如何协同，并指出最容易出现'假闭环'的两个环节。"
+  - id: complex_17
+    tag: complex
+    message: "请从冷启动、长期维护和检索质量三个维度，评估『用户确认后才收录资料』对知识库规模与复用率的长期影响，并给出迭代建议。"
+  - id: complex_18
+    tag: complex
+    message: "请分别说明 fast、complex、async 三条路径各自最该被监控的指标，并综合给出一页式产品指标看板的取舍。"
+  - id: complex_19
+    tag: complex
+    message: "请比较'每次请求都跑 LLM 路由'与'规则优先+低置信才升级 LLM'两种路由策略在稳定性、成本和准确率上的权衡，并给出推荐的阈值思路。"
+  - id: complex_20
+    tag: complex
+    message: "请综合评估视频学习场景下'字幕提取'与'ASR 转写'在质量、成本和失败处理上的差异，并给出一个长视频的分阶段处理方案。"
+  - id: complex_21
+    tag: complex
+    message: "请从数据治理、检索召回和回答可追溯三个维度，对比'全量自动入库'与'用户确认后再收录'两种知识沉淀策略，并给出落地建议。"
+  - id: complex_22
+    tag: complex
+    message: "请比较 streaming 首 token 延迟、整句完成率和用户感知满意度三者在 chat 产品中的权衡，并给出 async 任务的体验优化方案。"
+  - id: complex_23
+    tag: complex
+    message: "请综合分析 agent 编排中规则路由、LLM 意图识别和质量门三者的职责边界，并说明各自最该监控的指标。"
+  - id: complex_24
+    tag: complex
+    message: "请从准确率、延迟和运维成本三个角度评估 BM25、向量检索和 Hybrid+重排在企业文档问答中的选型路径。"
+  - id: complex_25
+    tag: complex
+    message: "请对比'每次请求都走 complex 三 Agent 链'与'fast 优先、质量门升级 complex'两种架构在成本与体验上的差异，并给出推荐。"
+  - id: complex_26
+    tag: complex
+    message: "请从可观测性、回滚成本和用户信任三个角度，评估 partial 交付与 insufficiency 诚实回退并存时的产品策略，并给出监控指标建议。"
+
+  # ---------- insufficiency x3 ----------
   - id: insufficiency_02
     tag: insufficiency
-    message: "根据我上传的 confidential_board_pack.pdf 中的表格，对比方案 A 和方案 B 的 ROI。"
-    upload_file: "C:/Users/Admin/Desktop/OpenClaw_TikTok_Temu_自动化解决方案(3)_20260422102333.pdf"
-    upload_filename: "confidential_board_pack.pdf"
+    message: "根据我上传的这份资料中的表格，对比方案 A 和方案 B 的 ROI。"
+    upload_file: scripts/metrics_sandbox_assets/phoenix_brief.md
+    upload_filename: confidential_board_pack.md
+  - id: insufficiency_03
+    tag: insufficiency
+    message: "请只根据我们知识库里关于'2027 年第四季度营收'的记录，给出精确的同比增长率。"
+    use_knowledge: true
+  - id: insufficiency_04
+    tag: insufficiency
+    message: "请基于我之前上传的那份内部财务附件，列出方案 C 的三年现金流明细。"
+
+  # ---------- async x3 ----------
   - id: async_02
     tag: async
     message: "这个网页抓取请先排队后台处理，稍后给我结果：https://cn.nytimes.com/business/20260602/china-military-nvidia-chips/"
+  - id: async_03
+    tag: async
+    message: "这个长网页请排队后台处理，处理完再把要点发我：https://en.wikipedia.org/wiki/Retrieval-augmented_generation"
+  - id: async_04
+    tag: async
+    message: "请把这个网页放后台抓取，稍后给我总结，不用现在等：https://en.wikipedia.org/wiki/Vector_database"
+
+  # ---------- reuse x3（北极星1：user_committed 二次检索）----------
+  # 跑前 run_metrics_sandbox_samples.py 会 seed metrics_sandbox_assets/phoenix_brief.md
+  - id: reuse_01
+    tag: reuse
+    message: "根据知识库，METRICS_REUSE_TOKEN_PHX9 对应的项目代号是什么？请简要说明。"
+    use_knowledge: true
+  - id: reuse_02
+    tag: reuse
+    message: "知识库里 Phoenix 项目的定位是什么？请根据检索到的资料回答。"
+    use_knowledge: true
+  - id: reuse_03
+    tag: reuse
+    message: "请只根据知识库中 phoenix_brief 的内容，复述 METRICS_REUSE_TOKEN_PHX9 的含义。"
+    use_knowledge: true
+
+  # 全 API 链路：upload prepare → commit → use_knowledge 检索（不依赖 seed，独立 session）
+  - id: reuse_flow_01
+    tag: reuse
+    flow: commit_then_retrieve
+    asset_file: scripts/metrics_sandbox_assets/flow_phoenix_brief.md
+    upload_filename: flow_phoenix_brief.md
+    prepare_message: "请先解析这份资料并整理要点。"
+    commit_message: "保存到知识库"
+    retrieve_message: "根据知识库，METRICS_FLOW_TOKEN_FLW1 对应的项目代号是什么？请简要说明。"

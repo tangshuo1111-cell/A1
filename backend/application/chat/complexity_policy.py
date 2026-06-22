@@ -6,7 +6,7 @@ import re
 
 from application.chat.chat_contracts import ComplexCandidateSignal
 
-_STRONG_COMPARE = ("对比", "比较", "异同", "优缺点", "适用场景")
+_STRONG_COMPARE = ("对比", "比较", "异同", "差异", "差别", "优缺点", "适用场景")
 _STRONG_MULTI_DIM = (
     "多个角度",
     "多个维度",
@@ -15,6 +15,10 @@ _STRONG_MULTI_DIM = (
     "三个角度",
     "四个角度",
     "五个角度",
+    "两个维度",
+    "三个维度",
+    "四个维度",
+    "五个维度",
     "两个视角",
     "两个角度",
     "双视角",

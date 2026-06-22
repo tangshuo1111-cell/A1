@@ -11,7 +11,8 @@
     allowed_task_status: ["succeeded", "partial", "failed"]
     allowed_pending_kinds: [null, "partial_pending"]
     allowed_primary_paths: ["kb", "kb_fast", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
-    required_trace_fields: ["lane"]
+    warning_assertions:
+      required_trace_fields: ["lane"]
   judge:
     rule: true
     llm_judge: false
@@ -37,7 +38,8 @@
     allowed_task_status: ["succeeded", "partial", "failed"]
     allowed_pending_kinds: [null, "partial_pending"]
     allowed_primary_paths: ["kb", "kb_fast", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
-    required_trace_fields: ["lane"]
+    warning_assertions:
+      required_trace_fields: ["lane"]
   judge:
     rule: true
     llm_judge: false
@@ -63,7 +65,8 @@
     allowed_task_status: ["succeeded", "partial", "failed"]
     allowed_pending_kinds: [null, "partial_pending"]
     allowed_primary_paths: ["kb", "kb_fast", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
-    required_trace_fields: ["lane"]
+    warning_assertions:
+      required_trace_fields: ["lane"]
   judge:
     rule: true
     llm_judge: false
@@ -89,7 +92,8 @@
     allowed_task_status: ["succeeded", "partial", "failed"]
     allowed_pending_kinds: [null, "partial_pending"]
     allowed_primary_paths: ["kb", "kb_fast", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
-    required_trace_fields: ["lane"]
+    warning_assertions:
+      required_trace_fields: ["lane"]
   judge:
     rule: true
     llm_judge: false

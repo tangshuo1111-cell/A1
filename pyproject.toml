@@ -67,7 +67,7 @@ where = ["."]
 include = ["backend*"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests/baselines", "tests/migration", "tests/unit", "tests/backend", "tests/integration", "tests/smoke", "tests/acceptance"]
+testpaths = ["tests/baselines", "tests/migration", "tests/unit", "tests/backend", "tests/integration", "tests/smoke", "tests/acceptance", "tests/evaluation"]
 pythonpath = ["backend"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"

@@ -18,6 +18,12 @@ _KB_COMPLEX_REASON_CODES = frozenset({
 _KB_COMPLEX_MARKERS = ("对比", "比较", "异同", "优缺点", "路线图", "优先级", "取舍", "分成", "分为", "从", "角度")
 
 
+def _committed_hits(chunks: list[Any]) -> int:
+    from rag.retrieval_provenance import count_user_committed_hits
+
+    return count_user_committed_hits(chunks)
+
+
 def run_kb_fast_path(
     *,
     message: str,
@@ -100,6 +106,8 @@ def run_kb_fast_path(
         "executor_profile": "fast",
         "rag_context_chars": len(material),
         "v15_retrieved_chunks_count": len(ranked),
+        "user_committed_hits_count": _committed_hits(ranked),
+        "user_committed_retrieval_hit": _committed_hits(ranked) > 0,
         "v14_retrieval_trace": trace_info,
         "capabilities_called": capabilities_called,
         "fast_exit_reason": "kb_retrieve_answer",

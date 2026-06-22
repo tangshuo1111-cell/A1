@@ -32,6 +32,7 @@ def insert_turn_product_metrics(
     sample_label: str | None = None,
     message_text: str | None = None,
     answer_summary: str | None = None,
+    user_committed_retrieval_hit: bool = False,
 ) -> None:
     try:
         pool = get_pool()
@@ -44,14 +45,16 @@ def insert_turn_product_metrics(
                     is_complex_task, quality_gate_passed, insufficient_evidence,
                     timing_total_ms, answer_char_count,
                     retrieved_chunks_count, temporary_materials_count,
-                    failure_reason_code, sample_label, message_text, answer_summary
+                    failure_reason_code, sample_label, message_text, answer_summary,
+                    user_committed_retrieval_hit
                 ) VALUES (
                     %s, %s, %s, %s,
                     %s, %s, %s,
                     %s, %s, %s,
                     %s, %s,
                     %s, %s,
-                    %s, %s, %s, %s
+                    %s, %s, %s, %s,
+                    %s
                 );
                 """,
                 (
@@ -73,6 +76,7 @@ def insert_turn_product_metrics(
                     sample_label,
                     message_text,
                     answer_summary,
+                    bool(user_committed_retrieval_hit),
                 ),
             )
             conn.commit()

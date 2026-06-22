@@ -233,6 +233,9 @@ def _migrate_schema() -> None:
         ALTER TABLE turn_product_metrics ADD COLUMN IF NOT EXISTS async_background_ms INTEGER;
  """,
         """
+        ALTER TABLE turn_product_metrics ADD COLUMN IF NOT EXISTS user_committed_retrieval_hit BOOLEAN NOT NULL DEFAULT FALSE;
+ """,
+        """
         CREATE INDEX IF NOT EXISTS idx_turn_product_metrics_created
         ON turn_product_metrics (created_at);
  """,

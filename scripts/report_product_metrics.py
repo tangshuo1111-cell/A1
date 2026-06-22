@@ -218,6 +218,40 @@ def render_html(report: dict[str, Any]) -> str:
         f" {n_warn}</div>"
     )
 
+    def _target_pct(v: float | None) -> str:
+        return "—" if v is None else f"{v * 100:.0f}%"
+
+    verdicts = report.get("target_verdicts") or []
+    verdict_rows = ""
+    for v in verdicts:
+        prefix = "北极星 · " if v.get("is_north_star") else "Guardrail · "
+        dir_sym = "≥" if v.get("direction") == "min" else "≤"
+        status = str(v.get("status") or "")
+        status_cls = {
+            "达标": "v-pass",
+            "未达标": "v-fail",
+            "样本不足": "v-insufficient",
+        }.get(status, "")
+        verdict_rows += (
+            f"<tr>"
+            f"<td>{_esc(prefix + str(v.get('label') or ''))}</td>"
+            f"<td>{_target_pct(v.get('value'))}</td>"
+            f"<td>目标 {dir_sym} {_target_pct(v.get('target'))}</td>"
+            f"<td>N={int(v.get('sample_n') or 0)} / 下限 {int(v.get('min_sample') or 0)}</td>"
+            f'<td class="{status_cls}"><strong>{_esc(status)}</strong></td>'
+            f"</tr>"
+        )
+    verdict_block = (
+        f'<div class="verdict">'
+        f"<strong>【达标判定】</strong>观测口径，非线上 SLO 门禁；"
+        f"样本量低于下限时标「样本不足」，只看趋势、不下达标结论。"
+        f"<table><thead><tr><th>指标</th><th>本周值</th><th>目标线</th>"
+        f"<th>样本量</th><th>判定</th></tr></thead><tbody>{verdict_rows}</tbody></table>"
+        f"</div>"
+        if verdict_rows
+        else ""
+    )
+
     notes_path = report.get("notes_template_path", "")
     appendix_html = render_sample_appendix(report.get("sample_appendix") or [])
     metric_guide = """
@@ -226,6 +260,7 @@ def render_html(report: dict[str, Any]) -> str:
 <ul>
 <li><strong>样本 N</strong>：必须先看清总请求数 N 与子集 n，再读任何百分比；N 过小（如 N&lt;30）时比率不可外推。</li>
 <li><strong>样本</strong>：本周纳入统计的请求次数；「复杂 / async（异步）」是其中的子集计数。</li>
+<li><strong>北极星 · 资料二次调用率</strong>：有检索发生的 turn 里，命中用户已 commit 资料的比例；分母为「有检索 chunk 的 turn」。</li>
 <li><strong>北极星 · 复杂任务有效完成率</strong>：复杂题里，真正「答完 + 证据够 + 质量门（quality_gate）通过」的比例。<strong>partial（部分交付）不算完成</strong>。</li>
 <li><strong>Guardrail（护栏）· Partial（部分交付）率</strong>：只交付了一部分、需要用户补材料或重试的比例；越高体验风险越大。</li>
 <li><strong>Guardrail · 复杂升级率</strong>：本应从 fast（快路径）升级到 complex（复杂路径）或 agent 的比例；反映「题难但初判偏轻」的情况。</li>
@@ -249,6 +284,11 @@ th,td{{border:1px solid #ddd;padding:0.5rem 0.65rem;text-align:left;vertical-ali
 .guide ul{{margin:0.5rem 0 0;padding-left:1.2rem}}
 .guide li{{margin:0.35rem 0}}
 .sample-n{{background:#eef6ff;border:1px solid #c5ddf5;padding:0.75rem 1rem;border-radius:6px;margin:1rem 0;font-size:0.92rem;line-height:1.55}}
+.verdict{{background:#f4faf4;border:1px solid #cfe6cf;padding:0.75rem 1rem;border-radius:6px;margin:1rem 0;font-size:0.9rem}}
+.verdict table{{margin-top:0.5rem}}
+.verdict .v-pass{{color:#1a7f37;font-weight:600}}
+.verdict .v-fail{{color:#b35900;font-weight:600}}
+.verdict .v-insufficient{{color:#666;font-weight:600}}
 .summary{{background:#f5f7fa;padding:0.75rem;border-radius:6px;margin:1rem 0}}
 .footer{{font-size:0.75rem;color:#666;margin-top:2rem}}
 code{{font-size:0.85em;background:#f0f0f0;padding:0.1em 0.3em;border-radius:3px}}
@@ -266,6 +306,7 @@ table.appendix th{{background:#f8f9fb;font-weight:600}}
 <h1>A1 产品协作周报</h1>
 <p>周期：{report.get("period_current","")} vs {report.get("period_previous","")}</p>
 {sample_block}
+{verdict_block}
 {metric_guide}
 <div class="summary"><strong>【结论】</strong>（请编辑 notes 或本段）有效完成率与 partial（部分交付）见下表；详见失败 Top3。</div>
 <table>
@@ -295,6 +336,7 @@ def main() -> None:
     from application.analytics.product_metrics import (
         aggregate_turn_rows,
         compare_periods,
+        evaluate_targets,
         row_from_pg,
     )
     from storage.pg_pool import get_pool
@@ -314,6 +356,7 @@ def main() -> None:
     prev_rows = [row_from_pg(r) for r in prev_pg_rows]
 
     report = compare_periods(aggregate_turn_rows(cur_rows), aggregate_turn_rows(prev_rows))
+    report["target_verdicts"] = evaluate_targets(report["current"])
     report["period_current"] = f"{cur_start[:10]} – {cur_end[:10]}"
     report["period_previous"] = f"{prev_start[:10]} – {prev_end[:10]}"
     report["generated_at"] = datetime.now(UTC).isoformat()

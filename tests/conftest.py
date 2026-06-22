@@ -26,10 +26,8 @@ if str(BACKEND_ROOT) not in sys.path:
 # 必须在 import config.settings 之前写入（pg_fixtures 会触发 settings 单例）。
 sys.dont_write_bytecode = True
 os.environ.setdefault("PYTHONDONTWRITEBYTECODE", "1")
-os.environ.setdefault(
-    "DATABASE_URL",
-    "postgresql://light_maqa:light_maqa_dev@127.0.0.1:5432/light_maqa",
-)
+# 不在此处 default 真实业务库 URL；@pytest.mark.pg 用例由 CI/workflow 或
+# PYTEST_DATABASE_URL / DATABASE_URL 注入。默认走 fake_pg（见 _fake_pg_unless_marked）。
 os.environ.setdefault("RAG_HYBRID", "0")
 os.environ["USE_LLM_ROUTER"] = "0"
 os.environ.setdefault("ENABLE_ANSWER_CRITIC", "0")

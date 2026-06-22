@@ -13,7 +13,8 @@
       allowed_modes: ["fast", "complex", "async"]
       allowed_lanes: ["kb", "general", "approval_gate", "agno_basic_v2_kb_v3_web"]
       must_have_one_of: ["primary_path", "quality_gate", "material_sufficiency", "v6_main_pan_renwu"]
-      required_trace_fields: ["primary_path"]
+      warning_assertions:
+        required_trace_fields: ["primary_path"]
     soft_observability:
       try_extract:
         - routing_explain

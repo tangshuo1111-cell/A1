@@ -32,9 +32,14 @@ class DynamicPageOutcome:
     metadata_extra: dict[str, Any] = field(default_factory=dict)
 
 
-def classify_dynamic_wall(text: str, html: str) -> tuple[str, str, str]:
-    """返回 (error_code, failure_reason, hint)；无阻断则 ("", "", "")。"""
-    sample = f"{text}\n{html[:4000]}".lower()
+def classify_dynamic_wall(text: str, html: str) -> tuple[str, str, str]:  # noqa: ARG001
+    """返回 (error_code, failure_reason, hint)；无阻断则 ("", "", "")。
+
+    只扫可见正文 text：访问墙会用挑战/登录文案替换可见内容，标志词必然落在正文里。
+    原始 html 头含框架样板（如 MediaWiki 站点注册的 hCaptcha 模块名 `ext.confirmEdit.hCaptcha`），
+    裸子串扫描会把能正常阅读的 MediaWiki/维基页误判成验证码墙、丢弃已抓到的好正文，故不扫 html。
+    """
+    sample = (text or "").lower()
     captcha_tokens = ("captcha", "verify you are human", "验证码", "人机验证", "anti-bot", "hcaptcha", "recaptcha")
     login_tokens = (
         "login required",

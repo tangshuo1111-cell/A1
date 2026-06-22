@@ -27,3 +27,11 @@ class LaneDecision(BaseModel):
     complex_candidate: bool = False
     complex_triggers: list[str] = Field(default_factory=list)
     complex_reason_codes: list[str] = Field(default_factory=list)
+    # C-level route shadow observability (fragile; not hard-fail contract)
+    route_shadow_rule_lane: str | None = None
+    route_shadow_rule_mode: ModeName | None = None
+    route_shadow_semantic_mode: ModeName | None = None
+    route_shadow_semantic_confidence: float | None = None
+    route_shadow_lane_match: bool | None = None
+    route_shadow_mode_match: bool | None = None
+    route_shadow_semantic_mode_match: bool | None = None

@@ -15,6 +15,7 @@ def run_document_fast_path(
     v13_text_content: str | None,
     v13_file_content: str | bytes | None,
     v13_title: str | None = None,
+    session_id: str | None = None,
     clock,
 ) -> tuple[str, dict[str, Any]] | None:
     from application.chat.decision_arbitrator import arbitrate_mode
@@ -105,4 +106,39 @@ def run_document_fast_path(
         "document_page_count": fact.page_count,
         "document_ocr_required": fact.ocr_required,
     }
+    extra_out.update(
+        _register_upload_pending_extra(
+            session_id=session_id,
+            file_path=file_path,
+            file_content=v13_file_content,
+        )
+    )
     return answer_text, extra_out
+
+
+def _register_upload_pending_extra(
+    *,
+    session_id: str | None,
+    file_path: str | None,
+    file_content: str | bytes | None,
+) -> dict[str, Any]:
+    """Upload + document_fast：同步写入 pending store，供下一轮「保存到知识库」commit。"""
+    if not session_id or file_content is None:
+        return {}
+    path = (file_path or "").strip()
+    if not path:
+        return {}
+    from services.capabilities.knowledge.pending_ingestion_service import prepare_file_source
+
+    try:
+        item = prepare_file_source(path, session_id=session_id, file_content=file_content)
+    except (OSError, ValueError, TypeError):  # noqa: BLE001
+        return {}
+    extra: dict[str, Any] = {
+        "pending_source_id": item.pending_id,
+        "v13_material_status": "pending" if item.extract_status == "ok" else item.extract_status,
+    }
+    if item.extract_status == "ok":
+        set_pending_kind_signal(extra, PendingKind.MATERIAL_PENDING.value)
+        extra["fast_exit_reason"] = "document_fast_pending_registered"
+    return extra

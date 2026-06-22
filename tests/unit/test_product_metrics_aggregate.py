@@ -56,5 +56,7 @@ def test_aggregate_sample_and_top3() -> None:
     assert stats["complex_task_count"] == 2
     assert stats["complex_effective_complete_rate"] == 0.5
     assert stats["partial_rate"] == 2 / 3
+    assert stats.get("knowledge_reuse_rate") == 0.0
+    assert stats.get("retrieval_turn_count") == 1
     assert len(stats["failure_top3"]) >= 1
     assert stats["failure_top3"][0]["code"] in {"insufficiency", "timeout_partial"}

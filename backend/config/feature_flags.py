@@ -35,6 +35,9 @@ FEATURE_FLAGS: dict[str, bool] = {
     "ENABLE_APPROVAL_GATE_V1": True,
     # Turn exit gate — shadow off by default; gate always single-writes canonical exit.
     "ENABLE_TURN_EXIT_GATE_SHADOW": False,
+    # Ingress route shadow — observability only; cutover off by default.
+    "ENABLE_ROUTE_SHADOW_OBSERVABILITY": True,
+    "ENABLE_SEMANTIC_ROUTE_CUTOVER": False,
     # RAG: 结构化切块实验开关（与 EMBEDDING_ENABLED 无关）
     "ENABLE_STRUCTURE_CHUNKING": False,
 }

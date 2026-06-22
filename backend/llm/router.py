@@ -182,7 +182,9 @@ def maybe_refine_with_llm(task: TaskInput, base: MainDecision) -> MainDecision:
     try:
         resp = client.chat.completions.create(
             model=settings.llm_router_model,
-            temperature=0.1,
+            # 路由判定用贪心解码（贪心=0.0）：同一输入跨次落到同一 lane/mode，
+            # 收敛 KI-V1-001 的升级路径非确定性；与本文件其余路由调用（已 0.0）口径一致。
+            temperature=0.0,
             messages=[
                 {"role": "system", "content": sys_prompt},
                 {"role": "user", "content": user_block},

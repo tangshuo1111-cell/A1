@@ -213,6 +213,12 @@ def _apply_v15_observability_extra(*, extra: dict[str, Any], plan: Any, bundle: 
     if v15_commits:
         extra["v15_commit_results"] = v15_commits
     extra["v15_retrieved_chunks_count"] = len(retrieved_chunks)
+    if retrieved_chunks:
+        from rag.retrieval_provenance import count_user_committed_hits
+
+        committed_hits = count_user_committed_hits(retrieved_chunks)
+        extra["user_committed_hits_count"] = committed_hits
+        extra["user_committed_retrieval_hit"] = committed_hits > 0
     plan_retrieval_filters = getattr(plan, "retrieval_filters", None)
     if plan_retrieval_filters:
         extra["v15_retrieval_filters"] = plan_retrieval_filters

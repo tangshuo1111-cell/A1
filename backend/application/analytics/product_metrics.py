@@ -6,6 +6,13 @@ from collections import Counter
 from typing import Any
 
 from application.chat.complexity_policy import is_complex_task_scope
+from config.metric_targets import (
+    PRODUCT_METRIC_TARGETS,
+    STATUS_FAIL,
+    STATUS_INSUFFICIENT_SAMPLE,
+    STATUS_PASS,
+    MetricTarget,
+)
 
 
 def row_from_pg(record: dict[str, Any]) -> dict[str, Any]:
@@ -24,6 +31,7 @@ def row_from_pg(record: dict[str, Any]) -> dict[str, Any]:
             "failure_reason_code": record.get("failure_reason_code"),
             "timing_total_ms": record.get("timing_total_ms"),
             "answer_char_count": record.get("answer_char_count"),
+            "user_committed_retrieval_hit": record.get("user_committed_retrieval_hit"),
         },
     }
 
@@ -82,6 +90,8 @@ def aggregate_turn_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
     gate_pass = 0
     gate_seen = 0
     failure_codes: Counter[str] = Counter()
+    retrieval_n = 0
+    reuse_hits = 0
 
     for row in rows:
         extra = dict(row.get("extra") or {})
@@ -102,6 +112,11 @@ def aggregate_turn_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
 
         c = extra.get("v15_retrieved_chunks_count")
         t = extra.get("v15_temporary_materials_count")
+        chunk_count = int(c or row.get("retrieved_chunks_count") or 0)
+        if chunk_count > 0:
+            retrieval_n += 1
+        if extra.get("user_committed_retrieval_hit") or row.get("user_committed_retrieval_hit"):
+            reuse_hits += 1
         if isinstance(c, (int, float)) or isinstance(t, (int, float)):
             mat_counts.append(float(c or 0) + float(t or 0))
 
@@ -144,6 +159,9 @@ def aggregate_turn_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
         "partial_count": partial,
         "partial_rate": (partial / total) if total else 0.0,
         "complex_effective_complete_rate": (complex_ok / complex_n) if complex_n else None,
+        "knowledge_reuse_rate": (reuse_hits / retrieval_n) if retrieval_n else None,
+        "retrieval_turn_count": retrieval_n,
+        "user_committed_hit_count": reuse_hits,
         "complex_upgrade_rate": (upgrade_n / complex_n) if complex_n else None,
         "insufficiency_rate": (insufficiency_n / total) if total else 0.0,
         "avg_material_count": (sum(mat_counts) / len(mat_counts)) if mat_counts else None,
@@ -167,6 +185,7 @@ def compare_periods(current: dict[str, Any], previous: dict[str, Any]) -> dict[s
         "current": current,
         "previous": previous,
         "delta": {
+            "knowledge_reuse_rate": delta("knowledge_reuse_rate"),
             "complex_effective_complete_rate": delta("complex_effective_complete_rate"),
             "partial_rate": delta("partial_rate"),
             "complex_upgrade_rate": delta("complex_upgrade_rate"),
@@ -175,3 +194,40 @@ def compare_periods(current: dict[str, Any], previous: dict[str, Any]) -> dict[s
             "quality_gate_pass_rate": delta("quality_gate_pass_rate"),
         },
     }
+
+
+def evaluate_targets(
+    agg: dict[str, Any],
+    targets: tuple[MetricTarget, ...] = PRODUCT_METRIC_TARGETS,
+) -> list[dict[str, Any]]:
+    """对聚合结果按目标线给出三态判定：达标 / 未达标 / 样本不足。
+
+    指标值为 None（无样本），或对应样本量低于 ``min_sample`` 时，统一标为"样本不足"，
+    不下达标结论——避免在小样本上把趋势误读成线上达标。
+    """
+    verdicts: list[dict[str, Any]] = []
+    for t in targets:
+        value = agg.get(t.key)
+        raw_sample = agg.get(t.sample_key)
+        sample_n = int(raw_sample) if isinstance(raw_sample, (int, float)) else 0
+        if value is None or sample_n < t.min_sample:
+            status = STATUS_INSUFFICIENT_SAMPLE
+        elif t.direction == "min":
+            status = STATUS_PASS if value >= t.target else STATUS_FAIL
+        else:  # "max"：越小越好
+            status = STATUS_PASS if value <= t.target else STATUS_FAIL
+        verdicts.append(
+            {
+                "key": t.key,
+                "label": t.label,
+                "value": value,
+                "target": t.target,
+                "direction": t.direction,
+                "sample_key": t.sample_key,
+                "sample_n": sample_n,
+                "min_sample": t.min_sample,
+                "is_north_star": t.is_north_star,
+                "status": status,
+            }
+        )
+    return verdicts
