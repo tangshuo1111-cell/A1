@@ -16,7 +16,7 @@ from .lane_decision_schema import LaneDecision
 from .lane_selector import select_lane
 from .main_plan_hints import MainPlanHints
 from .mode_selector import select_mode
-from .request_classifier import classify_request
+from .request_classifier import RequestSignals, classify_request
 from .route_shadow import attach_route_shadow, should_skip_main_agent_escalation
 
 

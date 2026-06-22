@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from application.ingress.lane_decision_schema import LaneDecision
-from application.ingress.route_shadow import attach_route_shadow, route_shadow_extra
 from application.ingress.request_classifier import classify_request
+from application.ingress.route_shadow import attach_route_shadow, route_shadow_extra
 
 
 def test_attach_route_shadow_populates_fragile_fields(monkeypatch) -> None:
