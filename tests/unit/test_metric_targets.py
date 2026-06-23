@@ -55,6 +55,8 @@ def test_guardrail_max_direction_pass_and_fail() -> None:
 
 def test_default_targets_cover_north_star_and_guardrails() -> None:
     agg = {
+        "knowledge_reuse_rate": 0.5,
+        "retrieval_turn_count": 35,
         "complex_effective_complete_rate": 0.8,
         "complex_task_count": 35,
         "partial_rate": 0.1,
