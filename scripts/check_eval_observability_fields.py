@@ -55,7 +55,9 @@ def main() -> int:
             if _is_under_warning_assertions(lines, idx):
                 continue
             rel = path.relative_to(ROOT).as_posix()
-            violations.append(f"{rel}:{idx + 1}: move required_trace_fields under warning_assertions")
+            violations.append(
+                f"{rel}:{idx + 1}: move required_trace_fields under warning_assertions"
+            )
 
     if violations:
         print("[FAIL] eval observability field violations:", file=sys.stderr)
@@ -63,7 +65,9 @@ def main() -> int:
             print(f"  {v}", file=sys.stderr)
         return 1
 
-    print(f"[OK] eval case observability fields ({len(list(CASES_DIR.glob('*.yaml')))} YAML files).")
+    print(
+        f"[OK] eval case observability fields ({len(list(CASES_DIR.glob('*.yaml')))} YAML files)."
+    )
     return 0
 
 
