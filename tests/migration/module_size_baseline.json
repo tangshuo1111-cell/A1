@@ -78,7 +78,7 @@
     "lines": 44
   },
   "backend/application/chat/executors/fast_lanes/document.py": {
-    "lines": 30
+    "lines": 31
   },
   "backend/application/chat/executors/fast_lanes/general.py": {
     "lines": 23
@@ -99,13 +99,13 @@
     "lines": 31
   },
   "backend/application/chat/executors/fast_lanes/kb_fast_impl.py": {
-    "lines": 151
+    "lines": 159
   },
   "backend/application/chat/executors/fast_lanes/web_fast_impl.py": {
     "lines": 101
   },
   "backend/application/chat/executors/fast_lanes/document_fast_impl.py": {
-    "lines": 108
+    "lines": 144
   },
   "backend/application/chat/executors/fast_lanes/video_fast_impl.py": {
     "lines": 117
