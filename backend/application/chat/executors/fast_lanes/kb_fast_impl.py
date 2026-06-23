@@ -19,7 +19,7 @@ _KB_COMPLEX_MARKERS = ("对比", "比较", "异同", "优缺点", "路线图", "
 
 
 def _committed_hits(chunks: list[Any]) -> int:
-    from rag.retrieval_provenance import count_user_committed_hits
+    from services.capabilities.knowledge.retrieval_provenance import count_user_committed_hits
 
     return count_user_committed_hits(chunks)
 

@@ -214,7 +214,7 @@ def _apply_v15_observability_extra(*, extra: dict[str, Any], plan: Any, bundle: 
         extra["v15_commit_results"] = v15_commits
     extra["v15_retrieved_chunks_count"] = len(retrieved_chunks)
     if retrieved_chunks:
-        from rag.retrieval_provenance import count_user_committed_hits
+        from services.capabilities.knowledge.retrieval_provenance import count_user_committed_hits
 
         committed_hits = count_user_committed_hits(retrieved_chunks)
         extra["user_committed_hits_count"] = committed_hits
