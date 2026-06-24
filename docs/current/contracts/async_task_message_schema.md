@@ -35,11 +35,8 @@ fields:
     pattern: "^task_[a-zA-Z0-9_]{6,}$"
   task_type:
     type: enum
-    values: ["video_asr_background", "document_ocr", "web_heavy_fetch", "multi_source_research"]
-  optional_task_types:
-    description: "Accepted in schema/enqueue but not fully implemented on async plane"
-    values: ["multi_source_research"]
-    handler: "async_dispatcher marks failed with error_code=multi_source_research_optional"
+    values: ["video_asr_background", "asr_mid_background", "document_ocr", "web_heavy_fetch", "multi_source_research"]
+    note: "均已在 backend/services/execution/async_dispatcher.py 实现对应分支（multi_source_research → run_multi_source_research_task；asr_mid_background → run_asr_mid_background_task）"
   lane:
     type: enum
     values: LANE
@@ -66,7 +63,7 @@ fields:
     default: "normal"
   status:
     type: enum
-    values: TASK_STATUS
+    values: ASYNC_TASK_STATUS
   parent_task_id:
     type: string
     default: ""
@@ -103,7 +100,7 @@ optional:
 
 ## Task status state machine
 
-See `enums.md` → `TASK_STATUS` for legal transitions.
+See `enums.md` → `ASYNC_TASK_STATUS` for legal transitions.
 
 ---
 
@@ -129,7 +126,7 @@ enqueued_at_ms: 1716297600000
 ```yaml
 task_id: "t1"                  # too short, no task_ prefix
 task_type: "image_analysis"    # not in allowed task_types
-status: "queued"               # not in TASK_STATUS
+status: "in_progress"          # not in ASYNC_TASK_STATUS（合法值见 enums.md）
 retry_count: 10                # exceeds max
 ```
 

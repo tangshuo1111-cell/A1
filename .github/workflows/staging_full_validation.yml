@@ -51,8 +51,11 @@ jobs:
         run: |
           python scripts/evaluation/run_project_validation.py --profile full-staging --execute
 
-      - name: Optional metrics sandbox line
+      # Honest no-op: the metrics sandbox line is NOT executed in CI (needs an
+      # isolated metrics PG + real LLM). This step only prints how to run it
+      # locally so the workflow never implies metrics were collected here.
+      - name: Metrics sandbox line (NOT run in CI — local only)
         if: github.event.inputs.include_metrics == 'true'
         run: |
-          echo "Metrics sandbox requires isolated PG on runner; run locally via scripts/run_metrics_sandbox.ps1 with real LLM."
-          exit 0
+          echo "::notice title=metrics-sandbox-skipped::Metrics sandbox is NOT run in CI."
+          echo "Run locally with isolated PG + real LLM: scripts/run_metrics_sandbox.ps1"

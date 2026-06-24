@@ -10,6 +10,7 @@ describe("statusCopy", () => {
     expect(humanizeTaskStatus("queued")).toBe("排队中");
     expect(humanizeTaskStatus("running")).toBe("处理中");
     expect(humanizeTaskStatus("done")).toBe("已完成");
+    expect(humanizeTaskStatus("blocked")).toBe("已阻止");
   });
 
   it("humanizePendingKind maps escalate_to_complex per pm/10", () => {

@@ -1,6 +1,6 @@
 # 当前项目目录树（评测与证据相关）
 
-> 生成时间：2026-06-15
+> 生成时间：2026-06-24（人工快照，可能与最新目录略有出入；以实际文件为准）
 > 排除：`__pycache__`、`.pyc`、runtime reports 具体文件
 
 ```
@@ -74,13 +74,14 @@ tests/evaluation/
   test_eval_regression_gate.py
   test_eval_route_exit_state.py
   test_eval_rule_catalog.py
+  test_run_project_validation.py
 scripts/evaluation/
-  _gen_project_tree.py
   render_eval_overview.py
   reset_eval_sandbox.py
   run_eval_regression.py
   run_eval_smoke.py
   run_eval_suite.py
+  run_project_validation.py
 runtime_data/eval_sandbox/
   runtime_data/eval_sandbox/kb_seed/
     .gitkeep
@@ -101,11 +102,17 @@ docs/evidence/
   eval_governance_guardrails.md
   eval_rule_fragility_audit.md
   evaluation_reproducibility.md
+  governance_backlog.md
   known_issues.md
+  project_validation_summary.md
   README.md
   real_external_smoke_sample.md
-  real_external_smoke_spec.md
+  real_external_validation_report.md
+  real_regression_validation_report.md
+  security_audit_record.md
   v3_observable_fields_report.md
+docs/history/evidence/
+  real_external_smoke_spec.md   # 已实施并归档
 ```
 
 ## 说明

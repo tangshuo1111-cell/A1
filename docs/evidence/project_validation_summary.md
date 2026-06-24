@@ -102,8 +102,9 @@ py scripts/evaluation/run_project_validation.py --profile full-staging --execute
 
 | 工作流 | 触发 | 跑什么 | 与三线关系 |
 | --- | --- | --- | --- |
-| **`.github/workflows/ci.yml`** | push / PR | gitleaks、ruff、架构 guard、pytest（**fake LLM**，`-m "not real_external"`）、OpenAPI 快照、前端 lint/e2e | **默认 CI**：轻量安全 + 单测/集成；**不跑** `regression_all` E2E、**不跑** `real_external_smoke` |
+| **`.github/workflows/ci.yml`** | push / PR | gitleaks、ruff、架构 guard、pytest（**fake LLM**，`-m "not real_external"`，含 `tests/evaluation/` + `tests/benchmarks/` schema）、`check_evidence_freshness.py`、`pip-audit`/`npm audit`（informational, continue-on-error）、OpenAPI 快照、前端 lint/e2e | **默认 CI**：轻量安全 + 单测/集成/契约守卫；**不跑** `regression_all` E2E、**不跑** `real_external_smoke` |
 | **`.github/workflows/real_external.yml`** | **workflow_dispatch**（手动） | `pytest -m real_external`（需 secrets） | **真实外部能力**可选自动化；**不是**每次 merge 默认 |
+| **`.github/workflows/staging_full_validation.yml`** | **schedule（cron）+ 手动** | `run_project_validation.py --profile full-staging --execute`（真实 LLM，需 secrets） | 定时 staging 全量（regression + external）；**需 secrets，不进 push/merge 默认 CI** |
 | **`.github/workflows/nightly_benchmark.yml`** | cron / 手动 | KB benchmark ingest + eval、agent smoke（fake LLM） | 夜间 KB 基准；**不是** 42/42 regression；fixture 位于 `docs/history/current/20–25_KB补强_*.md` |
 
 **必须对外如实表述**：
@@ -111,7 +112,7 @@ py scripts/evaluation/run_project_validation.py --profile full-staging --execute
 - ✅ 「项目提供真实验证套件，当前已在 staging 跑通 7/7 + 42/42」
 - ❌ 「每次 merge 自动保证 7/7 / 42/42」
 - 真实外部能力依赖：**secret / env / provider / staging backend / PG**；应放在 **workflow_dispatch / scheduled / protected staging**，不应塞进默认 CI。
-- **无 scheduled regression_all / scheduled real_external_smoke**；复现 42/42 + 7/7 依赖本地/staging 手动执行或 `full-staging --execute`。
+- **默认 push/merge CI 内无 42/42 / 7/7**；定时 staging 由 `staging_full_validation.yml`（cron + 手动，需 secrets）跑 `full-staging --execute`，或本地手动复现。两者都**不是** push 即自动保证。
 
 ### 5.1 Nightly KB Benchmark（2026-06-16 修复说明）
 

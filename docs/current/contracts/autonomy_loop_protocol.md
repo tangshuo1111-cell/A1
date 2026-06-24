@@ -48,7 +48,9 @@ fields:
       type: int
   stop_reason:
     type: enum
-    values: STOP_REASON
+    values: STOP_REASON   # 文档 enum；运行时真源 backend/application/chat/autonomy_loop.py::autonomy_stop_reason
+    # 运行时实际 emit 含：budget_exhausted / llm_calls_exhausted / max_round_reached 等；
+    # complex 路径另有 round_1_completed 等非 enums 值。以代码 emit 为准，enums 为目标口径。
     default: ""
   payload:
     type: object

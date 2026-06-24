@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import os
 import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -231,6 +232,7 @@ def render_html(report: dict[str, Any]) -> str:
             "达标": "v-pass",
             "未达标": "v-fail",
             "样本不足": "v-insufficient",
+            "不适用（FAKE）": "v-insufficient",
         }.get(status, "")
         verdict_rows += (
             f"<tr>"
@@ -252,6 +254,14 @@ def render_html(report: dict[str, Any]) -> str:
         else ""
     )
 
+    env_banner = (
+        '<div class="verdict" style="background:#fff4f4;border-color:#f0caca">'
+        "<strong>【环境：FAKE LLM】</strong>本周报由 FAKE LLM 生成（占位回答），"
+        "北极星2（复杂任务有效完成率）仅反映管线连通，<strong>不下达标结论</strong>"
+        "（KI-METRICS-001）。真实达标趋势须用真实 LLM（LIGHT_MAQA_FAKE_LLM=0）复跑。</div>"
+        if str(report.get("environment") or "REAL") == "FAKE"
+        else ""
+    )
     notes_path = report.get("notes_template_path", "")
     appendix_html = render_sample_appendix(report.get("sample_appendix") or [])
     metric_guide = """
@@ -305,6 +315,7 @@ table.appendix th{{background:#f8f9fb;font-weight:600}}
 </style></head><body>
 <h1>A1 产品协作周报</h1>
 <p>周期：{report.get("period_current","")} vs {report.get("period_previous","")}</p>
+{env_banner}
 {sample_block}
 {verdict_block}
 {metric_guide}
@@ -356,7 +367,23 @@ def main() -> None:
     prev_rows = [row_from_pg(r) for r in prev_pg_rows]
 
     report = compare_periods(aggregate_turn_rows(cur_rows), aggregate_turn_rows(prev_rows))
-    report["target_verdicts"] = evaluate_targets(report["current"])
+    # L13 观测层注入：FAKE LLM 运行时只标注、不改业务质量门 / 指标真源。
+    fake_llm = (
+        str(os.environ.get("LIGHT_MAQA_FAKE_LLM", "")).strip().lower()
+        in {"1", "true", "yes", "on"}
+    )
+    report["environment"] = "FAKE" if fake_llm else "REAL"
+    verdicts = evaluate_targets(report["current"])
+    if fake_llm:
+        # KI-METRICS-001：FAKE 下 complex 回答为占位文本 → 北极星2 不可外推；
+        # 仅在报告层把该项判定改为「不适用（FAKE）」，不输出达标 / 未达标结论。
+        for v in verdicts:
+            if v.get("key") == "complex_effective_complete_rate":
+                v["status"] = "不适用（FAKE）"
+                v["environment_note"] = (
+                    "FAKE LLM：仅验管线连通，不下达标结论（KI-METRICS-001）"
+                )
+    report["target_verdicts"] = verdicts
     report["period_current"] = f"{cur_start[:10]} – {cur_end[:10]}"
     report["period_previous"] = f"{prev_start[:10]} – {prev_end[:10]}"
     report["generated_at"] = datetime.now(UTC).isoformat()

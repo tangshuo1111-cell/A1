@@ -207,6 +207,7 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
 - FAKE 回答形如「测试回答：{原题}」，缺少对比结构/决策标记 → `quality_gate_block`
 - 北极星2 `complex_effective_complete_rate` 在 FAKE 沙箱上极低（如 4%），**不可外推为产品质量**
 - 当前处理策略：
+- **默认即真实 LLM**：指标沙箱 `scripts/run_metrics_sandbox.ps1` 默认 `LIGHT_MAQA_FAKE_LLM=0`（真实外部 LLM），北极星周报本来就是真实 LLM 跑的；4% 仅来自显式 `-FakeLLM` 的「仅验管线连通」跑。**本 KI 是防止 FAKE 跑数字被误用，并非指北极星默认是 FAKE。**
 - 周报三态：样本不足时不下达标结论；FAKE 跑只看管线连通，不看北极星2 绝对值
 - **真实 LLM 沙箱复跑**（`LIGHT_MAQA_FAKE_LLM=0`）才用于北极星2 趋势观测
 - 2026-06-22 真实 LLM 复跑：北极星2 **58.6%**（17/29 complex 有效完成），对比 FAKE 跑 **4%** — 证伪「FAKE 比率=产品质量」
@@ -214,7 +215,8 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
 - 样本题措辞：避免分析题正文出现裸 `commit` 英文子串（如 complex_21 旧文案），否则可能误触 commit 链（见 KI-V1-002 残留边界）
 - 后续建议：
 - 不在 FAKE 模式放宽 quality gate（会污染生产门禁语义）
-- 指标沙箱脚本默认要求真实 LLM，或显式 `--fake-llm` 旗标并强制周报标注 environment=FAKE
+- 指标沙箱默认即真实 LLM；如需 FAKE 仅验管线，用 `scripts/run_metrics_sandbox.ps1 -FakeLLM`（PowerShell switch），周报会强制标注 environment=FAKE
+- 2026-06-24 报告层缓解（仅 L13，不动业务质量门）：`scripts/report_product_metrics.py` 在 FAKE 下写 `environment=FAKE`，并把北极星2 判定改为「不适用（FAKE）」、HTML 顶部加 FAKE 横幅 → 杜绝「FAKE 比率被误读为产品质量」。**根因（FAKE 占位回答）未变**，真值仍须真实 LLM 复跑；故状态保持 `Open`。
 
 ---
 
@@ -296,6 +298,10 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
 - 回归方式：
 - `py scripts/evaluation/run_eval_suite.py --suite v2_5_multiturn_state`
 - 复测（2026-06-16）：`regression_all` 42/42；`background_task_followup_flow` 通过
+
+---
+
+## KI-V2.5-002
 
 - Issue ID：`KI-V2.5-002`
 - 标题：`continue_without_context_flow 空上下文继续请求被 succeeded + direct_llm 处理`

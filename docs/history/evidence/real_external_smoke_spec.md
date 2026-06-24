@@ -2,7 +2,7 @@
 
 > **版本**：v1.1（在 v1.0 基础上增加 guardrail 与不破坏性约束）  
 > **定位**：V4 之后的「真实可复现性补强」任务 — **不是 V5，不是新版本体系**  
-> **状态**：spec 定稿，待实施（本轮不写实现代码）
+> **状态**：**已实施并归档（2026-06）**。runner / cases / guardrail 测试均已落地并随 CI 收集（`tests/evaluation/runners/eval_real_external_runner.py`、`tests/evaluation/cases/real_external_smoke.yaml`、`test_eval_real_external_smoke.py`）；`real_external.yml`(workflow_dispatch) 与 `staging_full_validation.yml` 已挂接。本文件保留为历史 spec 记录。
 
 ---
 

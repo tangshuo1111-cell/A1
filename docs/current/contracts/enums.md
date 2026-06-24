@@ -23,16 +23,17 @@ MODE = { "fast", "complex", "async" }
 
 ## ROUTER_SOURCE（closed enum）
 
+代码真源 `backend/application/ingress/lane_decision_schema.py` 的 `RouterSourceName`：
+
 ```
 ROUTER_SOURCE = {
-  "rule",                   # high-confidence rule hit
-  "light_classifier",       # lightweight classifier hit
-  "rule+light_classifier",  # both agree
-  "llm_router",             # LLM router decision
-  "main_agent_escalation",  # escalated to MainAgent
-  "fallback_default"        # all classifiers failed
+  "rule",              # high-confidence rule hit
+  "light_classifier",  # lightweight classifier hit
+  "main_agent"         # escalated / decided by MainAgent
 }
 ```
+
+> 历史口径中出现过 `rule+light_classifier` / `llm_router` / `main_agent_escalation` / `fallback_default` 等字符串，**非当前 ingress 产出**，仅可能存在于旧 trace / compat 镜像，不得作为 canonical。
 
 ## AUTONOMY_TRIGGER（closed enum）
 
@@ -79,21 +80,44 @@ STOP_REASON = {
 }
 ```
 
-## TASK_STATUS（state machine）
+## TASK_STATUS（两套语义，勿混用）
+
+公开出口有两个不同的 task_status 面，**取值集合不同**：
+
+### CHAT_TURN_TASK_STATUS（`POST /chat/agno` 顶层 + extra）
+
+代码真源 `backend/application/chat/chat_contracts.py::TurnExitTaskStatus`：
 
 ```
-TASK_STATUS = {
+CHAT_TURN_TASK_STATUS = {
+  "pending",
+  "succeeded",
+  "failed",
+  "blocked",    # approval gate 阻断（前端文案「已阻止」）
+  "partial"     # 部分完成
+}
+```
+
+> 业务/前端读 chat 轮次状态时以本集合为准（含 `blocked` / `partial`）。`done` / `completed` / `routed` 会被 `normalize_task_status` 归一到 `succeeded`。
+
+### ASYNC_TASK_STATUS（异步任务生命周期，`GET /tasks*`）
+
+```
+ASYNC_TASK_STATUS = {
   "pending",    # enqueued, not yet consumed
+  "queued",     # 公开镜像（task_query_service.normalize_public_task_status 仍返回）
   "running",    # worker processing
   "succeeded",
   "failed",
+  "partial",
   "timeout",
+  "expired",
   "cancelled",
   "resumed"     # restarted after interruption
 }
 ```
 
-**Legal transitions:**
+**Async legal transitions:**
 ```
 pending  → running | cancelled
 running  → succeeded | failed | timeout | resumed

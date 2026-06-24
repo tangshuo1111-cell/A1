@@ -13,6 +13,8 @@ def test_project_validation_summary_profile() -> None:
         cwd=repo,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         check=False,
     )
     assert proc.returncode == 0, proc.stderr
@@ -31,6 +33,8 @@ def test_project_validation_full_staging_dry_run() -> None:
         cwd=repo,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         check=False,
     )
     assert proc.returncode == 0, proc.stderr

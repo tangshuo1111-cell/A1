@@ -1,7 +1,7 @@
 # Trace Field Catalog
 
 > **Authority**: §15.6 of docs/history/current/平台图+三强自治核心架构迁移执行计划.md  
-> **Implementation**: `backend/core/observability.py`, `backend/observability.py`  
+> **Implementation**: HTTP metrics `backend/observability.py` + `api/routes/internal_observability.py`（`GET /internal/metrics`）；phase 日志 `backend/core/observability.py`；chat exit trace `turn_response_builder.py` / `exit_extra_builder.py` / `response_assembly.py`  
 > **Forbidden**: Do NOT create a second trace framework.
 
 ---
@@ -20,7 +20,7 @@
 | Field | Level | Type | Source |
 |---|---|---|---|
 | `request_id` | PROD | string | `application/ingress` |
-| `lane` | PROD | enum LANE | same |
+| `router_lane` | PROD | enum LANE | exit extra canonical 键（`field_owners.py`）；同值同时镜像为 `lane` |
 | `mode` | PROD | enum MODE | same |
 | `router_source` | PROD | enum ROUTER_SOURCE | same |
 | `router_confidence` | PROD | float | same |
@@ -64,7 +64,7 @@
 |---|---|---|
 | `task_id` | PROD | string |
 | `task_type` | PROD | string |
-| `task_status` | PROD | enum TASK_STATUS |
+| `task_status` | PROD | enum ASYNC_TASK_STATUS |
 | `queue_backend` | PROD | enum QUEUE_BACKEND |
 | `worker_id` | DEBUG | string |
 | `retry_count` | PROD | int |
@@ -108,7 +108,7 @@
 
 | Field | Level | Type | Source |
 |---|---|---|---|
-| `quality_gate_passed` | PROD | bool | `turn_exit_gate.envelope_to_extra_fields` |
+| `quality_gate_passed` | PROD | bool | `turn_response_builder.build_exit_extra_from_envelope`（exit gate 触发；旧 `envelope_to_extra_fields` 已 deprecated 并转发至此） |
 | `insufficient_evidence` | PROD | bool | same |
 | `is_complex_task` | PROD | bool | same |
 | `failure_reason_code` | PROD | string | same |

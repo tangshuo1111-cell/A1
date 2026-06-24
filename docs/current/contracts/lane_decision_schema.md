@@ -59,7 +59,7 @@ fields:
 request_id: "req_abc123"
 lane: "video"
 mode: "fast"
-router_source: "rule+light_classifier"
+router_source: "rule"   # canonical 取值仅 rule | light_classifier | main_agent（见 enums.md）
 router_confidence: 0.93
 escalated_to_main_agent: false
 reason: "explicit video url + summarize intent"

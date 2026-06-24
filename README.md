@@ -109,6 +109,7 @@
 - 更深层的长期个人复盘和复杂分析仍在持续验证
 - 当前不把“抓到内容”自动等同于“应该直接入库”
 - 当前“单轮网页抓取并直接保存入库”不是默认主路径，知识沉淀仍然以用户确认保存为准
+- 验证分层（重要）：默认 CI（`.github/workflows/ci.yml`，FAKE LLM）跑的是轻量单测/集成 + 架构守卫，**不等于** 42/42 工程回归与 7/7 真实外部能力；后两者需 staging / 手动跑（`py -3.12 scripts/evaluation/run_project_validation.py --profile full-staging --execute`）。单一口径见 `docs/evidence/project_validation_summary.md`
 
 ## 典型使用方式
 
@@ -647,16 +648,10 @@ CI 默认门禁：
 python -m pytest -q -m "not real_external"
 ```
 
-按目录分层跑（默认 **不** 收集 `tests/legacy/` 考古用例）：
+按目录分层跑：
 
 ```powershell
 python -m pytest -q tests/smoke tests/backend tests/integration tests/acceptance
-```
-
-可选：仅跑历史归档（V14 等，依赖已删除的 SQLite 测试桩；可能失败）：
-
-```powershell
-python -m pytest -q tests/legacy
 ```
 
 ## 目录总览
@@ -683,7 +678,6 @@ python -m pytest -q tests/legacy
 │  ├─ integration/
 │  ├─ smoke/
 │  ├─ acceptance/
-│  ├─ legacy/          # 历史测试（pytest 默认不收集）
 │  ├─ _support/
 │  ├─ _fixtures/
 │  └─ fixtures/

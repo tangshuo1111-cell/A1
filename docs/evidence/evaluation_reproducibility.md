@@ -107,4 +107,4 @@ py scripts/evaluation/run_eval_suite.py --suite real_external_smoke
 
 `real_external_smoke` 的 status 枚举**只属于 evaluation report 层**，不出现在 `/chat/agno` 响应或业务 `task_status` 中。
 
-详见 [`real_external_smoke_spec.md`](real_external_smoke_spec.md)。
+详见 [`docs/history/evidence/real_external_smoke_spec.md`](/D:/1/A1_publish/docs/history/evidence/real_external_smoke_spec.md)（已实施并归档）。

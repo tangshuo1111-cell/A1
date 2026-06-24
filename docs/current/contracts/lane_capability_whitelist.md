@@ -1,8 +1,21 @@
 # Lane Capability Whitelist
 
-> **Authority**: §15.5 of docs/history/current/平台图+三强自治核心架构迁移执行计划.md  
-> **Naming convention**: `capability.<lane>.<verb>`  
-> Fast and complex share the capability pool; call-count limits differ.
+> **Authority（FAST 唯一真源）**: `backend/application/chat/executors/fast_lanes/fast_capability_policy.py` 的 `FAST_CAPABILITY_WHITELIST`。下方分 lane 表中 **fast 列以代码为准**；标 complex 的多为设计/能力名，complex 链不以同一字符串白名单 enforce。  
+> **Naming convention**: `capability.<lane>.<verb>`
+
+## FAST_CAPABILITY_WHITELIST（代码逐字，2026-06 口径）
+
+```
+video:    subtitle_probe, short_sync_asr, duration_probe
+document: probe, parse_quick, parse_pdf_quick, parse_text_or_table, summarize
+web:      static_fetch, probe
+kb:       probe, retrieve, rerank, grounding
+general:  direct_answer, canned_answer, weather_quick, fast_llm
+```
+
+跨 lane 例外（`CROSS_LANE_GENERAL_CAPABILITIES`）：`capability.general.fast_llm`、`capability.general.direct_answer`。
+
+> 下方分 lane 明细表为人工说明，如与上方代码块/`fast_capability_policy.py` 冲突，**以代码为准**。
 
 ---
 
@@ -69,6 +82,6 @@
 ## Cross-lane smuggling prohibition
 
 Fast Path **MUST NOT** call capabilities from other lanes (except
-`capability.general.fast_llm`).  
+`capability.general.fast_llm` 与 `capability.general.direct_answer`，见 `CROSS_LANE_GENERAL_CAPABILITIES`).  
 On violation: trace MUST record `cross_lane_violation=true`.  
 CI test MUST assert `cross_lane_violation` count is 0.

@@ -39,6 +39,8 @@ export function humanizeTaskStatus(raw: string | null | undefined): string {
     case "failed":
     case "error":
       return "未完成";
+    case "blocked":
+      return "已阻止";
     case "queued":
       return "排队中";
     case "running":

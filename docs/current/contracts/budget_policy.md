@@ -44,9 +44,9 @@ round_index >= MAX_AUTONOMY_ROUNDS → stop_reason = "max_round_reached"
 
 | Layer | Injected by | Consumed by | Fuse enforced by |
 |---|---|---|---|
-| Sync main chain | `application/chat/budget_clock.py` | MiddleAgent / tool calls | `application/chat/turn_orchestrator.py` |
+| Sync main chain | `application/chat/budget_clock.py` | MiddleAgent / tool calls | BudgetClock + `application/chat/autonomy_loop.py` / complex executor stages（`turn_orchestrator` 仅注入 clock） |
 | Autonomy loop | MainAgent | Middle / Answer | MainAgent |
-| Async task | `tasks/orchestration/task_dispatcher` | worker | worker |
+| Async task | `services/execution/async_dispatcher.py`（worker 入口 `workers/entry/task_dispatcher.py`） | worker | worker |
 
 ---
 
