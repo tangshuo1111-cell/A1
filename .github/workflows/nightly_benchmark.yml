@@ -68,7 +68,7 @@ jobs:
         run: python scripts/benchmarks/check_kb_regression.py --results _local/kb_nightly.json
 
       - name: Upload nightly KB eval artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: kb-nightly-eval
           path: _local/kb_nightly.json
@@ -135,7 +135,7 @@ jobs:
           EOF
 
       - name: Upload agent smoke artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: agent-smoke-eval
           path: |
