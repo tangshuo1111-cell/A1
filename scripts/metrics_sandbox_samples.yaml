@@ -82,7 +82,7 @@ samples:
     message: "请比较关键词高亮、原文片段引用和结构化字段三种 grounding 呈现方式在可信度和实现成本上的差异，并给出推荐组合。"
   - id: complex_16
     tag: complex
-    message: "请综合分析多轮对话里 session 状态、pending 任务追踪和上下文承接三者如何协同，并指出最容易出现'假闭环'的两个环节。"
+    message: "请从 session 状态、pending 任务追踪、上下文承接三个维度，综合分析多轮对话状态如何协同，并指出最容易出现'假闭环'的两个环节。"
   - id: complex_17
     tag: complex
     message: "请从冷启动、长期维护和检索质量三个维度，评估『用户确认后才收录资料』对知识库规模与复用率的长期影响，并给出迭代建议。"

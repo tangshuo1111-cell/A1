@@ -31,6 +31,30 @@ def _fake_llm_enabled() -> bool:
     return bool(settings.fake_llm_enabled)
 
 
+def _fake_answer_stub(text: str) -> str:
+    """FAKE LLM 占位回答（仅 LIGHT_MAQA_FAKE_LLM=1 时使用，生产走真实 LLM）。
+
+    设计意图（KI-METRICS-001）：FAKE 模式的唯一用途是「验管线连通」。旧桩 `测试回答：{text}`
+    过短且无结构，会被既有质量门挡在第一步，使连通跑被占位文本卡死、北极星2 只反映噪声。
+    这里改为一个**显式标注的结构化桩**，让连通跑能真正流过未改动的质量门，
+    从而测到下游主链而非卡在占位文本。
+
+    硬约束：
+    - 不改质量门判定标准（`quality_gate.py` 不动），只是让桩输出像真实结构化回答；
+    - 仍显式标注为测试桩，绝不冒充真实质量；FAKE 数字的误读防护在报告层
+      （`report_product_metrics.py` 按 environment=FAKE 标「不适用」），与本桩无关；
+    - 不含「知识库/网页/视频」等会触发诚实性 claims 抽取的措辞，避免伪造证据声明。
+    """
+    return (
+        "【测试回答·FAKE桩】本回答由 FAKE LLM 桩生成，仅用于验证主链连通，不代表真实回答质量。\n"
+        f"针对问题「{text}」，下面给出结构化说明：\n"
+        "首先，明确问题的核心诉求与边界；其次，对比可选方案的优缺点与差异，"
+        "并分析各自适用场景。\n"
+        "如果偏向稳定性，情况一可优先方案 A；如果偏向灵活性，情况二可优先方案 B。\n"
+        "综合权衡上述维度，最终建议结合实际约束择优落地，并以可观测指标验证结论。"
+    )
+
+
 def _require_llm_key() -> None:
     if not settings.openai_api_key:
         raise AppError(
@@ -166,7 +190,7 @@ def run_basic_qa(
         prompt = strat + output_rule + (head + f"【用户问题】\n{text}" if head else text)
 
     if _fake_llm_enabled():
-        return f"测试回答：{text}"
+        return _fake_answer_stub(text)
 
     agent = _build_agent()
     try:

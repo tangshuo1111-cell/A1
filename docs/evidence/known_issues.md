@@ -57,6 +57,8 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
 > 2026-06-22 修复：**KI-V1-004**（`document_fast` 上传解析不建 pending，导致「保存到知识库」被 approval gate 拦截）→ upload 同步 `prepare_file_source` 写入 pending；`reuse_flow_01` 可用普通 prepare 话术。
 >
 > 2026-06-22 修复：**KI-V1-001** 由 `Deferred` 转 `Fixed` — `_lane_from_main_plan` 对显式网页读取意图锚定 `web` lane，MainAgent 误标 `text/text_file` 不再漂到 `document`。
+>
+> 2026-06-25 修复（仅 FAKE 桩，不动质量门）：**KI-METRICS-001** 的可操作根因（占位回答过短无结构→被既有质量门挡在第一步→连通跑只反映噪声）已在 `backend/agents/answer_agent/llm_exec.py` 的 FAKE 分支修复：桩改为**显式标注的结构化回答**，让 FAKE「验管线连通」跑能真正流过**未改动**的质量门。环境口径性质（FAKE 比率≠产品质量）不变，仍由报告层 `environment=FAKE / 判定不适用` 守护，故 KI 保留为环境告警。
 
 下文 KI-V2-001 / KI-V2.5-001 / KI-V2.5-002 / KI-V3-001 / KI-V3-002 / KI-V3-003 均为 **`Fixed`**；本轮复测未再命中对应 case 失败。
 
@@ -202,7 +204,7 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
 - 来源版本：指标沙箱北极星2 观测
 - 来源 case：`complex_*` 子集（`_local/reports/metrics/weekly_2026-06-22.json`）
 - 问题类型：`observability environment limitation`（非产品诚实性缺陷）
-- 当前状态：`Open`（环境口径问题，非主链 bug）
+- 当前状态：`Open`（环境口径问题，非主链 bug；2026-06-25 已修复其中"占位桩过短被门挡死"的可操作根因，详见下方处理策略）
 - 现象：
 - FAKE 回答形如「测试回答：{原题}」，缺少对比结构/决策标记 → `quality_gate_block`
 - 北极星2 `complex_effective_complete_rate` 在 FAKE 沙箱上极低（如 4%），**不可外推为产品质量**
@@ -216,7 +218,20 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
 - 后续建议：
 - 不在 FAKE 模式放宽 quality gate（会污染生产门禁语义）
 - 指标沙箱默认即真实 LLM；如需 FAKE 仅验管线，用 `scripts/run_metrics_sandbox.ps1 -FakeLLM`（PowerShell switch），周报会强制标注 environment=FAKE
-- 2026-06-24 报告层缓解（仅 L13，不动业务质量门）：`scripts/report_product_metrics.py` 在 FAKE 下写 `environment=FAKE`，并把北极星2 判定改为「不适用（FAKE）」、HTML 顶部加 FAKE 横幅 → 杜绝「FAKE 比率被误读为产品质量」。**根因（FAKE 占位回答）未变**，真值仍须真实 LLM 复跑；故状态保持 `Open`。
+- 2026-06-24 报告层缓解（仅 L13，不动业务质量门）：`scripts/report_product_metrics.py` 在 FAKE 下写 `environment=FAKE`，并把北极星2 判定改为「不适用（FAKE）」、HTML 顶部加 FAKE 横幅 → 杜绝「FAKE 比率被误读为产品质量」。
+- 2026-06-25 桩层修复（不动质量门 / 路由 / 状态 / 出口 / 事实源）：`backend/agents/answer_agent/llm_exec.py` 的 FAKE 分支由裸 `测试回答：{text}` 改为 `_fake_answer_stub`——**显式标注的结构化回答**（含结论/对比/分情况/建议，且不含「知识库/网页/视频」等会触发诚实性 claims 的措辞）。
+  - 目的：FAKE 唯一用途是「验管线连通」；旧桩过短无结构，被既有质量门挡在第一步，使连通跑被占位文本卡死（北极星2 ~4% 实为噪声）。新桩让连通跑能真正流过**未改动**的质量门，测到下游主链而非卡在占位文本。
+  - 边界：未改 `quality_gate.py` 判定标准（不是放宽门，是让桩输出像真实结构化回答）；未新增平行链路/第二套事实源/新 Gate；只在 `LIGHT_MAQA_FAKE_LLM=1` 生效，生产走真实 LLM 不受影响。
+  - 误读防护不变：FAKE 比率仍由报告层结构性标「不适用（FAKE）」（与具体数字无关），改桩不会让 FAKE 数字被误读为质量。
+  - 回归：`tests/unit/test_ki_metrics_001_fake_stub.py`（桩仍显式标注 + 能流过 complex/fast 质量门）；相关 agents/chat/unit 套件 379 passed。
+- **根因里"FAKE≠真实质量"的本质不变**，真值仍须真实 LLM 复跑；故 KI 整体保持 `Open` 作为环境告警，仅其中"占位桩被门挡死"的可操作子项已修。
+- 2026-06-25 真实 LLM 复跑实测（`environment=REAL`，`scripts/run_metrics_sandbox.ps1`，证据 `_local/reports/metrics/weekly_2026-06-25.json`，gitignored）：
+  - 北极星2 = **58.6%**（17/29 complex），FAKE 同口径 = **4%** → **命题（FAKE≠产品质量）由数据证实**；
+  - 该复跑判定为「**样本不足**」（complex 计数 29 < 30 下限，差 1，因 `complex_16` 被判 `is_complex_task=false`），且 **58.6% < 70% 目标** → 暴露**真实产品差距**，主因 `upgrade_still_partial` ×6；
+  - 质量门通过率 77.3%、Partial 20.5%、insufficiency 6.8%（后两者达标）。
+  - 结论：本 KI 的「占位桩」子项与「证伪命题」均已闭环；**剩余的不是环境问题，而是真实质量项**，派生两个独立 backlog（见下），不再挂在本 KI 名下：
+    - **KI-METRICS-002（样本补齐）**：修 `complex_16` 分类/期望，使 complex 计数 ≥30，北极星2 才能出硬判定（非「样本不足」）。
+    - **KI-METRICS-003（`upgrade_still_partial` 专项）**：复杂题升级 complex 后为何停在 partial（质量门二轮偏严 vs 材料不足），是北极星2 上不去的真实主因。
 
 ---
 
