@@ -389,3 +389,60 @@ def build_complex_failure_breakdown(rows: list[dict[str, Any]]) -> dict[str, Any
         "partial_buckets": buckets,
         "would_answer_refine_ids": would_flip,
     }
+
+
+def _latest_answer_only_trace(bundle: Any) -> dict[str, Any] | None:
+    events = list(getattr(bundle, "autonomy_events", None) or [])
+    for ev in reversed(events):
+        if not isinstance(ev, dict):
+            continue
+        if str(ev.get("requested_action") or "") == "answer_only_regenerate":
+            return ev
+        payload = ev.get("payload") or {}
+        if isinstance(payload, dict) and payload.get("refine_kind") == "answer_only":
+            return ev
+    return None
+
+
+def is_answer_only_refine_bundle(bundle: Any) -> bool:
+    """True when complex feedback scheduled depth-only round-1 regeneration."""
+    if not complex_refine_v2_active():
+        return False
+    return _latest_answer_only_trace(bundle) is not None
+
+
+def answer_only_refine_reason_codes(bundle: Any) -> tuple[str, ...]:
+    ev = _latest_answer_only_trace(bundle)
+    if not ev:
+        return ()
+    payload = ev.get("payload") or {}
+    raw = payload.get("refine_reason_codes") if isinstance(payload, dict) else None
+    if not raw:
+        return ()
+    return tuple(str(code) for code in raw if str(code).strip())
+
+
+_ANSWER_ONLY_REASON_HINTS: dict[str, str] = {
+    "answer_too_shallow": "显著加长，至少覆盖题目要求的各维度/角度。",
+    "complex_answer_not_deep_enough": "补充案例、分情况分析与可执行建议，避免只列概念。",
+    "deep_complex_requires_agent": "按复杂题标准展开：对比 + 取舍 + 场景化结论。",
+    "case_analysis_missing": "至少给出 2–3 个分情况/scenario 分析。",
+    "decision_not_made": "必须给出明确推荐/选型结论，不可只描述选项。",
+    "structure_not_satisfied": "用清晰结构（分点或小标题）组织答案。",
+    "comparison_not_performed": "对题目中的对象做逐项对比，不要只讲单方。",
+}
+
+
+def build_answer_only_executor_hint(*, reason_codes: tuple[str, ...] | list[str]) -> str:
+    """Executor hint for round-1 depth regeneration (general-lane, no new material)."""
+    lines = [
+        "【质量门二轮：仅重生成答案】",
+        "这是 general-lane 纯推理/对比/设计题：无知识库或网页材料也可基于常识与工程经验作答。",
+        "禁止输出「材料不足 / 无法确认 / 请补充资料 / 未检索到片段」等 insufficiency 拒答模板。",
+        "必须：先给结论；按题目维度展开；给场景化建议；篇幅与深度明显超过上一轮。",
+    ]
+    for code in reason_codes or ():
+        hint = _ANSWER_ONLY_REASON_HINTS.get(str(code))
+        if hint:
+            lines.append(f"- 针对 {code}：{hint}")
+    return "\n".join(lines)

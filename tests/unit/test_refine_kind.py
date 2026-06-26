@@ -5,9 +5,12 @@ from __future__ import annotations
 import pytest
 
 from application.chat.refine_kind import (
+    answer_only_refine_reason_codes,
+    build_answer_only_executor_hint,
     build_complex_failure_breakdown,
     classify_partial_bucket,
     enrich_metrics_diagnostic_row,
+    is_answer_only_refine_bundle,
     narrow_general_reasoning_gate_reasons,
     narrow_kb_insufficient_reasons,
     resolve_refine_kind,
@@ -183,6 +186,52 @@ def test_enrich_metrics_diagnostic_row():
     assert out["stop_reason"] == "no_executable_feedback_plan"
     assert out["metrics_would_answer_refine"] is True
     assert out["metrics_partial_bucket"] == "answer_only_gap"
+
+
+def test_build_answer_only_executor_hint_forbids_insufficiency_template():
+    hint = build_answer_only_executor_hint(reason_codes=("answer_too_shallow", "decision_not_made"))
+    assert "禁止" in hint
+    assert "材料不足" in hint
+    assert "decision_not_made" in hint or "明确推荐" in hint
+
+
+def test_is_answer_only_refine_bundle_from_trace():
+    from agents.middle_agent.schema import AgnoMaterialBundle, CailiaoPan
+
+    bundle = AgnoMaterialBundle(
+        knowledge_block=None,
+        web_block=None,
+        trace=[],
+        knowledge_adequate=True,
+        material_still_insufficient=False,
+        web_judgment_reason="skip",
+        kb_evidence_tier="none",
+        insufficiency_signal="",
+        cailiao_pan=CailiaoPan(
+            gou=True,
+            kb_qiangdu=0.0,
+            bukong_xinhao="zu",
+            laiyuan_zhu="wu",
+            use_kb=False,
+            use_web=False,
+            que_shenme="",
+            xia_yi_bu="bu_wang",
+        ),
+        material_sufficiency="sufficient",
+        bundle_id="b-ao",
+        autonomy_events=[
+            {
+                "requested_action": "answer_only_regenerate",
+                "payload": {
+                    "refine_kind": "answer_only",
+                    "refine_reason_codes": ["answer_too_shallow"],
+                },
+            }
+        ],
+    )
+    FEATURE_FLAGS["ENABLE_COMPLEX_REFINE_V2"] = True
+    assert is_answer_only_refine_bundle(bundle)
+    assert answer_only_refine_reason_codes(bundle) == ("answer_too_shallow",)
 
 
 def test_build_complex_failure_breakdown():

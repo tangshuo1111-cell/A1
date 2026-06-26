@@ -28,6 +28,11 @@ from agents.middle_agent import AgnoMaterialBundle
 from agents.ports import AnswerAgentPort
 from application.chat.budget_clock import BudgetClock
 from application.chat.chat_contracts import AnswerAgentResult, assert_agent_extra_safe
+from application.chat.refine_kind import (
+    answer_only_refine_reason_codes,
+    build_answer_only_executor_hint,
+    is_answer_only_refine_bundle,
+)
 from debug_trace import trace
 
 from .answer_bundle_extra import (
@@ -294,6 +299,23 @@ class AnswerAgent(AnswerAgentPort):
             )
 
         answer_mode = getattr(plan, "answer_mode", "direct") or "direct"
+
+        if is_answer_only_refine_bundle(bundle):
+            hint = build_answer_only_executor_hint(
+                reason_codes=answer_only_refine_reason_codes(bundle),
+            )
+            text = self.zhixing.shengcheng(  # type: ignore[attr-defined]
+                user_message,
+                context_block=context_block,
+                knowledge_block=None,
+                web_search_block=None,
+                executor_hint=hint,
+            )
+            return AnswerAgentResult(
+                answer_text=text,
+                huida_pan=hp,
+                agent_extra=self.collab_extra(plan, bundle),
+            )
 
         if answer_mode == "source_brief_summary":
             review = self.review_multisource(

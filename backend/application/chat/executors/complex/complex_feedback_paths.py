@@ -84,6 +84,9 @@ def schedule_answer_only_refine(
             bundle,
             used_rounds=[0, 1],
             final_answer_based_on_round="round_1",
+            answer_limitations=[],
+            material_still_insufficient=False,
+            insufficiency_signal="",
         )
     return bundle
 

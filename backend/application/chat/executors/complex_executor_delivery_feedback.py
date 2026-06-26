@@ -15,6 +15,7 @@ from application.chat.executors.complex.complex_deadline import FeedbackGatherCo
 from application.chat.executors.complex.complex_feedback_impl import run_feedback_round_execution
 from application.chat.history_buffer import ChatTurnDeps
 from application.chat.shared_material_prep import run_shared_material_prep
+from application.chat.refine_kind import is_answer_only_refine_bundle
 from config.feature_flags import shared_retrieval_active
 from domain.session_types import SessionHistorySnapshot
 
@@ -116,18 +117,19 @@ def run_complex_feedback_loop(
             material_bundle=bundle,
             clock=budget_clock,
         )
+        answer_only_r1 = is_answer_only_refine_bundle(bundle)
         gate_input_r1 = gate_input_from_ingress(
             ingress=ingress,
             executor_profile="complex",
             round_index=1,
             answer_text=answer_text,
             shared_prep=shared_prep_out,
-            limitations=list(getattr(bundle, "answer_limitations", []) or []),
+            limitations=[] if answer_only_r1 else list(getattr(bundle, "answer_limitations", []) or []),
             material_facts=material_gate_facts_from_bundle(bundle, plan=plan),
             use_knowledge=use_knowledge,
             retrieved_chunks_count=len(list(getattr(bundle, "retrieved_chunks", []) or [])),
             pending_kind=str(getattr(session_pending_kind, "value", session_pending_kind) or "") or None,
-            insufficient_evidence=bool(getattr(bundle, "insufficient_evidence", False)),
+            insufficient_evidence=False if answer_only_r1 else bool(getattr(bundle, "insufficient_evidence", False)),
         )
         r1_outcome = run_delivery_gate(
             gate_input_r1,

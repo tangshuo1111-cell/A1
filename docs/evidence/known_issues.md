@@ -253,7 +253,8 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
   - 诊断分解：complex_partial=8，桶 **insufficiency_expected:8**（主因 `web_fetch_empty` + `limitations_present` 共现，`would_answer_refine_ids=[]`）；
   - Guardrail：Partial 20.5% ✅、insufficiency 22.7% ✅、质量门通过率 77.3%。
 - **2026-06-26 RefineV2 真实复跑（flag 关 A/B）**：北极星2 仍 **60.0%**；partial 8 条全为 `insufficiency_expected`，无 `answer_only` 触发（材料桶误判，见 004）。
-- **2026-06-26 004 合入后真实复跑**：`answer_only_refine_scheduled` 已触发（complex_04/06/14/24 等）；`would_answer_refine_ids` 非空；但二轮仍多落诚实 insufficiency 模板 → 北极星2 仍 **60.0%**（18/30），complex_partial=8；003 数值 PASS（≥70%）**未达标**。
+- **2026-06-26 004 合入后真实复跑**：`answer_only_refine_scheduled` 已触发；`would_answer_refine_ids` 非空；北极星2 仍 **60%**（18/30）。
+- **2026-06-26 005 补全**：`is_answer_only_refine_bundle` / `build_answer_only_executor_hint` 入 `refine_kind.py`；`AnswerAgent.huida` 二轮走 depth-only hint；round-1 gate 对 answer_only 清 limitations/insuf 误判。
 
 ---
 
