@@ -25,8 +25,9 @@ from config.feature_flags import FEATURE_FLAGS
 
 
 @pytest.fixture(autouse=True)
-def _restore_flags():
+def _restore_flags(monkeypatch):
     saved = dict(FEATURE_FLAGS)
+    monkeypatch.delenv("ENABLE_COMPLEX_REFINE_V2", raising=False)
     yield
     FEATURE_FLAGS.clear()
     FEATURE_FLAGS.update(saved)
@@ -285,6 +286,26 @@ def test_narrow_general_reasoning_keeps_material_with_strong_chunks():
         kb_evidence_tier="strong",
     )
     assert out == ["material_insufficient", "answer_too_shallow"]
+
+
+def test_resolve_limitations_only_general_refine():
+    FEATURE_FLAGS["ENABLE_COMPLEX_REFINE_V2"] = True
+    assert (
+        resolve_refine_kind(
+            need_second_round=True,
+            need_more_material=False,
+            reason_codes=("limitations_present",),
+            insufficient_evidence=True,
+            pending_kind=None,
+            answer_text="结论：Hybrid 检索应优先。",
+            limitations=["当前未从知识库检索到可用片段"],
+            lane="general",
+            use_knowledge=False,
+            retrieved_chunks_count=1,
+            kb_evidence_tier="weak",
+        )
+        == "answer_only"
+    )
 
 
 def test_reconcile_answer_only_turn_facts_clears_stale_partial():

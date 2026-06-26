@@ -94,6 +94,33 @@ def _has_document_intent_from_message(
     return bool(_ASCII_DOC_EXT_RE.search(attachment_names))
 
 
+def _is_about_kb_strategy_question(message: str) -> bool:
+    """Discussing KB product/workflow — not querying KB for facts."""
+    msg = (message or "").strip()
+    if not msg:
+        return False
+    lower = msg.lower()
+    if any(q in msg for q in ("根据知识库", "查知识库", "检索知识库", "从知识库", "知识库里关于")):
+        return False
+    if "知识库" not in msg and "rag" not in lower:
+        return False
+    strategy_markers = (
+        "产品策略",
+        "收录",
+        "沉淀",
+        "用户确认",
+        "全量自动",
+        "知识库问答",
+        "知识库规模",
+        "复用率",
+        "冷启动",
+        "长期维护",
+        "确认后再收录",
+        "自动沉淀",
+    )
+    return any(m in msg for m in strategy_markers)
+
+
 def classify_request(
     *,
     message: str,
@@ -125,7 +152,10 @@ def classify_request(
         has_document_intent = True
     if "local_file" in attachment_types:
         has_document_intent = True
-    has_kb_intent = use_knowledge or any(token.lower() in lower for token in _KB_HINTS)
+    has_kb_intent = use_knowledge or (
+        any(token.lower() in lower for token in _KB_HINTS)
+        and not _is_about_kb_strategy_question(msg)
+    )
     has_web_intent = (has_web_url or any(token in lower for token in _WEB_HINTS)) and not has_unsupported_video_url
     has_ocr_intent = any(token in lower for token in _OCR_HINTS)
     has_long_video_hint = "长视频" in msg or "后台" in msg or "youtube.com" in lower or "youtu.be" in lower

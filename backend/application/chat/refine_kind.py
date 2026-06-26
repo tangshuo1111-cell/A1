@@ -283,6 +283,36 @@ def would_answer_only_refine_apply(
     )
 
 
+def _limitations_only_general_refine(
+    *,
+    reason_codes: tuple[str, ...] | list[str],
+    limitations: list[str] | None,
+    lane: str,
+    use_knowledge: bool,
+    retrieved_chunks_count: int,
+    kb_evidence_tier: str,
+    need_second_round: bool,
+    need_more_material: bool,
+) -> bool:
+    """General-lane: stale material honesty lines → depth regen, not web gather."""
+    if not complex_refine_v2_active() or not need_second_round:
+        return False
+    raw = {str(c) for c in (reason_codes or ()) if str(c).strip()}
+    if raw != {"limitations_present"}:
+        return False
+    lane_l = str(lane or "").strip().lower()
+    if lane_l == "kb" or use_knowledge:
+        return False
+    if _material_relevant_chunks(
+        retrieved_chunks_count=retrieved_chunks_count,
+        kb_evidence_tier=kb_evidence_tier,
+    ):
+        return False
+    if need_more_material and _limitations_are_material_scope_only(list(limitations or ())) is False:
+        return False
+    return True
+
+
 def resolve_refine_kind(
     *,
     need_second_round: bool,
@@ -307,6 +337,17 @@ def resolve_refine_kind(
         retrieved_chunks_count=retrieved_chunks_count,
         kb_evidence_tier=kb_evidence_tier,
     )
+    if _limitations_only_general_refine(
+        reason_codes=reason_codes,
+        limitations=limitations,
+        lane=lane,
+        use_knowledge=use_knowledge,
+        retrieved_chunks_count=retrieved_chunks_count,
+        kb_evidence_tier=kb_evidence_tier,
+        need_second_round=need_second_round,
+        need_more_material=need_more_material,
+    ):
+        return "answer_only"
     if need_more_material or bool(effective_codes & MATERIAL_REASON_CODES):
         return "material"
     if would_answer_only_refine_apply(
