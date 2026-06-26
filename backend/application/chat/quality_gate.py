@@ -44,12 +44,19 @@ def _apply_material_gate_facts(
     executor_profile: ExecutorProfile,
     round_index: int,
     material_facts: MaterialGateFacts | None,
+    lane: str = "general",
+    use_knowledge: bool = False,
 ) -> bool:
     """Read Middle facts; return whether corrective web/material round is needed."""
     if material_facts is None or executor_profile != "complex" or round_index != 0:
         return False
     if not material_facts.try_rag_executed:
         return False
+    if complex_refine_v2_active():
+        lane_l = str(lane or "").strip().lower()
+        tier_l = str(getattr(material_facts, "kb_evidence_tier", "none") or "none").strip().lower()
+        if lane_l == "general" and not use_knowledge and tier_l in {"weak", "none"}:
+            return False
     if not _material_insufficient_for_web_fallback(material_facts):
         return False
     if not material_facts.allow_web or material_facts.has_web_evidence:
@@ -99,6 +106,8 @@ def evaluate_quality_gate(
         executor_profile=executor_profile,
         round_index=round_index,
         material_facts=material_facts,
+        lane=lane,
+        use_knowledge=use_knowledge,
     )
 
     kb_in_scope = lane == "kb" or kb_sufficiency is not None
@@ -144,6 +153,12 @@ def evaluate_quality_gate(
             if strong_reasoning_combo and _looks_incomplete_tail(text):
                 reasons.append("answer_tail_incomplete")
 
+    kb_tier = "none"
+    if kb_sufficiency is not None:
+        kb_tier = str(kb_sufficiency.evidence_tier or "none")
+    elif material_facts is not None:
+        kb_tier = str(getattr(material_facts, "kb_evidence_tier", "none") or "none")
+
     reasons = list(dict.fromkeys(reasons))
     reasons = narrow_general_reasoning_gate_reasons(
         reasons,
@@ -151,6 +166,7 @@ def evaluate_quality_gate(
         lane=lane,
         use_knowledge=use_knowledge,
         retrieved_chunks_count=retrieved_chunks_count,
+        kb_evidence_tier=kb_tier,
     )
     # Recompute from narrowed reasons so general-lane RefineV2 narrow cannot leave
     # a stale material_need_more flag driving web feedback after false-positive material codes.

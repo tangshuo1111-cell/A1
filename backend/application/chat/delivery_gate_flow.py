@@ -110,6 +110,11 @@ def run_delivery_gate(
         lane=gate_input.lane,
         use_knowledge=gate_input.use_knowledge,
         retrieved_chunks_count=gate_input.retrieved_chunks_count,
+        kb_evidence_tier=(
+            str(gate_input.kb_sufficiency.evidence_tier)
+            if gate_input.kb_sufficiency is not None
+            else str(getattr(gate_input.material_facts, "kb_evidence_tier", "") or "")
+        ),
     )
     extra["refine_kind"] = refine_kind
     extra["metrics.would_answer_refine"] = would_answer_only_refine_apply(
@@ -160,6 +165,7 @@ def material_gate_facts_from_bundle(
         try_rag_executed=bool(getattr(plan, "needs_retrieval", False)) if plan is not None else False,
         has_web_evidence=bool(web_block),
         allow_web=bool(getattr(xiezuo, "allow_web", False)) if xiezuo is not None else False,
+        kb_evidence_tier=str(getattr(bundle, "kb_evidence_tier", "none") or "none"),
     )
 
 

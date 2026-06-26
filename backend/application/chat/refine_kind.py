@@ -79,6 +79,20 @@ def _commit_blocked(*, pending_kind: str | None, answer_text: str) -> bool:
     return any(marker in text for marker in _COMMIT_MARKERS)
 
 
+def _material_relevant_chunks(
+    *,
+    retrieved_chunks_count: int,
+    kb_evidence_tier: str = "",
+) -> bool:
+    """True when retrieved chunks should block general-lane material narrow."""
+    if retrieved_chunks_count <= 0:
+        return False
+    tier_l = str(kb_evidence_tier or "").strip().lower()
+    if tier_l in {"weak", "none"}:
+        return False
+    return True
+
+
 def _effective_answer_only_codes(
     reason_codes: tuple[str, ...] | list[str],
     limitations: list[str],
@@ -86,12 +100,16 @@ def _effective_answer_only_codes(
     lane: str,
     use_knowledge: bool,
     retrieved_chunks_count: int,
+    kb_evidence_tier: str = "",
 ) -> set[str]:
     codes = set(reason_codes or ())
     if not complex_refine_v2_active():
         return codes
     lane_l = str(lane or "").strip().lower()
-    if lane_l == "kb" or use_knowledge or retrieved_chunks_count > 0:
+    if lane_l == "kb" or use_knowledge or _material_relevant_chunks(
+        retrieved_chunks_count=retrieved_chunks_count,
+        kb_evidence_tier=kb_evidence_tier,
+    ):
         return codes
     codes -= MATERIAL_REASON_CODES
     if "limitations_present" in codes and _limitations_are_material_scope_only(limitations):
@@ -107,12 +125,16 @@ def _depth_refine_eligible_despite_insufficiency(
     lane: str,
     use_knowledge: bool,
     retrieved_chunks_count: int,
+    kb_evidence_tier: str = "",
 ) -> bool:
     """General-lane reasoning: material-level insuf must not block depth-only refine."""
     if not insufficient_evidence or not complex_refine_v2_active():
         return False
     lane_l = str(lane or "").strip().lower()
-    if lane_l == "kb" or use_knowledge or retrieved_chunks_count > 0:
+    if lane_l == "kb" or use_knowledge or _material_relevant_chunks(
+        retrieved_chunks_count=retrieved_chunks_count,
+        kb_evidence_tier=kb_evidence_tier,
+    ):
         return False
     codes = _effective_answer_only_codes(
         reason_codes,
@@ -120,6 +142,7 @@ def _depth_refine_eligible_despite_insufficiency(
         lane=lane,
         use_knowledge=use_knowledge,
         retrieved_chunks_count=retrieved_chunks_count,
+        kb_evidence_tier=kb_evidence_tier,
     )
     if not codes or codes & MATERIAL_REASON_CODES:
         return False
@@ -140,6 +163,7 @@ def _answer_only_core(
     lane: str = "general",
     use_knowledge: bool = False,
     retrieved_chunks_count: int = 0,
+    kb_evidence_tier: str = "",
 ) -> bool:
     if not need_second_round or need_more_material:
         return False
@@ -150,6 +174,7 @@ def _answer_only_core(
         lane=lane,
         use_knowledge=use_knowledge,
         retrieved_chunks_count=retrieved_chunks_count,
+        kb_evidence_tier=kb_evidence_tier,
     ):
         return False
     if _commit_blocked(pending_kind=pending_kind, answer_text=answer_text):
@@ -160,6 +185,7 @@ def _answer_only_core(
         lane=lane,
         use_knowledge=use_knowledge,
         retrieved_chunks_count=retrieved_chunks_count,
+        kb_evidence_tier=kb_evidence_tier,
     )
     if not codes:
         return False
@@ -188,12 +214,16 @@ def narrow_general_reasoning_gate_reasons(
     lane: str,
     use_knowledge: bool,
     retrieved_chunks_count: int,
+    kb_evidence_tier: str = "",
 ) -> list[str]:
     """RefineV2: drop material/kb false positives on general lane without KB scope."""
     if not complex_refine_v2_active():
         return reasons
     lane_l = str(lane or "").strip().lower()
-    if lane_l == "kb" or use_knowledge or retrieved_chunks_count > 0:
+    if lane_l == "kb" or use_knowledge or _material_relevant_chunks(
+        retrieved_chunks_count=retrieved_chunks_count,
+        kb_evidence_tier=kb_evidence_tier,
+    ):
         return reasons
     out = [code for code in reasons if code not in MATERIAL_REASON_CODES]
     if "limitations_present" in out and _limitations_are_material_scope_only(limitations):
@@ -207,6 +237,7 @@ def narrow_kb_insufficient_reasons(
     lane: str,
     use_knowledge: bool,
     retrieved_chunks_count: int,
+    kb_evidence_tier: str = "",
 ) -> list[str]:
     """Drop kb_insufficient when general reasoning has no KB scope (false-positive narrow)."""
     return narrow_general_reasoning_gate_reasons(
@@ -215,6 +246,7 @@ def narrow_kb_insufficient_reasons(
         lane=lane,
         use_knowledge=use_knowledge,
         retrieved_chunks_count=retrieved_chunks_count,
+        kb_evidence_tier=kb_evidence_tier,
     )
 
 
@@ -231,6 +263,7 @@ def would_answer_only_refine_apply(
     lane: str = "general",
     use_knowledge: bool = False,
     retrieved_chunks_count: int = 0,
+    kb_evidence_tier: str = "",
 ) -> bool:
     """Shared predicate for shadow (live=False) and live answer-only refine (live=True)."""
     if live and not complex_refine_v2_active():
@@ -246,6 +279,7 @@ def would_answer_only_refine_apply(
         lane=lane,
         use_knowledge=use_knowledge,
         retrieved_chunks_count=retrieved_chunks_count,
+        kb_evidence_tier=kb_evidence_tier,
     )
 
 
@@ -261,6 +295,7 @@ def resolve_refine_kind(
     lane: str = "general",
     use_knowledge: bool = False,
     retrieved_chunks_count: int = 0,
+    kb_evidence_tier: str = "",
 ) -> RefineKind:
     if not need_second_round:
         return "none"
@@ -270,6 +305,7 @@ def resolve_refine_kind(
         lane=lane,
         use_knowledge=use_knowledge,
         retrieved_chunks_count=retrieved_chunks_count,
+        kb_evidence_tier=kb_evidence_tier,
     )
     if need_more_material or bool(effective_codes & MATERIAL_REASON_CODES):
         return "material"
@@ -284,6 +320,7 @@ def resolve_refine_kind(
         lane=lane,
         use_knowledge=use_knowledge,
         retrieved_chunks_count=retrieved_chunks_count,
+        kb_evidence_tier=kb_evidence_tier,
     ):
         return "answer_only"
     return "none"
@@ -535,6 +572,7 @@ def reconcile_answer_only_turn_facts(
             lane=facts.router_lane,
             use_knowledge=use_knowledge,
             retrieved_chunks_count=chunks,
+            kb_evidence_tier=str(getattr(bundle, "kb_evidence_tier", "") or ""),
         )
     )
     cleaned_gate = QualityGateResult(

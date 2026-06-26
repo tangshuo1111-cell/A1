@@ -76,6 +76,7 @@ class MaterialGateFacts:
     try_rag_executed: bool = False
     has_web_evidence: bool = False
     allow_web: bool = False
+    kb_evidence_tier: str = "none"
 
 
 @dataclass(frozen=True)

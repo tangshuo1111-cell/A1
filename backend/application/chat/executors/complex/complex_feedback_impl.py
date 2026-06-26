@@ -77,6 +77,7 @@ def run_feedback_round_execution(
     use_kb = bool(getattr(gather_context, "use_knowledge", False)) if gather_context else False
     lane = str(getattr(gather_context, "lane", None) or getattr(plan, "lane", None) or "general")
     chunks = int(getattr(gather_context, "retrieved_chunks_count", 0) or 0) if gather_context else 0
+    kb_tier = str(getattr(bundle, "kb_evidence_tier", "") or "")
     refine_kind = resolve_refine_kind(
         need_second_round=quality_gate.need_second_round,
         need_more_material=quality_gate.need_more_material,
@@ -88,6 +89,7 @@ def run_feedback_round_execution(
         lane=lane,
         use_knowledge=use_kb,
         retrieved_chunks_count=chunks,
+        kb_evidence_tier=kb_tier,
     )
     if refine_kind == "answer_only":
         return schedule_answer_only_refine(
@@ -204,6 +206,7 @@ def run_feedback_round_execution(
                 lane=lane,
                 use_knowledge=use_kb,
                 retrieved_chunks_count=chunks,
+                kb_evidence_tier=str(getattr(bundle, "kb_evidence_tier", "") or ""),
             )
 
             if resolve_refine_kind(
@@ -217,6 +220,7 @@ def run_feedback_round_execution(
                 lane=lane,
                 use_knowledge=use_kb,
                 retrieved_chunks_count=chunks,
+                kb_evidence_tier=str(getattr(bundle, "kb_evidence_tier", "") or ""),
             ) == "answer_only":
                 return schedule_answer_only_refine(
                     bundle,

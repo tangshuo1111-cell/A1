@@ -261,6 +261,32 @@ def test_build_complex_failure_breakdown():
     assert bd["would_answer_refine_ids"] == ["a"]
 
 
+def test_narrow_general_reasoning_drops_material_with_weak_incidental_chunks():
+    FEATURE_FLAGS["ENABLE_COMPLEX_REFINE_V2"] = True
+    out = narrow_general_reasoning_gate_reasons(
+        ["material_insufficient", "answer_too_shallow"],
+        [],
+        lane="general",
+        use_knowledge=False,
+        retrieved_chunks_count=1,
+        kb_evidence_tier="weak",
+    )
+    assert out == ["answer_too_shallow"]
+
+
+def test_narrow_general_reasoning_keeps_material_with_strong_chunks():
+    FEATURE_FLAGS["ENABLE_COMPLEX_REFINE_V2"] = True
+    out = narrow_general_reasoning_gate_reasons(
+        ["material_insufficient", "answer_too_shallow"],
+        [],
+        lane="general",
+        use_knowledge=False,
+        retrieved_chunks_count=1,
+        kb_evidence_tier="strong",
+    )
+    assert out == ["material_insufficient", "answer_too_shallow"]
+
+
 def test_reconcile_answer_only_turn_facts_clears_stale_partial():
     from agents.middle_agent.schema import AgnoMaterialBundle, CailiaoPan
 
