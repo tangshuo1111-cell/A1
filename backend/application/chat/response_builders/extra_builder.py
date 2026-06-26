@@ -21,11 +21,9 @@ def is_complex_task(envelope: TurnExitEnvelope, extra: dict[str, Any]) -> bool:
 
 
 def insufficient_evidence(envelope: TurnExitEnvelope) -> bool:
-    mat = str(envelope.material_sufficiency or "").strip().lower()
-    if mat in {"insufficient", "no_match", "low_confidence"}:
-        return True
-    codes = list(envelope.quality_gate.get("reason_codes") or [])
-    return "kb_insufficient" in codes
+    from application.chat.refine_kind import exit_insufficient_evidence
+
+    return exit_insufficient_evidence(envelope)
 
 
 def has_external_capability_error(extra: dict[str, Any]) -> bool:

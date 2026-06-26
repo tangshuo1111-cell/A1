@@ -471,6 +471,97 @@ def prepare_bundle_for_answer_only_refine(
     return bundle
 
 
+def answer_only_success_exit_eligible(
+    *,
+    bundle: Any,
+    quality_gate: Any | None,
+    router_lane: str,
+    use_knowledge: bool,
+) -> bool:
+    """Anti-gaming: flip partial→succeeded only after answer-only round-1 gate pass."""
+    if not complex_refine_v2_active():
+        return False
+    if not is_answer_only_refine_bundle(bundle):
+        return False
+    if str(getattr(bundle, "final_answer_based_on_round", "") or "") != "round_1":
+        return False
+    if quality_gate is None or not bool(getattr(quality_gate, "pass_", False)):
+        return False
+    lane_l = str(router_lane or "").strip().lower()
+    chunks = len(list(getattr(bundle, "retrieved_chunks", None) or []))
+    if lane_l == "kb" or use_knowledge or chunks > 0:
+        return False
+    codes = set(getattr(quality_gate, "reason_codes", ()) or ())
+    if codes & MATERIAL_REASON_CODES:
+        return False
+    mat = str(getattr(bundle, "material_sufficiency", "") or "").strip().lower()
+    if mat == "insufficient" and bool(getattr(bundle, "material_still_insufficient", False)):
+        signal = str(getattr(bundle, "insufficiency_signal", "") or "").strip().lower()
+        hard = {
+            "still_empty_after_gather",
+            "required_material_missing_after_round1",
+            "history_anchor_missing_source_id",
+        }
+        if signal in hard:
+            return False
+    return True
+
+
+def reconcile_answer_only_turn_facts(
+    facts: Any,
+    *,
+    bundle: Any,
+    use_knowledge: bool,
+) -> Any:
+    """Clear stale partial/material exit signals after answer-only round-1 gate pass."""
+    from dataclasses import replace
+
+    from application.chat.chat_contracts import QualityGateResult
+    from application.chat.pending_kind import PendingKind
+
+    if not answer_only_success_exit_eligible(
+        bundle=bundle,
+        quality_gate=facts.quality_gate,
+        router_lane=facts.router_lane,
+        use_knowledge=use_knowledge,
+    ):
+        return facts
+    qg = facts.quality_gate
+    chunks = len(list(getattr(bundle, "retrieved_chunks", None) or []))
+    cleaned_codes = tuple(
+        _effective_answer_only_codes(
+            qg.reason_codes if qg else (),
+            [],
+            lane=facts.router_lane,
+            use_knowledge=use_knowledge,
+            retrieved_chunks_count=chunks,
+        )
+    )
+    cleaned_gate = QualityGateResult(
+        pass_=True,
+        upgrade_profile=bool(getattr(qg, "upgrade_profile", False)) if qg else False,
+        need_second_round=False,
+        need_more_material=False,
+        reason_codes=cleaned_codes,
+    )
+    return replace(
+        facts,
+        pending_kind=PendingKind.NONE,
+        material_sufficiency="sufficient",
+        quality_gate=cleaned_gate,
+        answer_only_exit_reconcile=True,
+    )
+
+
+def exit_insufficient_evidence(envelope: Any) -> bool:
+    """Canonical insufficiency predicate (single source for exit + metrics)."""
+    mat = str(envelope.material_sufficiency or "").strip().lower()
+    if mat in {"insufficient", "no_match", "low_confidence"}:
+        return True
+    codes = list(envelope.quality_gate.get("reason_codes") or [])
+    return "kb_insufficient" in codes
+
+
 def build_answer_only_executor_hint(*, reason_codes: tuple[str, ...] | list[str]) -> str:
     """Executor hint for round-1 depth regeneration (general-lane, no new material)."""
     lines = [

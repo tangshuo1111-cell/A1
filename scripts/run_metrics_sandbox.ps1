@@ -71,6 +71,7 @@ if (-not $pgReady) { throw "沙箱 PG 未在超时内 healthy（容器 ${project
 # 沙箱后端环境（仅本进程及其子进程，不污染主链）
 $env:DATABASE_URL = $sandboxDb
 $env:EMBEDDING_ENABLED = "0"
+$env:TASK_TIMEOUT_SEC = "240"
 $env:LIGHT_MAQA_FAKE_LLM = if ($FakeLLM) { "1" } else { "0" }
 if ($RefineV2) { $env:ENABLE_COMPLEX_REFINE_V2 = "1" } else { Remove-Item Env:ENABLE_COMPLEX_REFINE_V2 -ErrorAction SilentlyContinue }
 

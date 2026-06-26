@@ -28,6 +28,12 @@ if str(BACKEND_ROOT) not in sys.path:
 SAMPLES = REPO_ROOT / "scripts" / "metrics_sandbox_samples.yaml"
 REUSE_ASSET = REPO_ROOT / "scripts" / "metrics_sandbox_assets" / "phoenix_brief.md"
 REUSE_SOURCE_ID = "metrics_sandbox/phoenix_brief.md"
+DEFAULT_CHAT_TIMEOUT_SEC = float(
+    __import__("os").environ.get("SANDBOX_CHAT_TIMEOUT_SEC", "120")
+)
+COMPLEX_CHAT_TIMEOUT_SEC = float(
+    __import__("os").environ.get("SANDBOX_COMPLEX_CHAT_TIMEOUT_SEC", "240")
+)
 
 
 def fetch_task_result(base: str, task_id: str) -> dict:
@@ -90,6 +96,7 @@ def post_chat(
     session_id: str,
     *,
     use_knowledge: bool = False,
+    timeout_sec: float = DEFAULT_CHAT_TIMEOUT_SEC,
 ) -> dict:
     import urllib.error
     import urllib.request
@@ -110,7 +117,7 @@ def post_chat(
         method="POST",
     )
     try:
-        with urllib.request.urlopen(req, timeout=120) as resp:
+        with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
             return json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
         detail = e.read().decode("utf-8", errors="replace")
@@ -347,7 +354,18 @@ def main() -> int:
                 )
             else:
                 use_kb = bool(item.get("use_knowledge"))
-                out = post_chat(args.api, item["message"], sid, use_knowledge=use_kb)
+                chat_timeout = (
+                    COMPLEX_CHAT_TIMEOUT_SEC
+                    if str(item.get("tag") or "").strip().lower() == "complex"
+                    else DEFAULT_CHAT_TIMEOUT_SEC
+                )
+                out = post_chat(
+                    args.api,
+                    item["message"],
+                    sid,
+                    use_knowledge=use_kb,
+                    timeout_sec=chat_timeout,
+                )
             ms = int((time.perf_counter() - t0) * 1000)
             row = _row_from_response(item, out, ms=ms)
             row.update(flow_meta)

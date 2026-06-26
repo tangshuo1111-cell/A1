@@ -239,13 +239,17 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
 
 - Issue ID：`KI-METRICS-003`
 - 标题：复杂题 `upgrade_still_partial` — 质量门二轮无补材计划时停在 partial
-- 当前状态：`In progress`（诊断层已落地常驻；行为修复在 `ENABLE_COMPLEX_REFINE_V2` 后，**默认 OFF**——eval-gate 未绿前不切主路径；env 覆盖做 A/B）
+- 当前状态：`In progress`（出口态收口 + answer_only 二轮已验证；`ENABLE_COMPLEX_REFINE_V2` **默认仍 OFF**，待 regression 全绿 + 沙箱二轮确认后切主路径）
 - 根因（代码）：round-0 质量门 `need_second_round` → 二轮仅补材；纯推理题无 feedback plan → `stop_reason=no_executable_feedback_plan` → 无 round-1 重生成 → partial。
-- 2026-06-26 实现（代码即契约，无新 spec 文档）：
+- **2026-06-26 出口收口（本分支）**：`reconcile_answer_only_turn_facts` + `exit_insufficient_evidence` 单一真源；answer_only round-1 gate pass 后清 `partial_pending`/stale insuf（general-lane、无 KB scope、防刷硬约束）。沙箱 RefineV2 首轮：**北极星2=73.3%（22/30）**，complex partial **8→2**；`complex_14` 等 answer_only 题已 `succeeded`。
   - **永久诊断层**：沙箱 JSONL / `DIAG:` stdout / 周报 HTML「Complex partial 分解」输出 `quality_gate_reason_codes`、`stop_reason`、`metrics_partial_bucket`、`metrics_would_answer_refine`（shadow，flag 关也可见）。
   - **RefineKind 单一真源**：`backend/application/chat/refine_kind.py`（`none | material | answer_only`）；`answer_only` 走既有 round-1 重生成 + 同一 `evaluate_quality_gate` 复评。
   - **单 flag**：`ENABLE_COMPLEX_REFINE_V2`（`feature_flags.py`，**默认 OFF**，env 可覆盖做 A/B）；含 general-lane 材料/kb 误判收窄 + answer_only 路径。
   - **验收分离**：002 = n≥30 硬判定；003 = 42/42 + 北极星2 区间不下降 + honesty 白名单仍绿。
+  - **转正门禁（S0 口径，2026-06-26）**：
+    - **Fixed 条件**：S1（机制 + flip 5 题 rubric 0 容忍）+ S3（shadow 无 diff、v1 10/10、v2–v3 结案）+ 1.2 逃生口债已删；
+    - **70%**：仅 S2 观测门槛（连续 2 轮、同 commit、`complex_total=30`、exit0），**不构成 KI Fixed 充分条件**；
+    - **有效完成率**：北极星2 = complex 样本 `task_status=succeeded` / `complex_total`（与 `product_metrics` 一致）。
 - 复跑：`pwsh -File .\scripts\run_metrics_sandbox.ps1`（真实 LLM）；诊断 profile：`py scripts/evaluation/run_project_validation.py --profile metrics-diagnostic --execute`。
 - **2026-06-26 真实复跑（`environment=REAL`，commit `8f762ab` 后）**：
   - complex 计数 **30**（KI-METRICS-002 样本补齐 ✅）；
@@ -265,7 +269,7 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
 
 - Issue ID：`KI-METRICS-004`
 - 标题：general-lane 纯推理题被材料门误判 → 走 web 补材 → `web_fetch_empty` → partial
-- 当前状态：`In progress`（narrow + need_more_material 重算 + answer_only 前置已验证触发；二轮重生成质量仍不足，数值未达标）
+- 当前状态：`In progress`（narrow + answer_only + 出口收口已落地；剩余 partial 为真 insufficiency/budget，非假 flip）
 - 现象：complex partial 桶 `insufficiency_expected` 占主导；`quality_gate_reason_codes` 共现 `limitations_present`/`material_*` + `stop_reason=web_fetch_empty`；`refine_kind=material` 而非 `answer_only`。
 - 根因：Middle 材料不足诚实模板触发材料 reason；general lane 无 KB  scope 时不应强制 web 二轮；narrow 后 `need_more_material` 仍 true 或 `insufficient_evidence` 阻断 answer_only。
 - 修复锚点：`quality_gate.py`（narrow 后重算 need_more_material）、`refine_kind.py`（effective codes + depth-only insuf 例外）、`complex_feedback_impl.py`（answer_only 先于 build_feedback_request；web_fetch_empty 回退 answer_only）。

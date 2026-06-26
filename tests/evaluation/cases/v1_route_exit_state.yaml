@@ -104,11 +104,11 @@
   category: route_exit_state
   user_input: 根据知识库说明一下这个项目的资料处理主链。
   expected:
-    allowed_lanes: ["kb", "general", "agno_basic_v2_kb_v3_web"]
+    allowed_lanes: ["kb", "general", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web"]
     allowed_modes: ["fast", "complex"]
     allowed_task_status: ["succeeded", "partial", "failed"]
     allowed_pending_kinds: [null, "partial_pending"]
-    allowed_primary_paths: ["kb", "kb_fast", "kb_complex", "agno_basic", "agno_basic_v2_kb_v3_web", null]
+    allowed_primary_paths: ["kb", "kb_fast", "kb_complex", "agno_basic", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
     warning_assertions:
       required_trace_fields: ["lane"]
   judge:
@@ -124,11 +124,11 @@
   category: route_exit_state
   user_input: 结合网页、视频和文档三种资料，给我一个项目评测方案草案。
   expected:
-    allowed_lanes: ["general", "kb", "web", "document", "agno_basic_v2_kb_v3_web"]
+    allowed_lanes: ["general", "kb", "web", "document", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web"]
     allowed_modes: ["complex", "async", "fast"]
     allowed_task_status: ["succeeded", "partial", "pending", "blocked"]
     allowed_pending_kinds: [null, "processing_pending", "fast_pending", "partial_pending"]
-    allowed_primary_paths: ["general_complex", "kb_complex", "general_async", "agno_basic", "agno_basic_v2_kb_v3_web", null]
+    allowed_primary_paths: ["general_complex", "kb_complex", "general_async", "agno_basic", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
     warning_assertions:
       required_trace_fields: ["lane", "mode"]
   judge:
@@ -184,11 +184,11 @@
   category: route_exit_state
   user_input: 我有一份扫描版 PDF，先按扫描 PDF 场景告诉我接下来会怎么处理。
   expected:
-    allowed_lanes: ["document", "general", "agno_basic_v2_kb_v3_web"]
+    allowed_lanes: ["document", "general", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web"]
     allowed_modes: ["async", "complex", "fast"]
     allowed_task_status: ["pending", "blocked", "partial", "failed"]
     allowed_pending_kinds: [null, "processing_pending", "material_pending", "fast_pending", "partial_pending"]
-    allowed_primary_paths: ["document", "document_complex", "document_async", "agno_basic", "agno_basic_v2_kb_v3_web", null]
+    allowed_primary_paths: ["document", "document_complex", "document_async", "agno_basic", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
     warning_assertions:
       required_trace_fields: ["lane"]
   judge:

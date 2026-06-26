@@ -10,12 +10,17 @@ from application.chat.refine_kind import (
     build_complex_failure_breakdown,
     classify_partial_bucket,
     enrich_metrics_diagnostic_row,
+    exit_insufficient_evidence,
     is_answer_only_refine_bundle,
     narrow_general_reasoning_gate_reasons,
     narrow_kb_insufficient_reasons,
+    reconcile_answer_only_turn_facts,
     resolve_refine_kind,
     would_answer_only_refine_apply,
 )
+from application.chat.chat_contracts import QualityGateResult, TurnExitEnvelope
+from application.chat.pending_kind import PendingKind
+from application.chat.turn_facts import TurnFacts
 from config.feature_flags import FEATURE_FLAGS
 
 
@@ -254,3 +259,130 @@ def test_build_complex_failure_breakdown():
     assert bd["complex_partial"] == 1
     assert bd["partial_buckets"]["answer_only_gap"] == 1
     assert bd["would_answer_refine_ids"] == ["a"]
+
+
+def test_reconcile_answer_only_turn_facts_clears_stale_partial():
+    from agents.middle_agent.schema import AgnoMaterialBundle, CailiaoPan
+
+    FEATURE_FLAGS["ENABLE_COMPLEX_REFINE_V2"] = True
+    bundle = AgnoMaterialBundle(
+        knowledge_block=None,
+        web_block=None,
+        trace=[],
+        knowledge_adequate=True,
+        material_still_insufficient=False,
+        web_judgment_reason="skip",
+        kb_evidence_tier="none",
+        insufficiency_signal="",
+        cailiao_pan=CailiaoPan(
+            gou=True,
+            kb_qiangdu=0.0,
+            bukong_xinhao="zu",
+            laiyuan_zhu="wu",
+            use_kb=False,
+            use_web=False,
+            que_shenme="",
+            xia_yi_bu="bu_wang",
+        ),
+        material_sufficiency="sufficient",
+        bundle_id="b-rec",
+        final_answer_based_on_round="round_1",
+        execution_status="partial",
+        negotiation_trace={"complex_pending_kind": "partial_pending"},
+        autonomy_events=[
+            {
+                "requested_action": "answer_only_regenerate",
+                "payload": {"refine_kind": "answer_only", "refine_reason_codes": ["answer_too_shallow"]},
+            }
+        ],
+    )
+    facts = TurnFacts(
+        router_lane="general",
+        effective_mode="complex",
+        executor_profile="complex",
+        pending_kind=PendingKind.PARTIAL_PENDING,
+        material_sufficiency="insufficient",
+        quality_gate=QualityGateResult(pass_=True, reason_codes=()),
+    )
+    out = reconcile_answer_only_turn_facts(facts, bundle=bundle, use_knowledge=False)
+    assert out.pending_kind == PendingKind.NONE
+    assert out.material_sufficiency == "sufficient"
+    assert out.answer_only_exit_reconcile is True
+    assert out.quality_gate is not None
+    assert out.quality_gate.pass_ is True
+
+
+def test_reconcile_skips_kb_scope():
+    from agents.middle_agent.schema import AgnoMaterialBundle, CailiaoPan
+
+    FEATURE_FLAGS["ENABLE_COMPLEX_REFINE_V2"] = True
+    bundle = AgnoMaterialBundle(
+        knowledge_block="kb",
+        web_block=None,
+        trace=[],
+        knowledge_adequate=False,
+        material_still_insufficient=True,
+        web_judgment_reason="skip",
+        kb_evidence_tier="low",
+        insufficiency_signal="still_empty_after_gather",
+        cailiao_pan=CailiaoPan(
+            gou=False,
+            kb_qiangdu=0.1,
+            bukong_xinhao="bu",
+            laiyuan_zhu="kb",
+            use_kb=True,
+            use_web=False,
+            que_shenme="",
+            xia_yi_bu="bu_wang",
+        ),
+        material_sufficiency="insufficient",
+        bundle_id="b-kb",
+        retrieved_chunks=[object()],
+        final_answer_based_on_round="round_1",
+        autonomy_events=[
+            {
+                "requested_action": "answer_only_regenerate",
+                "payload": {"refine_kind": "answer_only"},
+            }
+        ],
+    )
+    facts = TurnFacts(
+        router_lane="kb",
+        pending_kind=PendingKind.PARTIAL_PENDING,
+        material_sufficiency="insufficient",
+        quality_gate=QualityGateResult(pass_=True, reason_codes=()),
+    )
+    out = reconcile_answer_only_turn_facts(facts, bundle=bundle, use_knowledge=True)
+    assert out is facts
+
+
+def test_exit_insufficient_evidence_false_after_reconcile_envelope_fields():
+    env = TurnExitEnvelope(
+        task_status="succeeded",
+        pending_kind=None,
+        primary_path="complex_rag_answer",
+        mode="complex",
+        executor_profile="complex",
+        router_lane="general",
+        material_sufficiency="sufficient",
+        quality_gate={"pass": True, "reason_codes": []},
+        winner_rule="default_success",
+        trace={},
+    )
+    assert exit_insufficient_evidence(env) is False
+
+
+def test_exit_insufficient_evidence_true_when_material_stale():
+    env = TurnExitEnvelope(
+        task_status="succeeded",
+        pending_kind=None,
+        primary_path="complex_rag_answer",
+        mode="complex",
+        executor_profile="complex",
+        router_lane="general",
+        material_sufficiency="insufficient",
+        quality_gate={"pass": True, "reason_codes": ["kb_insufficient"]},
+        winner_rule="default_success",
+        trace={},
+    )
+    assert exit_insufficient_evidence(env) is True

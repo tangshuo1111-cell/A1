@@ -22,6 +22,7 @@ from application.chat.pipeline.complex_session_writeback import writeback_comple
 from application.chat.pipeline.fast_stage import build_merge_turn_obs, finalize_turn_cache
 from application.chat.pipeline.pipeline_state import TurnPipelineState
 from application.chat.turn_exit_gate import apply_turn_exit_to_chat_turn
+from application.chat.refine_kind import reconcile_answer_only_turn_facts
 from application.chat.turn_facts import (
     build_complex_turn_facts,
     lift_background_task_exit,
@@ -118,6 +119,11 @@ def run_complex_finalize_stage(
     )
     if not complex_pending_kind_active():
         facts = replace(facts, pending_kind=PendingKind.NONE)
+    facts = reconcile_answer_only_turn_facts(
+        facts,
+        bundle=bundle,
+        use_knowledge=state.use_knowledge,
+    )
     facts, extra, background_task_id = lift_background_task_exit(
         facts=facts, extra=extra, bundle=bundle,
     )

@@ -47,6 +47,7 @@ class TurnFacts:
     shared_material: SharedMaterialPrepResult | None = None
     legacy_task_status: str | None = None
     public_mode: str | None = None
+    answer_only_exit_reconcile: bool = False
 
 
 def quality_gate_from_extra(extra: dict[str, Any]) -> QualityGateResult | None:

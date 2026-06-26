@@ -122,6 +122,8 @@ def finalize_turn_exit(facts: TurnFacts) -> TurnExitEnvelope:
     trace: dict[str, Any] = {"winner_rule": winner}
     if facts.limitations:
         trace["limitations_count"] = len(facts.limitations)
+    if facts.answer_only_exit_reconcile:
+        trace["answer_only_exit_reconcile"] = True
 
     return TurnExitEnvelope(
         task_status=status,
@@ -155,11 +157,9 @@ def _is_complex_task(
 
 def _insufficient_evidence(envelope: TurnExitEnvelope) -> bool:
     """Product metrics v1: canonical insufficiency (single exit write)."""
-    mat = str(envelope.material_sufficiency or "").strip().lower()
-    if mat in {"insufficient", "no_match", "low_confidence"}:
-        return True
-    codes = list(envelope.quality_gate.get("reason_codes") or [])
-    return "kb_insufficient" in codes
+    from application.chat.refine_kind import exit_insufficient_evidence
+
+    return exit_insufficient_evidence(envelope)
 
 
 def _has_external_capability_error(extra: dict[str, Any]) -> bool:

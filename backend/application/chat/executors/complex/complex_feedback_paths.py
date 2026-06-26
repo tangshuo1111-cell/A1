@@ -80,6 +80,12 @@ def schedule_answer_only_refine(
         },
     )
     if is_dataclass(bundle):
+        trace = dict(getattr(bundle, "negotiation_trace", {}) or {})
+        trace.pop("complex_pending_kind", None)
+        trace.pop("v17_partial_status", None)
+        critic = dict(getattr(bundle, "critic_check", {}) or {})
+        if critic:
+            critic = {**critic, "revision_required": False}
         return replace(
             bundle,
             used_rounds=[0, 1],
@@ -88,6 +94,9 @@ def schedule_answer_only_refine(
             material_sufficiency="sufficient",
             material_still_insufficient=False,
             insufficiency_signal="",
+            execution_status="ok",
+            negotiation_trace=trace,
+            critic_check=critic or getattr(bundle, "critic_check", {}),
         )
     return bundle
 

@@ -248,6 +248,66 @@ def test_exit_compare_fields_fixed() -> None:
     assert EXIT_COMPARE_FIELDS == ("task_status", "pending_kind", "primary_path", "mode")
 
 
+def test_answer_only_reconcile_maps_succeeded() -> None:
+    from agents.middle_agent.schema import AgnoMaterialBundle, CailiaoPan
+    from application.chat.refine_kind import reconcile_answer_only_turn_facts
+    from config import feature_flags
+
+    old = dict(feature_flags.FEATURE_FLAGS)
+    try:
+        feature_flags.FEATURE_FLAGS["ENABLE_COMPLEX_REFINE_V2"] = True
+        bundle = AgnoMaterialBundle(
+            knowledge_block=None,
+            web_block=None,
+            trace=[],
+            knowledge_adequate=True,
+            material_still_insufficient=False,
+            web_judgment_reason="skip",
+            kb_evidence_tier="none",
+            insufficiency_signal="",
+            cailiao_pan=CailiaoPan(
+                gou=True,
+                kb_qiangdu=0.0,
+                bukong_xinhao="zu",
+                laiyuan_zhu="wu",
+                use_kb=False,
+                use_web=False,
+                que_shenme="",
+                xia_yi_bu="bu_wang",
+            ),
+            material_sufficiency="sufficient",
+            bundle_id="b-exit",
+            final_answer_based_on_round="round_1",
+            autonomy_events=[
+                {
+                    "requested_action": "answer_only_regenerate",
+                    "payload": {"refine_kind": "answer_only"},
+                }
+            ],
+        )
+        facts = reconcile_answer_only_turn_facts(
+            TurnFacts(
+                router_lane="general",
+                effective_mode="complex",
+                executor_profile="complex",
+                pending_kind=PendingKind.PARTIAL_PENDING,
+                material_sufficiency="insufficient",
+                quality_gate=QualityGateResult(pass_=True, reason_codes=()),
+            ),
+            bundle=bundle,
+            use_knowledge=False,
+        )
+        env = finalize_turn_exit(facts)
+        assert env.task_status == "succeeded"
+        assert env.pending_kind is None
+        from application.chat.response_builders.extra_builder import insufficient_evidence
+
+        assert insufficient_evidence(env) is False
+    finally:
+        feature_flags.FEATURE_FLAGS.clear()
+        feature_flags.FEATURE_FLAGS.update(old)
+
+
 def test_product_metrics_v1_canonical_fields() -> None:
     from application.chat.turn_exit_gate import envelope_to_extra_fields
 
