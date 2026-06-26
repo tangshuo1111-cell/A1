@@ -273,7 +273,7 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
 - 现象：complex partial 桶 `insufficiency_expected` 占主导；`quality_gate_reason_codes` 共现 `limitations_present`/`material_*` + `stop_reason=web_fetch_empty`；`refine_kind=material` 而非 `answer_only`。
 - 根因：Middle 材料不足诚实模板触发材料 reason；general lane 无 KB  scope 时不应强制 web 二轮；narrow 后 `need_more_material` 仍 true 或 `insufficient_evidence` 阻断 answer_only。
 - 修复锚点：`quality_gate.py`（narrow 后重算 need_more_material）、`refine_kind.py`（effective codes + depth-only insuf 例外）、`complex_feedback_impl.py`（answer_only 先于 build_feedback_request；web_fetch_empty 回退 answer_only）。
-- 回归：`pwsh -File .\scripts\run_metrics_sandbox.ps1`；看 `DIAG:` 中 `answer_only`/`would_answer_refine_ids` 与北极星2 是否上升。
+- **2026-06-26 C1 trace（complex_03）**：reuse seed 弱命中 1 chunk → `retrieved_chunks_count>0` 阻断 general-lane narrow → `material_insufficient` + web 补材 → `web_fetch_empty` → partial。修复：复用既有 `kb_evidence_tier=weak/none` 时不计 material-relevant chunks（commit `5f53cce`），不新造 score 阈值。
 
 ---
 
