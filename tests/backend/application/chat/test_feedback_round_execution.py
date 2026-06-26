@@ -233,3 +233,68 @@ def test_feedback_execution_synthesizes_web_when_material_insufficient(monkeypat
 
     assert result.web_block == "[Web检索] hybrid retrieval summary"
     assert result.final_answer_based_on_round == "round_1"
+
+
+def test_feedback_execution_answer_only_when_no_plan_and_flag_on(monkeypatch):
+    monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_THREE_AGENT_AUTONOMY", True)
+    monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_COMPLEX_REFINE_V2", True)
+    monkeypatch.setattr(
+        "application.chat.autonomy_loop.autonomy_stop_reason_with_clock",
+        lambda *a, **k: "",
+    )
+
+    plan = MagicMock()
+    plan.max_rounds = 2
+    plan.decision.task_id = "t4"
+    plan.tools_allowed = ()
+    plan.privacy_scope = ""
+    plan.budget_policy = {}
+    plan.fallback_steps = ()
+    plan.xiezuo_pan.allow_web = False
+    plan.original_user_intent = "deep analysis"
+    plan.job_type = ""
+
+    bundle = AgnoMaterialBundle(
+        knowledge_block=None,
+        web_block=None,
+        trace=[],
+        knowledge_adequate=True,
+        material_still_insufficient=False,
+        web_judgment_reason="skip",
+        kb_evidence_tier="none",
+        insufficiency_signal="",
+        cailiao_pan=CailiaoPan(
+            gou=True,
+            kb_qiangdu=0.0,
+            bukong_xinhao="zu",
+            laiyuan_zhu="wu",
+            use_kb=False,
+            use_web=False,
+            que_shenme="",
+            xia_yi_bu="bu_wang",
+        ),
+        material_sufficiency="sufficient",
+        bundle_id="b4",
+    )
+
+    deps = MagicMock()
+    deps.answer_agent.runtime.build_feedback_request.return_value = None
+
+    gate = QualityGateResult(
+        pass_=False,
+        need_second_round=True,
+        need_more_material=False,
+        reason_codes=("complex_answer_not_deep_enough", "case_analysis_missing"),
+    )
+
+    result = run_feedback_round_execution(
+        "多维度权衡分析",
+        plan,
+        bundle,
+        deps,
+        quality_gate=gate,
+        session_pending_kind=PendingKind.NONE,
+    )
+
+    assert result.final_answer_based_on_round == "round_1"
+    assert result.used_rounds == [0, 1]

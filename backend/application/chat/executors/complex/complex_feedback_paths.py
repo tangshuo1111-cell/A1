@@ -56,6 +56,38 @@ def reject_missing_feedback_request(
     )
 
 
+def schedule_answer_only_refine(
+    bundle: Any,
+    *,
+    plan: Any,
+    current_round: int,
+    quality_gate: Any,
+) -> Any:
+    from dataclasses import is_dataclass, replace
+
+    bundle = trace_feedback_round(
+        bundle,
+        plan=plan,
+        round_index=current_round,
+        trigger="quality_gate_refine",
+        requested_action="answer_only_regenerate",
+        requested_by="quality_gate",
+        stop_reason="answer_only_refine_scheduled",
+        answer_check="retry_generate",
+        payload={
+            "refine_reason_codes": list(quality_gate.reason_codes),
+            "refine_kind": "answer_only",
+        },
+    )
+    if is_dataclass(bundle):
+        return replace(
+            bundle,
+            used_rounds=[0, 1],
+            final_answer_based_on_round="round_1",
+        )
+    return bundle
+
+
 def reject_feedback_gate(
     bundle: Any,
     *,

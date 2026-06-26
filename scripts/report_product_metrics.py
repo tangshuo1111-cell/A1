@@ -28,6 +28,40 @@ if str(BACKEND_ROOT) not in sys.path:
 
 OUT_DIR = REPO_ROOT / "_local" / "reports" / "metrics"
 
+PARTIAL_BUCKET_LABELS = {
+    "answer_only_gap": "可 answer_only 重生成（003 主因）",
+    "misjudged_gate": "深度/结构门误判",
+    "material_gap": "材料不足",
+    "commit_misroute": "commit 误路由",
+    "insufficiency_expected": "预期 insufficiency",
+    "budget_limited": "预算耗尽",
+    "other": "其他",
+}
+
+
+def render_complex_diagnostic_html(breakdown: dict[str, Any]) -> str:
+    if not breakdown:
+        return ""
+    buckets = breakdown.get("partial_buckets") or {}
+    if not buckets and not breakdown.get("would_answer_refine_ids"):
+        return ""
+    rows = ""
+    for key, count in sorted(buckets.items()):
+        label = PARTIAL_BUCKET_LABELS.get(key, key)
+        rows += f"<li>{_esc(label)} — {count}</li>"
+    flip = breakdown.get("would_answer_refine_ids") or []
+    flip_line = ""
+    if flip:
+        flip_line = f"<p>shadow would_answer_refine: {_esc(', '.join(str(x) for x in flip))}</p>"
+    return (
+        f"<h2>Complex partial 分解（诊断层）</h2>"
+        f"<p>complex_total={breakdown.get('complex_total', 0)}, "
+        f"complex_partial={breakdown.get('complex_partial', 0)}</p>"
+        f"<ul>{rows or '<li>（无 partial 桶）</li>'}</ul>"
+        f"{flip_line}"
+    )
+
+
 FAILURE_LABELS = {
     "insufficiency": "材料/证据不足",
     "external_capability_fail": "外部能力失败",
@@ -264,6 +298,7 @@ def render_html(report: dict[str, Any]) -> str:
     )
     notes_path = report.get("notes_template_path", "")
     appendix_html = render_sample_appendix(report.get("sample_appendix") or [])
+    diagnostic_html = render_complex_diagnostic_html(report.get("complex_failure_breakdown") or {})
     metric_guide = """
 <div class="guide">
 <strong>指标速览（先看这里）</strong>
@@ -333,6 +368,7 @@ table.appendix th{{background:#f8f9fb;font-weight:600}}
 </table>
 <h2>失败 Top3（failure_reason_code · 失败原因码）</h2>
 <ul>{top3_lines or "<li>（无失败样本）</li>"}</ul>
+{diagnostic_html}
 <h2>逐条样本附录（问题 + 状态 + 摘要）</h2>
 {appendix_html}
 <h2>本周变化与下周动作</h2>
@@ -403,6 +439,13 @@ def main() -> None:
         }
         for r in cur_pg_rows
     ]
+    diag_path = OUT_DIR / "last_sandbox_diagnostic.json"
+    if diag_path.is_file():
+        try:
+            diag_payload = json.loads(diag_path.read_text(encoding="utf-8"))
+            report["complex_failure_breakdown"] = diag_payload.get("breakdown") or {}
+        except (json.JSONDecodeError, OSError):
+            report["complex_failure_breakdown"] = {}
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     end_tag = cur_end[:10]

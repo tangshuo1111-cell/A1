@@ -53,6 +53,10 @@ def run_complex_feedback_loop(
         shared_prep=shared_prep,
         limitations=list(getattr(bundle, "answer_limitations", []) or []),
         material_facts=material_gate_facts_from_bundle(bundle, plan=plan),
+        use_knowledge=use_knowledge,
+        retrieved_chunks_count=len(list(getattr(bundle, "retrieved_chunks", []) or [])),
+        pending_kind=str(getattr(session_pending_kind, "value", session_pending_kind) or "") or None,
+        insufficient_evidence=bool(getattr(bundle, "insufficient_evidence", False)),
     )
     complex_outcome = run_delivery_gate(
         gate_input,
@@ -120,6 +124,10 @@ def run_complex_feedback_loop(
             shared_prep=shared_prep_out,
             limitations=list(getattr(bundle, "answer_limitations", []) or []),
             material_facts=material_gate_facts_from_bundle(bundle, plan=plan),
+            use_knowledge=use_knowledge,
+            retrieved_chunks_count=len(list(getattr(bundle, "retrieved_chunks", []) or [])),
+            pending_kind=str(getattr(session_pending_kind, "value", session_pending_kind) or "") or None,
+            insufficient_evidence=bool(getattr(bundle, "insufficient_evidence", False)),
         )
         r1_outcome = run_delivery_gate(
             gate_input_r1,

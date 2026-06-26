@@ -8,6 +8,7 @@ from application.chat.chat_contracts import (
     MaterialGateFacts,
     QualityGateResult,
 )
+from application.chat.refine_kind import narrow_kb_insufficient_reasons
 
 _COMPARISON_CODES = frozenset({"comparison", "pro_con", "cross_material"})
 _DEEP_COMPLEX_CODES = frozenset({"decision_tradeoff", "multi_dimension", "solution_design", "multi_analysis", "cross_material", "pro_con"})
@@ -68,6 +69,8 @@ def evaluate_quality_gate(
     round_index: int = 0,
     complex_reason_codes: tuple[str, ...] = (),
     material_facts: MaterialGateFacts | None = None,
+    use_knowledge: bool = False,
+    retrieved_chunks_count: int = 0,
 ) -> QualityGateResult:
     text = (answer_text or "").strip()
     lims = list(limitations or [])
@@ -140,6 +143,12 @@ def evaluate_quality_gate(
                 reasons.append("answer_tail_incomplete")
 
     reasons = list(dict.fromkeys(reasons))
+    reasons = narrow_kb_insufficient_reasons(
+        reasons,
+        lane=lane,
+        use_knowledge=use_knowledge,
+        retrieved_chunks_count=retrieved_chunks_count,
+    )
     need_more_material = (
         "kb_insufficient" in reasons
         or material_need_more

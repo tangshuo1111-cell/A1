@@ -91,6 +91,7 @@ def run_summary() -> int:
     print("  py scripts/evaluation/run_project_validation.py --profile full-staging")
     print("  py scripts/evaluation/run_project_validation.py --profile full-staging --execute")
     print("  py scripts/evaluation/run_project_validation.py --profile metrics --execute")
+    print("  py scripts/evaluation/run_project_validation.py --profile metrics-diagnostic --execute")
     print()
     print("CI boundary: default ci.yml uses LIGHT_MAQA_FAKE_LLM=1; does NOT auto-run 42/42 or 7/7.")
     print("Real external: .github/workflows/real_external.yml (workflow_dispatch + secrets).")
@@ -134,6 +135,19 @@ def run_metrics(*, execute: bool = False) -> int:
     if rc1 != 0:
         return rc1
     return _run_py(["scripts/report_product_metrics.py", "--days", "7", "--html"])
+
+
+def run_metrics_diagnostic(*, execute: bool = False) -> int:
+    _print_header("Product metrics diagnostic profile")
+    print("Runs sandbox samples; stdout includes DIAG: partial buckets + reason_codes.")
+    print("Sidecar: _local/reports/metrics/last_sandbox_diagnostic.json")
+    if not execute:
+        print()
+        print("Dry-run only. Pass --execute with --profile metrics-diagnostic.")
+        return 0
+    return _run_py(
+        ["scripts/run_metrics_sandbox_samples.py", "--api", "http://127.0.0.1:8000", "--report"]
+    )
 
 
 def _latest_report_json(prefix: str) -> Path | None:
@@ -325,7 +339,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Project validation orchestrator (default: summary only)")
     parser.add_argument(
         "--profile",
-        choices=("summary", "regression", "external", "metrics", "full-staging"),
+        choices=("summary", "regression", "external", "metrics", "metrics-diagnostic", "full-staging"),
         default="summary",
         help="summary=print index only; full-staging=bundle regression+external with --execute",
     )
@@ -348,6 +362,8 @@ def main() -> int:
         return run_external()
     if args.profile == "full-staging":
         return run_full_staging(execute=args.execute, include_metrics=args.include_metrics)
+    if args.profile == "metrics-diagnostic":
+        return run_metrics_diagnostic(execute=args.execute)
     return run_metrics(execute=args.execute)
 
 

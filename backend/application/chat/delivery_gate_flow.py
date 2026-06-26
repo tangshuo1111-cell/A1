@@ -14,6 +14,7 @@ from application.chat.chat_contracts import (
 )
 from application.chat.domain.events import TurnEvent, quality_escalated_event
 from application.chat.domain.reason_codes import QUALITY_REQUIRES_COMPLEX
+from application.chat.refine_kind import resolve_refine_kind, would_answer_only_refine_apply
 from application.chat.quality_gate import evaluate_quality_gate
 from application.chat.shared_material_prep import shared_prep_trace_extra
 from application.chat.trace_writer import (
@@ -32,6 +33,10 @@ class QualityGateInput:
     complex_reason_codes: tuple[str, ...]
     lane: str
     answer_text: str
+    use_knowledge: bool = False
+    retrieved_chunks_count: int = 0
+    pending_kind: str | None = None
+    insufficient_evidence: bool = False
     kb_sufficiency: KbSufficiencyResult | None = None
     material_facts: MaterialGateFacts | None = None
     limitations: tuple[str, ...] = ()
@@ -85,12 +90,32 @@ def run_delivery_gate(
         round_index=gate_input.round_index,
         complex_reason_codes=gate_input.complex_reason_codes,
         material_facts=gate_input.material_facts,
+        use_knowledge=gate_input.use_knowledge,
+        retrieved_chunks_count=gate_input.retrieved_chunks_count,
     )
     extra = apply_quality_gate_extra(
         extra,
         gate=gate,
         complex_candidate=gate_input.complex_candidate,
         fast_gate_pass=gate.pass_ if gate_input.executor_profile == "fast" else None,
+    )
+    refine_kind = resolve_refine_kind(
+        need_second_round=gate.need_second_round,
+        need_more_material=gate.need_more_material,
+        reason_codes=gate.reason_codes,
+        insufficient_evidence=gate_input.insufficient_evidence,
+        pending_kind=gate_input.pending_kind,
+        answer_text=gate_input.answer_text,
+    )
+    extra["refine_kind"] = refine_kind
+    extra["metrics.would_answer_refine"] = would_answer_only_refine_apply(
+        reason_codes=gate.reason_codes,
+        need_second_round=gate.need_second_round,
+        need_more_material=gate.need_more_material,
+        insufficient_evidence=gate_input.insufficient_evidence,
+        pending_kind=gate_input.pending_kind,
+        answer_text=gate_input.answer_text,
+        live=False,
     )
 
     if gate_input.executor_profile == "fast":
@@ -143,6 +168,10 @@ def gate_input_from_ingress(
     shared_prep: SharedMaterialPrepResult | None = None,
     limitations: list[str] | None = None,
     material_facts: MaterialGateFacts | None = None,
+    use_knowledge: bool = False,
+    retrieved_chunks_count: int = 0,
+    pending_kind: str | None = None,
+    insufficient_evidence: bool = False,
 ) -> QualityGateInput:
     kb_suff = shared_prep.kb_sufficiency if shared_prep is not None else None
     return QualityGateInput(
@@ -155,6 +184,10 @@ def gate_input_from_ingress(
         kb_sufficiency=kb_suff,
         material_facts=material_facts,
         limitations=tuple(limitations or ()),
+        use_knowledge=use_knowledge,
+        retrieved_chunks_count=retrieved_chunks_count,
+        pending_kind=pending_kind,
+        insufficient_evidence=insufficient_evidence,
     )
 
 

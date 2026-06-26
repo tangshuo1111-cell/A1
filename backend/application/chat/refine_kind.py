@@ -1,0 +1,250 @@
+"""RefineKind — single contract for complex round-1 refine (material vs answer-only)."""
+
+from __future__ import annotations
+
+from typing import Any, Literal
+
+from config.feature_flags import complex_refine_v2_active
+
+RefineKind = Literal["none", "material", "answer_only"]
+
+# Depth/structure failures — answer-only refine eligible (not material / honesty).
+DEPTH_STRUCTURE_REASON_CODES: frozenset[str] = frozenset(
+    {
+        "answer_too_shallow",
+        "complex_answer_not_deep_enough",
+        "deep_complex_requires_agent",
+        "case_analysis_missing",
+        "decision_not_made",
+        "structure_not_satisfied",
+        "comparison_not_performed",
+    }
+)
+
+MATERIAL_REASON_CODES: frozenset[str] = frozenset(
+    {
+        "kb_insufficient",
+        "evidence_not_used",
+        "material_insufficient",
+    }
+)
+
+INTEGRITY_REASON_CODES: frozenset[str] = frozenset(
+    {
+        "answer_truncated",
+        "answer_tail_incomplete",
+        "answer_empty",
+        "limitations_present",
+    }
+)
+
+PartialBucket = Literal[
+    "none",
+    "misjudged_gate",
+    "answer_only_gap",
+    "material_gap",
+    "commit_misroute",
+    "insufficiency_expected",
+    "budget_limited",
+    "other",
+]
+
+_COMMIT_MARKERS = ("no_pending_found", "pending_commit", "保存资料时失败")
+_COMMIT_PENDING_KINDS = frozenset({"pending_commit", "approval_blocked", "material_pending"})
+
+
+def _commit_blocked(*, pending_kind: str | None, answer_text: str) -> bool:
+    pk = str(pending_kind or "").strip().lower()
+    if pk in _COMMIT_PENDING_KINDS:
+        return True
+    text = str(answer_text or "")
+    return any(marker in text for marker in _COMMIT_MARKERS)
+
+
+def _answer_only_core(
+    *,
+    reason_codes: tuple[str, ...] | list[str],
+    need_second_round: bool,
+    need_more_material: bool,
+    insufficient_evidence: bool,
+    pending_kind: str | None,
+    answer_text: str,
+) -> bool:
+    if not need_second_round or need_more_material:
+        return False
+    if insufficient_evidence:
+        return False
+    if _commit_blocked(pending_kind=pending_kind, answer_text=answer_text):
+        return False
+    codes = set(reason_codes or ())
+    if not codes:
+        return False
+    if codes & (MATERIAL_REASON_CODES | INTEGRITY_REASON_CODES):
+        return False
+    return bool(codes & DEPTH_STRUCTURE_REASON_CODES)
+
+
+def narrow_kb_insufficient_reasons(
+    reasons: list[str],
+    *,
+    lane: str,
+    use_knowledge: bool,
+    retrieved_chunks_count: int,
+) -> list[str]:
+    """Drop kb_insufficient when general reasoning has no KB scope (false-positive narrow)."""
+    if not complex_refine_v2_active():
+        return reasons
+    lane_l = str(lane or "").strip().lower()
+    if lane_l == "kb" or use_knowledge or retrieved_chunks_count > 0:
+        return reasons
+    return [code for code in reasons if code != "kb_insufficient"]
+
+
+def would_answer_only_refine_apply(
+    *,
+    reason_codes: tuple[str, ...] | list[str],
+    need_second_round: bool,
+    need_more_material: bool,
+    insufficient_evidence: bool,
+    pending_kind: str | None,
+    answer_text: str,
+    live: bool = True,
+) -> bool:
+    """Shared predicate for shadow (live=False) and live answer-only refine (live=True)."""
+    if live and not complex_refine_v2_active():
+        return False
+    return _answer_only_core(
+        reason_codes=reason_codes,
+        need_second_round=need_second_round,
+        need_more_material=need_more_material,
+        insufficient_evidence=insufficient_evidence,
+        pending_kind=pending_kind,
+        answer_text=answer_text,
+    )
+
+
+def resolve_refine_kind(
+    *,
+    need_second_round: bool,
+    need_more_material: bool,
+    reason_codes: tuple[str, ...] | list[str],
+    insufficient_evidence: bool,
+    pending_kind: str | None,
+    answer_text: str,
+) -> RefineKind:
+    if not need_second_round:
+        return "none"
+    if need_more_material or bool(set(reason_codes or ()) & MATERIAL_REASON_CODES):
+        return "material"
+    if would_answer_only_refine_apply(
+        reason_codes=reason_codes,
+        need_second_round=need_second_round,
+        need_more_material=need_more_material,
+        insufficient_evidence=insufficient_evidence,
+        pending_kind=pending_kind,
+        answer_text=answer_text,
+    ):
+        return "answer_only"
+    return "none"
+
+
+def classify_partial_bucket(
+    row: dict[str, Any],
+    *,
+    refine_kind: RefineKind | None = None,
+) -> PartialBucket:
+    status = str(row.get("task_status") or "").strip().lower()
+    if status != "partial":
+        return "none"
+    failure = str(row.get("failure_reason_code") or "").strip().lower()
+    insuf = bool(row.get("insufficient_evidence"))
+    if insuf or failure == "insufficiency":
+        return "insufficiency_expected"
+    answer = str(row.get("answer_summary") or "")
+    pending = row.get("pending_kind")
+    if _commit_blocked(pending_kind=str(pending) if pending else None, answer_text=answer):
+        return "commit_misroute"
+    stop = str(row.get("stop_reason") or "").strip().lower()
+    events = row.get("autonomy_events") or []
+    event_stops = {
+        str(ev.get("stop_reason") or "").strip().lower()
+        for ev in events
+        if isinstance(ev, dict)
+    }
+    budget_stops = {"budget_exhausted", "max_round_reached", "llm_calls_exhausted", "tool_calls_exhausted"}
+    if stop in budget_stops or event_stops & budget_stops:
+        return "budget_limited"
+    codes = set(row.get("quality_gate_reason_codes") or [])
+    chunks = int(row.get("v15_retrieved_chunks_count") or 0)
+    use_kb = bool(row.get("use_knowledge"))
+    if codes & MATERIAL_REASON_CODES or (use_kb and chunks <= 1):
+        return "material_gap"
+    rk = refine_kind or str(row.get("refine_kind") or "none")
+    if rk == "answer_only" or _answer_only_core(
+        reason_codes=tuple(codes),
+        need_second_round=True,
+        need_more_material=False,
+        insufficient_evidence=insuf,
+        pending_kind=str(pending) if pending else None,
+        answer_text=answer,
+    ):
+        return "answer_only_gap"
+    if codes & DEPTH_STRUCTURE_REASON_CODES:
+        return "misjudged_gate"
+    return "other"
+
+
+def enrich_metrics_diagnostic_row(row: dict[str, Any], extra: dict[str, Any]) -> dict[str, Any]:
+    """Add permanent diagnostic fields (read-only; does not change product behavior)."""
+    out = dict(row)
+    qg_codes = list(extra.get("quality_gate.reason_codes") or extra.get("quality_gate_reason_codes") or [])
+    out["quality_gate_reason_codes"] = qg_codes
+    out["stop_reason"] = extra.get("stop_reason") or ""
+    events = extra.get("autonomy_events") or []
+    out["autonomy_events"] = events if isinstance(events, list) else []
+    out["refine_kind"] = extra.get("refine_kind") or "none"
+    out["metrics_would_answer_refine"] = bool(
+        extra.get("metrics.would_answer_refine")
+        if "metrics.would_answer_refine" in extra
+        else would_answer_only_refine_apply(
+            reason_codes=qg_codes,
+            need_second_round=bool(extra.get("quality_gate.need_second_round")),
+            need_more_material=bool(extra.get("quality_gate.need_more_material")),
+            insufficient_evidence=bool(extra.get("insufficient_evidence")),
+            pending_kind=str(extra.get("pending_kind") or "") or None,
+            answer_text=str(extra.get("answer") or out.get("answer_summary") or ""),
+            live=False,
+        )
+    )
+    out["metrics_partial_bucket"] = classify_partial_bucket(out, refine_kind=out.get("refine_kind"))
+    blockers: list[str] = []
+    if not out.get("is_complex_task"):
+        blockers.append("not_complex_task")
+    if str(out.get("task_status") or "").lower() != "succeeded":
+        blockers.append(f"task_status={out.get('task_status')}")
+    if out.get("insufficient_evidence"):
+        blockers.append("insufficient_evidence")
+    if out.get("quality_gate_passed") is False:
+        blockers.append("quality_gate_passed=false")
+    out["metrics_north_star_blockers"] = blockers
+    return out
+
+
+def build_complex_failure_breakdown(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    complex_rows = [r for r in rows if r.get("is_complex_task")]
+    partial_rows = [r for r in complex_rows if str(r.get("task_status") or "").lower() == "partial"]
+    buckets: dict[str, int] = {}
+    for row in partial_rows:
+        bucket = str(row.get("metrics_partial_bucket") or "other")
+        buckets[bucket] = buckets.get(bucket, 0) + 1
+    would_flip = [
+        r.get("id")
+        for r in partial_rows
+        if r.get("metrics_would_answer_refine")
+    ]
+    return {
+        "complex_total": len(complex_rows),
+        "complex_partial": len(partial_rows),
+        "partial_buckets": buckets,
+        "would_answer_refine_ids": would_flip,
+    }

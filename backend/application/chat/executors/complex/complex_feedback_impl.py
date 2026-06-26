@@ -19,7 +19,9 @@ from application.chat.executors.complex.complex_feedback_paths import (
     reject_feedback_gate,
     reject_missing_feedback_request,
     reject_tool_failure,
+    schedule_answer_only_refine,
 )
+from application.chat.refine_kind import resolve_refine_kind
 from application.chat.executors.complex.complex_feedback_synthesize import (
     synthesize_multisource_feedback_request,
     synthesize_web_feedback_request,
@@ -73,6 +75,25 @@ def run_feedback_round_execution(
         synthesize_web_feedback_request=synthesize_web_feedback_request,
     )
     if feedback_request is None:
+        pending_raw = getattr(bundle, "pending_kind", None)
+        pending = str(getattr(pending_raw, "value", pending_raw) or "") or None
+        insuf = bool(getattr(bundle, "insufficient_evidence", False))
+        answer = str(getattr(bundle, "answer_text", "") or getattr(bundle, "draft_answer", "") or "")
+        refine_kind = resolve_refine_kind(
+            need_second_round=quality_gate.need_second_round,
+            need_more_material=quality_gate.need_more_material,
+            reason_codes=quality_gate.reason_codes,
+            insufficient_evidence=insuf,
+            pending_kind=pending,
+            answer_text=answer,
+        )
+        if refine_kind == "answer_only":
+            return schedule_answer_only_refine(
+                bundle,
+                plan=plan,
+                current_round=current_round,
+                quality_gate=quality_gate,
+            )
         return reject_missing_feedback_request(
             bundle,
             plan=plan,

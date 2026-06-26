@@ -267,7 +267,7 @@ def expected_metric_rows(samples: list[dict]) -> int:
 
 def _row_from_response(item: dict, out: dict, *, ms: int) -> dict:
     extra = out.get("extra") or {}
-    return {
+    row = {
         "id": item["id"],
         "tag": item.get("tag"),
         "message": item.get("message") or item.get("retrieve_message") or "",
@@ -291,6 +291,9 @@ def _row_from_response(item: dict, out: dict, *, ms: int) -> dict:
         "user_committed_retrieval_hit": bool(extra.get("user_committed_retrieval_hit")),
         "v15_retrieved_chunks_count": int(extra.get("v15_retrieved_chunks_count") or 0),
     }
+    from application.analytics.metrics_diagnostic import enrich_metrics_diagnostic_row
+
+    return enrich_metrics_diagnostic_row(row, extra)
 
 
 def main() -> int:
@@ -440,6 +443,22 @@ def main() -> int:
             print(f"  - {line}", file=sys.stderr)
     else:
         print("TAG validation: ok")
+
+    from application.analytics.metrics_diagnostic import (
+        build_complex_failure_breakdown,
+        render_diagnostic_summary_lines,
+    )
+
+    breakdown = build_complex_failure_breakdown(results)
+    for line in render_diagnostic_summary_lines(breakdown):
+        print(f"DIAG: {line}")
+    diag_dir = REPO_ROOT / "_local" / "reports" / "metrics"
+    diag_dir.mkdir(parents=True, exist_ok=True)
+    diag_path = diag_dir / "last_sandbox_diagnostic.json"
+    diag_path.write_text(
+        json.dumps({"breakdown": breakdown, "rows": results}, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
 
     if args.report:
         subprocess.run(
