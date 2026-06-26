@@ -239,7 +239,7 @@ def test_knowledge_grounded_empty_chunks_uses_web_block():
     assert "Hybrid" in (fake.calls[0]["web_search_block"] or "")
 
 
-def test_answer_only_refine_bypasses_knowledge_grounded_template():
+def test_answer_only_refine_bypasses_knowledge_grounded_template(monkeypatch):
     """round_1 answer_only 不应再短路成 insufficiency 模板。"""
     from dataclasses import replace
 
@@ -247,6 +247,9 @@ def test_answer_only_refine_bypasses_knowledge_grounded_template():
     from agents.main_agent import MainAgent
     from agents.middle_agent import MiddleAgent
     from application.chat.refine_kind import prepare_bundle_for_answer_only_refine
+    from config import feature_flags
+
+    monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_COMPLEX_REFINE_V2", True)
 
     m = MainAgent()
     plan = m.pan(

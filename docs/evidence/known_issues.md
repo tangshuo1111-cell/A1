@@ -239,12 +239,12 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
 
 - Issue ID：`KI-METRICS-003`
 - 标题：复杂题 `upgrade_still_partial` — 质量门二轮无补材计划时停在 partial
-- 当前状态：`In progress`（诊断层已落地；`ENABLE_COMPLEX_REFINE_V2` **默认开**；004 材料桶误判收窄已合入）
+- 当前状态：`In progress`（诊断层已落地常驻；行为修复在 `ENABLE_COMPLEX_REFINE_V2` 后，**默认 OFF**——eval-gate 未绿前不切主路径；env 覆盖做 A/B）
 - 根因（代码）：round-0 质量门 `need_second_round` → 二轮仅补材；纯推理题无 feedback plan → `stop_reason=no_executable_feedback_plan` → 无 round-1 重生成 → partial。
 - 2026-06-26 实现（代码即契约，无新 spec 文档）：
   - **永久诊断层**：沙箱 JSONL / `DIAG:` stdout / 周报 HTML「Complex partial 分解」输出 `quality_gate_reason_codes`、`stop_reason`、`metrics_partial_bucket`、`metrics_would_answer_refine`（shadow，flag 关也可见）。
   - **RefineKind 单一真源**：`backend/application/chat/refine_kind.py`（`none | material | answer_only`）；`answer_only` 走既有 round-1 重生成 + 同一 `evaluate_quality_gate` 复评。
-  - **单 flag**：`ENABLE_COMPLEX_REFINE_V2=True`（`feature_flags.py`，env 可覆盖做 A/B）；含 general-lane 材料/kb 误判收窄 + answer_only 路径。
+  - **单 flag**：`ENABLE_COMPLEX_REFINE_V2`（`feature_flags.py`，**默认 OFF**，env 可覆盖做 A/B）；含 general-lane 材料/kb 误判收窄 + answer_only 路径。
   - **验收分离**：002 = n≥30 硬判定；003 = 42/42 + 北极星2 区间不下降 + honesty 白名单仍绿。
 - 复跑：`pwsh -File .\scripts\run_metrics_sandbox.ps1`（真实 LLM）；诊断 profile：`py scripts/evaluation/run_project_validation.py --profile metrics-diagnostic --execute`。
 - **2026-06-26 真实复跑（`environment=REAL`，commit `8f762ab` 后）**：
@@ -257,6 +257,7 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
 - **2026-06-26 005 补全**：`is_answer_only_refine_bundle` / `build_answer_only_executor_hint`  wired；二轮已能产出深度答（如 complex_14 gate pass）；仍有个别 case `partial_pending` + stale insuf 挡 succeeded。
 - **2026-06-26 005 沙箱（431d0a5 后）**：DIAG complex=25 partial=6（脚本 exit 1；LLM 方差 + 部分 case 超时）；较 004 轮 answer_only 二轮内容明显改善。
 - **2026-06-26 regression（FAKE :8000）**：**34/42**（V1 7/10、V2 13/16、V2.5 7/8、V3 7/8）；较上轮 33/42 +1；**未达 42/42**。
+- **2026-06-26 清债**：flag 默认回退 OFF（未达 gate 不切主路径，消 (b) 级 flag 债）；补 `prepare_bundle_for_answer_only_refine` 修红测试；52 单测 + 4 守卫全绿。剩余为纯数值未达标（非债务）。
 
 ---
 
