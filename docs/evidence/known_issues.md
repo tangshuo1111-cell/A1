@@ -254,7 +254,9 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
   - Guardrail：Partial 20.5% ✅、insufficiency 22.7% ✅、质量门通过率 77.3%。
 - **2026-06-26 RefineV2 真实复跑（flag 关 A/B）**：北极星2 仍 **60.0%**；partial 8 条全为 `insufficiency_expected`，无 `answer_only` 触发（材料桶误判，见 004）。
 - **2026-06-26 004 合入后真实复跑**：`answer_only_refine_scheduled` 已触发；`would_answer_refine_ids` 非空；北极星2 仍 **60%**（18/30）。
-- **2026-06-26 005 补全**：`is_answer_only_refine_bundle` / `build_answer_only_executor_hint` 入 `refine_kind.py`；`AnswerAgent.huida` 二轮走 depth-only hint；round-1 gate 对 answer_only 清 limitations/insuf 误判。
+- **2026-06-26 005 补全**：`is_answer_only_refine_bundle` / `build_answer_only_executor_hint`  wired；二轮已能产出深度答（如 complex_14 gate pass）；仍有个别 case `partial_pending` + stale insuf 挡 succeeded。
+- **2026-06-26 005 沙箱（431d0a5 后）**：DIAG complex=25 partial=6（脚本 exit 1；LLM 方差 + 部分 case 超时）；较 004 轮 answer_only 二轮内容明显改善。
+- **2026-06-26 regression（FAKE :8000）**：**34/42**（V1 7/10、V2 13/16、V2.5 7/8、V3 7/8）；较上轮 33/42 +1；**未达 42/42**。
 
 ---
 

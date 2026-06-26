@@ -237,3 +237,45 @@ def test_knowledge_grounded_empty_chunks_uses_web_block():
     assert len(fake.calls) == 1
     assert fake.calls[0]["knowledge_block"] is None
     assert "Hybrid" in (fake.calls[0]["web_search_block"] or "")
+
+
+def test_answer_only_refine_bypasses_knowledge_grounded_template():
+    """round_1 answer_only 不应再短路成 insufficiency 模板。"""
+    from dataclasses import replace
+
+    from agents.answer_agent import AnswerAgent
+    from agents.main_agent import MainAgent
+    from agents.middle_agent import MiddleAgent
+    from application.chat.refine_kind import prepare_bundle_for_answer_only_refine
+
+    m = MainAgent()
+    plan = m.pan(
+        "请从准确率、延迟、成本三个维度对比 BM25 与向量检索",
+        session_id=None,
+        http_use_knowledge=False,
+        clock=BudgetClock.start(),
+    ).plan
+    plan = replace(plan, answer_mode="knowledge_grounded", needs_retrieval=True)
+    mid = MiddleAgent()
+    bundle = mid.caipan(
+        "请从准确率、延迟、成本三个维度对比 BM25 与向量检索",
+        plan=plan,
+        http_use_knowledge=False,
+        clock=BudgetClock.start(),
+    ).bundle
+    bundle = replace(bundle, retrieved_chunks=[], web_block=None)
+    bundle = prepare_bundle_for_answer_only_refine(bundle, reason_codes=("answer_too_shallow",))
+
+    fake = _FakeZhixing()
+    a = AnswerAgent(zhixing=fake)
+    text, _hp = a.huida(
+        "请从准确率、延迟、成本三个维度对比 BM25 与向量检索",
+        context_block=None,
+        plan=plan,
+        bundle=bundle,
+        clock=BudgetClock.start(),
+    )
+    assert text == "FAKE_ANSWER"
+    assert len(fake.calls) == 1
+    assert "[refine/answer_only]" in (fake.calls[0]["executor_hint"] or "")
+    assert "材料不足" not in text
