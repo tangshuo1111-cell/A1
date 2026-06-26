@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,9 @@ LANE_FAST_FLAG: dict[str, str] = {
 
 def is_enabled(flag: str) -> bool:
     """Return True if the named feature flag is enabled."""
+    override = os.environ.get(flag)
+    if override is not None:
+        return str(override).strip().lower() in {"1", "true", "yes", "on"}
     return bool(FEATURE_FLAGS.get(flag, False))
 
 

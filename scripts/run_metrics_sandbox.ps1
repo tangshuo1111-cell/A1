@@ -19,14 +19,19 @@
 .PARAMETER Down
   跑完顺带 `compose down` 掉沙箱 PG（默认保留，便于复跑对照）。
 
+.PARAMETER RefineV2
+  开启 ENABLE_COMPLEX_REFINE_V2（003 answer_only 验收；默认关）。
+
 .NOTES
   用法（项目根）:
     .\scripts\run_metrics_sandbox.ps1            # 真实 LLM 跑一轮并出周报
     .\scripts\run_metrics_sandbox.ps1 -FakeLLM   # 不打真实外部，仅验证管线
+    .\scripts\run_metrics_sandbox.ps1 -RefineV2  # 003 行为修复验收
     .\scripts\run_metrics_sandbox.ps1 -Down      # 跑完销毁沙箱 PG
 #>
 param(
     [switch]$FakeLLM,
+    [switch]$RefineV2,
     [switch]$Down
 )
 
@@ -67,8 +72,9 @@ if (-not $pgReady) { throw "沙箱 PG 未在超时内 healthy（容器 ${project
 $env:DATABASE_URL = $sandboxDb
 $env:EMBEDDING_ENABLED = "0"
 $env:LIGHT_MAQA_FAKE_LLM = if ($FakeLLM) { "1" } else { "0" }
+if ($RefineV2) { $env:ENABLE_COMPLEX_REFINE_V2 = "1" } else { Remove-Item Env:ENABLE_COMPLEX_REFINE_V2 -ErrorAction SilentlyContinue }
 
-Write-Host "[sandbox] 3/5 后台拉起 :8001 后端（FAKE_LLM=$($env:LIGHT_MAQA_FAKE_LLM)）..." -ForegroundColor Cyan
+Write-Host "[sandbox] 3/5 后台拉起 :8001 后端（FAKE_LLM=$($env:LIGHT_MAQA_FAKE_LLM), REFINE_V2=$($env:ENABLE_COMPLEX_REFINE_V2)）..." -ForegroundColor Cyan
 $be = Start-Process -FilePath "py" `
     -ArgumentList @("-3.12", "-m", "uvicorn", "api.main:app", "--host", "127.0.0.1", "--port", "8001") `
     -PassThru -WindowStyle Hidden

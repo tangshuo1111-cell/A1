@@ -252,7 +252,8 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
   - 北极星2 = **60.0%**（18/30），硬判定 **「未达标」**（<70%）；
   - 诊断分解：complex_partial=8，桶 **insufficiency_expected:8**（主因 `web_fetch_empty` + `limitations_present` 共现，`would_answer_refine_ids=[]`）；
   - Guardrail：Partial 20.5% ✅、insufficiency 22.7% ✅、质量门通过率 77.3%。
-- **003 下一验收步**：开 `ENABLE_COMPLEX_REFINE_V2=1` 复跑 + 42/42 绿 + 北极星2 区间不下降。
+- **003 下一验收步**：`.\scripts\run_metrics_sandbox.ps1 -RefineV2`（或 `ENABLE_COMPLEX_REFINE_V2=1`）+ 42/42 绿 + 北极星2 区间不下降。
+- **2026-06-26 RefineV2 真实复跑**：北极星2 仍 **60.0%**（与 flag 关同值）；partial 8 条仍全为 `insufficiency_expected`，**无 `answer_only` 路径触发**（reason 共现 `limitations_present`/`material_*`，属 KI-METRICS-004 材料桶，非 003 主因）。
 
 ---
 
