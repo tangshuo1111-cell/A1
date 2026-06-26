@@ -433,9 +433,48 @@ _ANSWER_ONLY_REASON_HINTS: dict[str, str] = {
 }
 
 
+def prepare_bundle_for_answer_only_refine(
+    bundle: Any,
+    *,
+    reason_codes: tuple[str, ...] | list[str],
+) -> Any:
+    """Mark a bundle for round-1 depth-only regeneration (test/helper entrypoint).
+
+    Mirrors what ``schedule_answer_only_refine`` records so ``AnswerAgent.huida``
+    takes the answer-only path instead of the knowledge_grounded insufficiency template.
+    """
+    from dataclasses import is_dataclass, replace
+
+    event = {
+        "trigger": "quality_gate_refine",
+        "requested_action": "answer_only_regenerate",
+        "requested_by": "quality_gate",
+        "stop_reason": "answer_only_refine_scheduled",
+        "payload": {
+            "refine_kind": "answer_only",
+            "refine_reason_codes": [str(c) for c in reason_codes or ()],
+        },
+    }
+    events = list(getattr(bundle, "autonomy_events", None) or [])
+    events.append(event)
+    if is_dataclass(bundle):
+        return replace(
+            bundle,
+            autonomy_events=events,
+            used_rounds=[0, 1],
+            final_answer_based_on_round="round_1",
+            answer_limitations=[],
+            material_sufficiency="sufficient",
+            material_still_insufficient=False,
+            insufficiency_signal="",
+        )
+    return bundle
+
+
 def build_answer_only_executor_hint(*, reason_codes: tuple[str, ...] | list[str]) -> str:
     """Executor hint for round-1 depth regeneration (general-lane, no new material)."""
     lines = [
+        "[refine/answer_only]",
         "【质量门二轮：仅重生成答案】",
         "这是 general-lane 纯推理/对比/设计题：无知识库或网页材料也可基于常识与工程经验作答。",
         "禁止输出「材料不足 / 无法确认 / 请补充资料 / 未检索到片段」等 insufficiency 拒答模板。",
