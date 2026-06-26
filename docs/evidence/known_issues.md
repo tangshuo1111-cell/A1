@@ -247,6 +247,12 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
   - **单 flag**：`ENABLE_COMPLEX_REFINE_V2=False`（`feature_flags.py`）；含 kb 误判收窄 + answer_only 路径。
   - **验收分离**：002 = n≥30 硬判定；003 = flag 开 + 42/42 + 北极星2 区间不下降 + honesty 白名单仍绿。
 - 复跑：`pwsh -File .\scripts\run_metrics_sandbox.ps1`（真实 LLM）；诊断 profile：`py scripts/evaluation/run_project_validation.py --profile metrics-diagnostic --execute`。
+- **2026-06-26 真实复跑（`environment=REAL`，commit `8f762ab` 后）**：
+  - complex 计数 **30**（KI-METRICS-002 样本补齐 ✅）；
+  - 北极星2 = **60.0%**（18/30），硬判定 **「未达标」**（<70%）；
+  - 诊断分解：complex_partial=8，桶 **insufficiency_expected:8**（主因 `web_fetch_empty` + `limitations_present` 共现，`would_answer_refine_ids=[]`）；
+  - Guardrail：Partial 20.5% ✅、insufficiency 22.7% ✅、质量门通过率 77.3%。
+- **003 下一验收步**：开 `ENABLE_COMPLEX_REFINE_V2=1` 复跑 + 42/42 绿 + 北极星2 区间不下降。
 
 ---
 
