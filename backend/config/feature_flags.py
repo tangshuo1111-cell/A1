@@ -34,8 +34,7 @@ FEATURE_FLAGS: dict[str, bool] = {
     "ENABLE_SHARED_RETRIEVAL": True,
     "ENABLE_KB_SUFFICIENCY_GATE": True,
     "ENABLE_APPROVAL_GATE_V1": True,
-    # Complex round-1 refine v2: answer_only regenerate (default off; shadow via metrics diagnostic).
-    "ENABLE_COMPLEX_REFINE_V2": False,
+    "ENABLE_COMPLEX_REFINE_V2": True,   # KI-METRICS-003/004; env override still wins for sandbox A/B
     # Turn exit gate — shadow off by default; gate always single-writes canonical exit.
     "ENABLE_TURN_EXIT_GATE_SHADOW": False,
     # Ingress route shadow — observability only; cutover off by default.

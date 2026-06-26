@@ -8,7 +8,7 @@ from application.chat.chat_contracts import (
     MaterialGateFacts,
     QualityGateResult,
 )
-from application.chat.refine_kind import narrow_kb_insufficient_reasons
+from application.chat.refine_kind import complex_refine_v2_active, narrow_general_reasoning_gate_reasons
 
 _COMPARISON_CODES = frozenset({"comparison", "pro_con", "cross_material"})
 _DEEP_COMPLEX_CODES = frozenset({"decision_tradeoff", "multi_dimension", "solution_design", "multi_analysis", "cross_material", "pro_con"})
@@ -102,6 +102,8 @@ def evaluate_quality_gate(
     )
 
     kb_in_scope = lane == "kb" or kb_sufficiency is not None
+    if complex_refine_v2_active() and str(lane or "").strip().lower() == "general" and not use_knowledge:
+        kb_in_scope = False
     if (
         kb_in_scope
         and kb_sufficiency is not None
@@ -143,16 +145,23 @@ def evaluate_quality_gate(
                 reasons.append("answer_tail_incomplete")
 
     reasons = list(dict.fromkeys(reasons))
-    reasons = narrow_kb_insufficient_reasons(
+    reasons = narrow_general_reasoning_gate_reasons(
         reasons,
+        lims,
         lane=lane,
         use_knowledge=use_knowledge,
         retrieved_chunks_count=retrieved_chunks_count,
     )
+    # Recompute from narrowed reasons so general-lane RefineV2 narrow cannot leave
+    # a stale material_need_more flag driving web feedback after false-positive material codes.
     need_more_material = (
         "kb_insufficient" in reasons
-        or material_need_more
-        or ("evidence_not_used" in reasons and material_facts is not None and _material_insufficient_for_web_fallback(material_facts))
+        or "material_insufficient" in reasons
+        or (
+            "evidence_not_used" in reasons
+            and material_facts is not None
+            and _material_insufficient_for_web_fallback(material_facts)
+        )
     )
 
     if executor_profile == "complex" and round_index == 0 and reasons:

@@ -239,21 +239,33 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
 
 - Issue ID：`KI-METRICS-003`
 - 标题：复杂题 `upgrade_still_partial` — 质量门二轮无补材计划时停在 partial
-- 当前状态：`In progress`（诊断层已落地；行为修复 behind `ENABLE_COMPLEX_REFINE_V2`，默认关）
+- 当前状态：`In progress`（诊断层已落地；`ENABLE_COMPLEX_REFINE_V2` **默认开**；004 材料桶误判收窄已合入）
 - 根因（代码）：round-0 质量门 `need_second_round` → 二轮仅补材；纯推理题无 feedback plan → `stop_reason=no_executable_feedback_plan` → 无 round-1 重生成 → partial。
 - 2026-06-26 实现（代码即契约，无新 spec 文档）：
   - **永久诊断层**：沙箱 JSONL / `DIAG:` stdout / 周报 HTML「Complex partial 分解」输出 `quality_gate_reason_codes`、`stop_reason`、`metrics_partial_bucket`、`metrics_would_answer_refine`（shadow，flag 关也可见）。
   - **RefineKind 单一真源**：`backend/application/chat/refine_kind.py`（`none | material | answer_only`）；`answer_only` 走既有 round-1 重生成 + 同一 `evaluate_quality_gate` 复评。
-  - **单 flag**：`ENABLE_COMPLEX_REFINE_V2=False`（`feature_flags.py`）；含 kb 误判收窄 + answer_only 路径。
-  - **验收分离**：002 = n≥30 硬判定；003 = flag 开 + 42/42 + 北极星2 区间不下降 + honesty 白名单仍绿。
+  - **单 flag**：`ENABLE_COMPLEX_REFINE_V2=True`（`feature_flags.py`，env 可覆盖做 A/B）；含 general-lane 材料/kb 误判收窄 + answer_only 路径。
+  - **验收分离**：002 = n≥30 硬判定；003 = 42/42 + 北极星2 区间不下降 + honesty 白名单仍绿。
 - 复跑：`pwsh -File .\scripts\run_metrics_sandbox.ps1`（真实 LLM）；诊断 profile：`py scripts/evaluation/run_project_validation.py --profile metrics-diagnostic --execute`。
 - **2026-06-26 真实复跑（`environment=REAL`，commit `8f762ab` 后）**：
   - complex 计数 **30**（KI-METRICS-002 样本补齐 ✅）；
   - 北极星2 = **60.0%**（18/30），硬判定 **「未达标」**（<70%）；
   - 诊断分解：complex_partial=8，桶 **insufficiency_expected:8**（主因 `web_fetch_empty` + `limitations_present` 共现，`would_answer_refine_ids=[]`）；
   - Guardrail：Partial 20.5% ✅、insufficiency 22.7% ✅、质量门通过率 77.3%。
-- **003 下一验收步**：`.\scripts\run_metrics_sandbox.ps1 -RefineV2`（或 `ENABLE_COMPLEX_REFINE_V2=1`）+ 42/42 绿 + 北极星2 区间不下降。
-- **2026-06-26 RefineV2 真实复跑**：北极星2 仍 **60.0%**（与 flag 关同值）；partial 8 条仍全为 `insufficiency_expected`，**无 `answer_only` 路径触发**（reason 共现 `limitations_present`/`material_*`，属 KI-METRICS-004 材料桶，非 003 主因）。
+- **2026-06-26 RefineV2 真实复跑（flag 关 A/B）**：北极星2 仍 **60.0%**；partial 8 条全为 `insufficiency_expected`，无 `answer_only` 触发（材料桶误判，见 004）。
+- **2026-06-26 004 合入后真实复跑**：`answer_only_refine_scheduled` 已触发（complex_04/06/14/24 等）；`would_answer_refine_ids` 非空；但二轮仍多落诚实 insufficiency 模板 → 北极星2 仍 **60.0%**（18/30），complex_partial=8；003 数值 PASS（≥70%）**未达标**。
+
+---
+
+## KI-METRICS-004
+
+- Issue ID：`KI-METRICS-004`
+- 标题：general-lane 纯推理题被材料门误判 → 走 web 补材 → `web_fetch_empty` → partial
+- 当前状态：`In progress`（narrow + need_more_material 重算 + answer_only 前置已验证触发；二轮重生成质量仍不足，数值未达标）
+- 现象：complex partial 桶 `insufficiency_expected` 占主导；`quality_gate_reason_codes` 共现 `limitations_present`/`material_*` + `stop_reason=web_fetch_empty`；`refine_kind=material` 而非 `answer_only`。
+- 根因：Middle 材料不足诚实模板触发材料 reason；general lane 无 KB  scope 时不应强制 web 二轮；narrow 后 `need_more_material` 仍 true 或 `insufficient_evidence` 阻断 answer_only。
+- 修复锚点：`quality_gate.py`（narrow 后重算 need_more_material）、`refine_kind.py`（effective codes + depth-only insuf 例外）、`complex_feedback_impl.py`（answer_only 先于 build_feedback_request；web_fetch_empty 回退 answer_only）。
+- 回归：`pwsh -File .\scripts\run_metrics_sandbox.ps1`；看 `DIAG:` 中 `answer_only`/`would_answer_refine_ids` 与北极星2 是否上升。
 
 ---
 

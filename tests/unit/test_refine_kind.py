@@ -8,6 +8,7 @@ from application.chat.refine_kind import (
     build_complex_failure_breakdown,
     classify_partial_bucket,
     enrich_metrics_diagnostic_row,
+    narrow_general_reasoning_gate_reasons,
     narrow_kb_insufficient_reasons,
     resolve_refine_kind,
     would_answer_only_refine_apply,
@@ -24,10 +25,35 @@ def _restore_flags():
 
 
 def test_narrow_kb_insufficient_when_flag_off():
+    FEATURE_FLAGS["ENABLE_COMPLEX_REFINE_V2"] = False
     reasons = ["kb_insufficient", "answer_too_shallow"]
     assert narrow_kb_insufficient_reasons(
         reasons, lane="general", use_knowledge=False, retrieved_chunks_count=0
     ) == reasons
+
+
+def test_narrow_general_reasoning_drops_material_and_limitations():
+    FEATURE_FLAGS["ENABLE_COMPLEX_REFINE_V2"] = True
+    out = narrow_general_reasoning_gate_reasons(
+        ["answer_too_shallow", "limitations_present", "material_insufficient"],
+        ["当前未从知识库检索到可用片段，也未获得可用的外部网页证据"],
+        lane="general",
+        use_knowledge=False,
+        retrieved_chunks_count=0,
+    )
+    assert out == ["answer_too_shallow"]
+
+
+def test_narrow_general_reasoning_keeps_honesty_limitations():
+    FEATURE_FLAGS["ENABLE_COMPLEX_REFINE_V2"] = True
+    out = narrow_general_reasoning_gate_reasons(
+        ["limitations_present", "answer_too_shallow"],
+        ["video_total_failure: 无法解析视频"],
+        lane="general",
+        use_knowledge=False,
+        retrieved_chunks_count=0,
+    )
+    assert "limitations_present" in out
 
 
 def test_narrow_kb_insufficient_general_lane():
@@ -86,7 +112,27 @@ def test_material_codes_block_answer_only():
         insufficient_evidence=False,
         pending_kind=None,
         answer_text="x",
+        lane="kb",
+        use_knowledge=True,
+        retrieved_chunks_count=1,
     ) == "material"
+
+
+def test_answer_only_despite_material_insufficiency_on_general_lane():
+    FEATURE_FLAGS["ENABLE_COMPLEX_REFINE_V2"] = True
+    lims = ["当前未从知识库检索到可用片段，也未获得可用的外部网页证据"]
+    assert resolve_refine_kind(
+        need_second_round=True,
+        need_more_material=False,
+        reason_codes=("answer_too_shallow",),
+        insufficient_evidence=True,
+        pending_kind=None,
+        answer_text="结论：现有材料不足，无法确认。",
+        limitations=lims,
+        lane="general",
+        use_knowledge=False,
+        retrieved_chunks_count=0,
+    ) == "answer_only"
 
 
 def test_integrity_codes_block_answer_only():

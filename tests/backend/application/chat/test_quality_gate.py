@@ -8,6 +8,7 @@ from application.chat.chat_contracts import (
 )
 from application.chat.complexity_policy import evaluate_complex_candidate
 from application.chat.quality_gate import evaluate_quality_gate
+from config.feature_flags import FEATURE_FLAGS
 from services.capabilities.knowledge.kb_sufficiency import evaluate_kb_sufficiency, tier_from_score
 
 
@@ -258,9 +259,42 @@ class TestQualityGate:
                 has_web_evidence=False,
                 allow_web=True,
             ),
+            use_knowledge=True,
+            retrieved_chunks_count=1,
         )
         assert gate.pass_ is False
         assert gate.need_second_round is True
         assert gate.need_more_material is True
         assert "material_insufficient" in gate.reason_codes
         assert "evidence_not_used" in gate.reason_codes
+
+    def test_general_lane_refine_v2_narrows_material_need_more(self):
+        saved = dict(FEATURE_FLAGS)
+        try:
+            FEATURE_FLAGS["ENABLE_COMPLEX_REFINE_V2"] = True
+            gate = evaluate_quality_gate(
+                executor_profile="complex",
+                round_index=0,
+                complex_candidate=True,
+                answer_text="材料不足，无法确认。",
+                limitations=["当前未从知识库检索到可用片段，也未获得可用的外部网页证据"],
+                material_facts=MaterialGateFacts(
+                    material_sufficiency="insufficient",
+                    material_still_insufficient=True,
+                    try_rag_executed=True,
+                    has_web_evidence=False,
+                    allow_web=True,
+                ),
+                lane="general",
+                use_knowledge=False,
+                retrieved_chunks_count=0,
+                complex_reason_codes=("comparison", "multi_dimension"),
+            )
+            assert gate.pass_ is False
+            assert gate.need_second_round is True
+            assert gate.need_more_material is False
+            assert "material_insufficient" not in gate.reason_codes
+            assert "answer_too_shallow" in gate.reason_codes
+        finally:
+            FEATURE_FLAGS.clear()
+            FEATURE_FLAGS.update(saved)

@@ -21,7 +21,11 @@ from application.chat.executors.complex.complex_feedback_paths import (
     reject_tool_failure,
     schedule_answer_only_refine,
 )
-from application.chat.refine_kind import resolve_refine_kind
+from application.chat.refine_kind import (
+    complex_refine_v2_active,
+    narrow_general_reasoning_gate_reasons,
+    resolve_refine_kind,
+)
 from application.chat.executors.complex.complex_feedback_synthesize import (
     synthesize_multisource_feedback_request,
     synthesize_web_feedback_request,
@@ -65,6 +69,34 @@ def run_feedback_round_execution(
     if budget_result is not None:
         return budget_result
 
+    pending_raw = getattr(bundle, "pending_kind", None)
+    pending = str(getattr(pending_raw, "value", pending_raw) or "") or None
+    insuf = bool(getattr(bundle, "insufficient_evidence", False))
+    answer = str(getattr(bundle, "answer_text", "") or getattr(bundle, "draft_answer", "") or "")
+    limitations = list(getattr(bundle, "answer_limitations", []) or [])
+    use_kb = bool(getattr(gather_context, "use_knowledge", False)) if gather_context else False
+    lane = str(getattr(gather_context, "lane", None) or getattr(plan, "lane", None) or "general")
+    chunks = int(getattr(gather_context, "retrieved_chunks_count", 0) or 0) if gather_context else 0
+    refine_kind = resolve_refine_kind(
+        need_second_round=quality_gate.need_second_round,
+        need_more_material=quality_gate.need_more_material,
+        reason_codes=quality_gate.reason_codes,
+        insufficient_evidence=insuf,
+        pending_kind=pending,
+        answer_text=answer,
+        limitations=limitations,
+        lane=lane,
+        use_knowledge=use_kb,
+        retrieved_chunks_count=chunks,
+    )
+    if refine_kind == "answer_only":
+        return schedule_answer_only_refine(
+            bundle,
+            plan=plan,
+            current_round=current_round,
+            quality_gate=quality_gate,
+        )
+
     feedback_request = feedback_gate_mod.build_feedback_request(
         plan=plan,
         bundle=bundle,
@@ -75,25 +107,6 @@ def run_feedback_round_execution(
         synthesize_web_feedback_request=synthesize_web_feedback_request,
     )
     if feedback_request is None:
-        pending_raw = getattr(bundle, "pending_kind", None)
-        pending = str(getattr(pending_raw, "value", pending_raw) or "") or None
-        insuf = bool(getattr(bundle, "insufficient_evidence", False))
-        answer = str(getattr(bundle, "answer_text", "") or getattr(bundle, "draft_answer", "") or "")
-        refine_kind = resolve_refine_kind(
-            need_second_round=quality_gate.need_second_round,
-            need_more_material=quality_gate.need_more_material,
-            reason_codes=quality_gate.reason_codes,
-            insufficient_evidence=insuf,
-            pending_kind=pending,
-            answer_text=answer,
-        )
-        if refine_kind == "answer_only":
-            return schedule_answer_only_refine(
-                bundle,
-                plan=plan,
-                current_round=current_round,
-                quality_gate=quality_gate,
-            )
         return reject_missing_feedback_request(
             bundle,
             plan=plan,
@@ -180,6 +193,37 @@ def run_feedback_round_execution(
         fetch_web_evidence_block=agno_web_service.fetch_web_evidence_block,
     )
     if not fetch_ok:
+        if complex_refine_v2_active():
+            pending_raw = getattr(bundle, "pending_kind", None)
+            pending = str(getattr(pending_raw, "value", pending_raw) or "") or None
+            insuf = bool(getattr(bundle, "insufficient_evidence", False))
+            answer = str(getattr(bundle, "answer_text", "") or getattr(bundle, "draft_answer", "") or "")
+            narrowed_codes = narrow_general_reasoning_gate_reasons(
+                list(quality_gate.reason_codes),
+                limitations,
+                lane=lane,
+                use_knowledge=use_kb,
+                retrieved_chunks_count=chunks,
+            )
+
+            if resolve_refine_kind(
+                need_second_round=quality_gate.need_second_round,
+                need_more_material=False,
+                reason_codes=narrowed_codes,
+                insufficient_evidence=insuf,
+                pending_kind=pending,
+                answer_text=answer,
+                limitations=limitations,
+                lane=lane,
+                use_knowledge=use_kb,
+                retrieved_chunks_count=chunks,
+            ) == "answer_only":
+                return schedule_answer_only_refine(
+                    bundle,
+                    plan=plan,
+                    current_round=current_round,
+                    quality_gate=quality_gate,
+                )
         return reject_tool_failure(
             bundle,
             plan=plan,

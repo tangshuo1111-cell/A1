@@ -51,6 +51,24 @@ PartialBucket = Literal[
 
 _COMMIT_MARKERS = ("no_pending_found", "pending_commit", "保存资料时失败")
 _COMMIT_PENDING_KINDS = frozenset({"pending_commit", "approval_blocked", "material_pending"})
+_MATERIAL_LIMITATION_MARKERS = (
+    "材料不足",
+    "知识库",
+    "网页证据",
+    "未获得可用",
+    "检索到可用片段",
+    "无法基于材料",
+    "仍缺少哪些证据",
+    "现有材料不足",
+    "未从知识库",
+    "外部网页",
+    "补网后仍未获得",
+    "证据尚未补齐",
+    "没有成功来源",
+    "没有成功证据",
+    "fetch_web",
+    "web_fetch",
+)
 
 
 def _commit_blocked(*, pending_kind: str | None, answer_text: str) -> bool:
@@ -61,6 +79,55 @@ def _commit_blocked(*, pending_kind: str | None, answer_text: str) -> bool:
     return any(marker in text for marker in _COMMIT_MARKERS)
 
 
+def _effective_answer_only_codes(
+    reason_codes: tuple[str, ...] | list[str],
+    limitations: list[str],
+    *,
+    lane: str,
+    use_knowledge: bool,
+    retrieved_chunks_count: int,
+) -> set[str]:
+    codes = set(reason_codes or ())
+    if not complex_refine_v2_active():
+        return codes
+    lane_l = str(lane or "").strip().lower()
+    if lane_l == "kb" or use_knowledge or retrieved_chunks_count > 0:
+        return codes
+    codes -= MATERIAL_REASON_CODES
+    if "limitations_present" in codes and _limitations_are_material_scope_only(limitations):
+        codes.discard("limitations_present")
+    return codes
+
+
+def _depth_refine_eligible_despite_insufficiency(
+    *,
+    insufficient_evidence: bool,
+    reason_codes: tuple[str, ...] | list[str],
+    limitations: list[str] | None,
+    lane: str,
+    use_knowledge: bool,
+    retrieved_chunks_count: int,
+) -> bool:
+    """General-lane reasoning: material-level insuf must not block depth-only refine."""
+    if not insufficient_evidence or not complex_refine_v2_active():
+        return False
+    lane_l = str(lane or "").strip().lower()
+    if lane_l == "kb" or use_knowledge or retrieved_chunks_count > 0:
+        return False
+    codes = _effective_answer_only_codes(
+        reason_codes,
+        list(limitations or ()),
+        lane=lane,
+        use_knowledge=use_knowledge,
+        retrieved_chunks_count=retrieved_chunks_count,
+    )
+    if not codes or codes & MATERIAL_REASON_CODES:
+        return False
+    if codes & (INTEGRITY_REASON_CODES - {"limitations_present"}):
+        return False
+    return bool(codes & DEPTH_STRUCTURE_REASON_CODES)
+
+
 def _answer_only_core(
     *,
     reason_codes: tuple[str, ...] | list[str],
@@ -69,19 +136,69 @@ def _answer_only_core(
     insufficient_evidence: bool,
     pending_kind: str | None,
     answer_text: str,
+    limitations: list[str] | None = None,
+    lane: str = "general",
+    use_knowledge: bool = False,
+    retrieved_chunks_count: int = 0,
 ) -> bool:
     if not need_second_round or need_more_material:
         return False
-    if insufficient_evidence:
+    if insufficient_evidence and not _depth_refine_eligible_despite_insufficiency(
+        insufficient_evidence=insufficient_evidence,
+        reason_codes=reason_codes,
+        limitations=limitations,
+        lane=lane,
+        use_knowledge=use_knowledge,
+        retrieved_chunks_count=retrieved_chunks_count,
+    ):
         return False
     if _commit_blocked(pending_kind=pending_kind, answer_text=answer_text):
         return False
-    codes = set(reason_codes or ())
+    codes = _effective_answer_only_codes(
+        reason_codes,
+        list(limitations or ()),
+        lane=lane,
+        use_knowledge=use_knowledge,
+        retrieved_chunks_count=retrieved_chunks_count,
+    )
     if not codes:
         return False
-    if codes & (MATERIAL_REASON_CODES | INTEGRITY_REASON_CODES):
+    if codes & (INTEGRITY_REASON_CODES - {"limitations_present"}):
         return False
     return bool(codes & DEPTH_STRUCTURE_REASON_CODES)
+
+
+def _limitations_are_material_scope_only(limitations: list[str]) -> bool:
+    if not limitations:
+        return False
+    for limitation in limitations:
+        text = str(limitation or "").strip()
+        if not text:
+            continue
+        if any(marker in text for marker in _MATERIAL_LIMITATION_MARKERS):
+            continue
+        return False
+    return True
+
+
+def narrow_general_reasoning_gate_reasons(
+    reasons: list[str],
+    limitations: list[str],
+    *,
+    lane: str,
+    use_knowledge: bool,
+    retrieved_chunks_count: int,
+) -> list[str]:
+    """RefineV2: drop material/kb false positives on general lane without KB scope."""
+    if not complex_refine_v2_active():
+        return reasons
+    lane_l = str(lane or "").strip().lower()
+    if lane_l == "kb" or use_knowledge or retrieved_chunks_count > 0:
+        return reasons
+    out = [code for code in reasons if code not in MATERIAL_REASON_CODES]
+    if "limitations_present" in out and _limitations_are_material_scope_only(limitations):
+        out = [code for code in out if code != "limitations_present"]
+    return out
 
 
 def narrow_kb_insufficient_reasons(
@@ -92,12 +209,13 @@ def narrow_kb_insufficient_reasons(
     retrieved_chunks_count: int,
 ) -> list[str]:
     """Drop kb_insufficient when general reasoning has no KB scope (false-positive narrow)."""
-    if not complex_refine_v2_active():
-        return reasons
-    lane_l = str(lane or "").strip().lower()
-    if lane_l == "kb" or use_knowledge or retrieved_chunks_count > 0:
-        return reasons
-    return [code for code in reasons if code != "kb_insufficient"]
+    return narrow_general_reasoning_gate_reasons(
+        reasons,
+        [],
+        lane=lane,
+        use_knowledge=use_knowledge,
+        retrieved_chunks_count=retrieved_chunks_count,
+    )
 
 
 def would_answer_only_refine_apply(
@@ -109,6 +227,10 @@ def would_answer_only_refine_apply(
     pending_kind: str | None,
     answer_text: str,
     live: bool = True,
+    limitations: list[str] | None = None,
+    lane: str = "general",
+    use_knowledge: bool = False,
+    retrieved_chunks_count: int = 0,
 ) -> bool:
     """Shared predicate for shadow (live=False) and live answer-only refine (live=True)."""
     if live and not complex_refine_v2_active():
@@ -120,6 +242,10 @@ def would_answer_only_refine_apply(
         insufficient_evidence=insufficient_evidence,
         pending_kind=pending_kind,
         answer_text=answer_text,
+        limitations=limitations,
+        lane=lane,
+        use_knowledge=use_knowledge,
+        retrieved_chunks_count=retrieved_chunks_count,
     )
 
 
@@ -131,10 +257,21 @@ def resolve_refine_kind(
     insufficient_evidence: bool,
     pending_kind: str | None,
     answer_text: str,
+    limitations: list[str] | None = None,
+    lane: str = "general",
+    use_knowledge: bool = False,
+    retrieved_chunks_count: int = 0,
 ) -> RefineKind:
     if not need_second_round:
         return "none"
-    if need_more_material or bool(set(reason_codes or ()) & MATERIAL_REASON_CODES):
+    effective_codes = _effective_answer_only_codes(
+        reason_codes,
+        list(limitations or ()),
+        lane=lane,
+        use_knowledge=use_knowledge,
+        retrieved_chunks_count=retrieved_chunks_count,
+    )
+    if need_more_material or bool(effective_codes & MATERIAL_REASON_CODES):
         return "material"
     if would_answer_only_refine_apply(
         reason_codes=reason_codes,
@@ -143,6 +280,10 @@ def resolve_refine_kind(
         insufficient_evidence=insufficient_evidence,
         pending_kind=pending_kind,
         answer_text=answer_text,
+        limitations=limitations,
+        lane=lane,
+        use_knowledge=use_knowledge,
+        retrieved_chunks_count=retrieved_chunks_count,
     ):
         return "answer_only"
     return "none"

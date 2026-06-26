@@ -106,6 +106,10 @@ def run_delivery_gate(
         insufficient_evidence=gate_input.insufficient_evidence,
         pending_kind=gate_input.pending_kind,
         answer_text=gate_input.answer_text,
+        limitations=list(gate_input.limitations),
+        lane=gate_input.lane,
+        use_knowledge=gate_input.use_knowledge,
+        retrieved_chunks_count=gate_input.retrieved_chunks_count,
     )
     extra["refine_kind"] = refine_kind
     extra["metrics.would_answer_refine"] = would_answer_only_refine_apply(
