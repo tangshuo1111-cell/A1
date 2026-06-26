@@ -76,8 +76,19 @@ $env:LIGHT_MAQA_FAKE_LLM = if ($FakeLLM) { "1" } else { "0" }
 if ($RefineV2) { $env:ENABLE_COMPLEX_REFINE_V2 = "1" } else { Remove-Item Env:ENABLE_COMPLEX_REFINE_V2 -ErrorAction SilentlyContinue }
 
 Write-Host "[sandbox] 3/5 后台拉起 :8001 后端（FAKE_LLM=$($env:LIGHT_MAQA_FAKE_LLM), REFINE_V2=$($env:ENABLE_COMPLEX_REFINE_V2)）..." -ForegroundColor Cyan
-$be = Start-Process -FilePath "py" `
-    -ArgumentList @("-3.12", "-m", "uvicorn", "api.main:app", "--host", "127.0.0.1", "--port", "8001") `
+$beScript = Join-Path $PSScriptRoot "start_metrics_sandbox_backend.ps1"
+$refineFlag = if ($RefineV2) { "1" } else { "0" }
+$be = Start-Process -FilePath "pwsh" `
+    -ArgumentList @(
+        "-NoProfile",
+        "-File", $beScript,
+        "-Root", $root,
+        "-BackendRoot", $backendRoot,
+        "-DatabaseUrl", $sandboxDb,
+        "-FakeLLM", $env:LIGHT_MAQA_FAKE_LLM,
+        "-RefineV2", $refineFlag
+    ) `
+    -WorkingDirectory $root `
     -PassThru -WindowStyle Hidden
 
 try {
