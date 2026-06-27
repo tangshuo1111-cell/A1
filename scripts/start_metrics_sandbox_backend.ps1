@@ -5,6 +5,7 @@ param(
     [Parameter(Mandatory = $true)][string]$DatabaseUrl,
     [Parameter(Mandatory = $true)][string]$FakeLLM,
     [Parameter(Mandatory = $true)][string]$RefineV2,
+    [string]$ExitShadow = "0",
     [string]$Port = "8001"
 )
 
@@ -19,6 +20,11 @@ if ($RefineV2 -eq "1") {
     $env:ENABLE_COMPLEX_REFINE_V2 = "1"
 } else {
     Remove-Item Env:ENABLE_COMPLEX_REFINE_V2 -ErrorAction SilentlyContinue
+}
+if ($ExitShadow -eq "1") {
+    $env:ENABLE_TURN_EXIT_GATE_SHADOW = "1"
+} else {
+    Remove-Item Env:ENABLE_TURN_EXIT_GATE_SHADOW -ErrorAction SilentlyContinue
 }
 
 Set-Location $Root

@@ -34,7 +34,7 @@ FEATURE_FLAGS: dict[str, bool] = {
     "ENABLE_SHARED_RETRIEVAL": True,
     "ENABLE_KB_SUFFICIENCY_GATE": True,
     "ENABLE_APPROVAL_GATE_V1": True,
-    "ENABLE_COMPLEX_REFINE_V2": False,  # KI-METRICS-003/004; default OFF until eval-gate green (env override wins for A/B)
+    "ENABLE_COMPLEX_REFINE_V2": True,  # KI-METRICS-003/004; S3 gate green 2026-06-27 (env override for rollback)
     # Turn exit gate — shadow off by default; gate always single-writes canonical exit.
     "ENABLE_TURN_EXIT_GATE_SHADOW": False,
     # Ingress route shadow — observability only; cutover off by default.

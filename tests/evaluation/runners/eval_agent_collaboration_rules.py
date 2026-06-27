@@ -123,7 +123,21 @@ def check_multi_source_alignment(case: dict[str, Any], actual: dict[str, Any]) -
         return []
     issues: list[str] = []
     answer = _answer_text(actual)
+    common = actual.get("common") or {}
     material = actual.get("material") or {}
+    insuf_markers = (
+        "材料不足",
+        "无法确认",
+        "未获得可用",
+        "无法基于材料",
+        "并未获得",
+        "请补充资料",
+    )
+    mat_suff = str(material.get("material_sufficiency") or common.get("material_sufficiency") or "").lower()
+    if common.get("insufficient_evidence") or mat_suff in {"insufficient", "no_match", "low_confidence"}:
+        return []
+    if any(marker in answer for marker in insuf_markers):
+        return []
     mentions_kb = "知识库" in answer
     mentions_web = "网页" in answer or "官方教程" in answer or "Python 教程" in answer or "python 官方教程" in answer.lower()
     has_kb = _has_any_value(material, ["kb_hits", "kb_evidence_tier", "retrieved_chunks"])

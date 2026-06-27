@@ -335,6 +335,7 @@ def main() -> int:
     data = yaml.safe_load(SAMPLES.read_text(encoding="utf-8"))
     samples: list[dict] = list(data["samples"])
     results: list[dict] = []
+    shadow_mismatches: list[dict] = []
     for item in samples:
         sid = f"sandbox_{item['id']}_{uuid.uuid4().hex[:8]}"
         t0 = time.perf_counter()
@@ -369,6 +370,12 @@ def main() -> int:
             ms = int((time.perf_counter() - t0) * 1000)
             row = _row_from_response(item, out, ms=ms)
             row.update(flow_meta)
+            trace = (out.get("extra") or {}).get("trace") or {}
+            shadow = trace.get("exit_shadow") or {}
+            if shadow and not shadow.get("match"):
+                shadow_mismatches.append(
+                    {"id": item["id"], "diff_fields": shadow.get("diff_fields") or {}}
+                )
             if item.get("tag") == "async":
                 extra = out.get("extra") or {}
                 task_id = str(out.get("task_id") or extra.get("web_task_id") or "").strip()
@@ -462,6 +469,20 @@ def main() -> int:
     else:
         print("TAG validation: ok")
 
+    shadow_on = str(__import__("os").environ.get("ENABLE_TURN_EXIT_GATE_SHADOW", "")).strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+    if shadow_on:
+        if shadow_mismatches:
+            print("EXIT_SHADOW mismatches:", file=sys.stderr)
+            for entry in shadow_mismatches:
+                print(f"  - {entry['id']}: {entry['diff_fields']}", file=sys.stderr)
+        else:
+            print("EXIT_SHADOW: ok (all match)")
+
     from application.analytics.metrics_diagnostic import (
         build_complex_failure_breakdown,
         render_diagnostic_summary_lines,
@@ -486,7 +507,7 @@ def main() -> int:
         )
 
     failed = sum(1 for r in results if r.get("error"))
-    if tag_checks:
+    if tag_checks or shadow_mismatches:
         return 1
     return 1 if failed else 0
 

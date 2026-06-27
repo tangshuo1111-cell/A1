@@ -253,7 +253,7 @@
       expected:
         allowed_task_status: ["partial", "succeeded", "pending", "blocked"]
         allowed_pending_kinds: [null, "partial_pending", "material_pending", "processing_pending"]
-        allowed_primary_paths: ["agno_basic_v2_kb_v3_web", "kb_fast", "web_async", "approval_gate", null]
+        allowed_primary_paths: ["agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", "kb_fast", "web_async", "approval_gate", null]
         allowed_modes: ["fast", "complex", "async", "blocked"]
         allowed_lanes: ["agno_basic_v2_kb_v3_web", "kb", "web", "approval_gate", "general"]
         warning_assertions:

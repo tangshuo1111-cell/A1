@@ -22,6 +22,9 @@
 .PARAMETER RefineV2
   开启 ENABLE_COMPLEX_REFINE_V2（003 answer_only 验收；默认关）。
 
+.PARAMETER ExitShadow
+  开启 ENABLE_TURN_EXIT_GATE_SHADOW，样本跑完后审计 exit_shadow.diff_fields。
+
 .NOTES
   用法（项目根）:
     .\scripts\run_metrics_sandbox.ps1            # 真实 LLM 跑一轮并出周报
@@ -32,6 +35,7 @@
 param(
     [switch]$FakeLLM,
     [switch]$RefineV2,
+    [switch]$ExitShadow,
     [switch]$Down
 )
 
@@ -74,10 +78,12 @@ $env:EMBEDDING_ENABLED = "0"
 $env:TASK_TIMEOUT_SEC = "240"
 $env:LIGHT_MAQA_FAKE_LLM = if ($FakeLLM) { "1" } else { "0" }
 if ($RefineV2) { $env:ENABLE_COMPLEX_REFINE_V2 = "1" } else { Remove-Item Env:ENABLE_COMPLEX_REFINE_V2 -ErrorAction SilentlyContinue }
+if ($ExitShadow) { $env:ENABLE_TURN_EXIT_GATE_SHADOW = "1" } else { Remove-Item Env:ENABLE_TURN_EXIT_GATE_SHADOW -ErrorAction SilentlyContinue }
 
-Write-Host "[sandbox] 3/5 后台拉起 :8001 后端（FAKE_LLM=$($env:LIGHT_MAQA_FAKE_LLM), REFINE_V2=$($env:ENABLE_COMPLEX_REFINE_V2)）..." -ForegroundColor Cyan
+Write-Host "[sandbox] 3/5 后台拉起 :8001 后端（FAKE_LLM=$($env:LIGHT_MAQA_FAKE_LLM), REFINE_V2=$($env:ENABLE_COMPLEX_REFINE_V2), EXIT_SHADOW=$($env:ENABLE_TURN_EXIT_GATE_SHADOW)）..." -ForegroundColor Cyan
 $beScript = Join-Path $PSScriptRoot "start_metrics_sandbox_backend.ps1"
 $refineFlag = if ($RefineV2) { "1" } else { "0" }
+$shadowFlag = if ($ExitShadow) { "1" } else { "0" }
 $be = Start-Process -FilePath "pwsh" `
     -ArgumentList @(
         "-NoProfile",
@@ -86,7 +92,8 @@ $be = Start-Process -FilePath "pwsh" `
         "-BackendRoot", $backendRoot,
         "-DatabaseUrl", $sandboxDb,
         "-FakeLLM", $env:LIGHT_MAQA_FAKE_LLM,
-        "-RefineV2", $refineFlag
+        "-RefineV2", $refineFlag,
+        "-ExitShadow", $shadowFlag
     ) `
     -WorkingDirectory $root `
     -PassThru -WindowStyle Hidden

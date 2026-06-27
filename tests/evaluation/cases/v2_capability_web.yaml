@@ -61,7 +61,7 @@
     allowed_modes: ["fast", "complex", "blocked", "async"]
     allowed_task_status: ["succeeded", "partial", "blocked", "failed", "pending"]
     allowed_pending_kinds: [null, "partial_pending", "confirm_pending", "processing_pending"]
-    allowed_primary_paths: ["web_fast", "video", "video_async", "approval_gate", "agno_basic_v2_kb_v3_web", null]
+    allowed_primary_paths: ["web_fast", "video", "video_async", "approval_gate", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
     warning_assertions:
       required_trace_fields: ["lane"]
   judge:

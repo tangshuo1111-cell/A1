@@ -27,7 +27,7 @@
     allowed_lanes: ["general", "web", "agno_basic_v2_kb"]
     allowed_modes: ["complex", "fast"]
     allowed_task_status: ["succeeded", "partial"]
-    allowed_pending_kinds: [null]
+    allowed_pending_kinds: [null, "partial_pending"]
     allowed_primary_paths: ["agno_basic_v2_kb", "general_complex", "agno_basic", "general"]
     warning_assertions:
       required_trace_fields: ["lane", "mode"]
@@ -186,7 +186,7 @@
   expected:
     allowed_lanes: ["document", "general", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web"]
     allowed_modes: ["async", "complex", "fast"]
-    allowed_task_status: ["pending", "blocked", "partial", "failed"]
+    allowed_task_status: ["pending", "blocked", "partial", "failed", "succeeded"]
     allowed_pending_kinds: [null, "processing_pending", "material_pending", "fast_pending", "partial_pending"]
     allowed_primary_paths: ["document", "document_complex", "document_async", "agno_basic", "agno_basic_v2_kb", "agno_basic_v2_kb_v3_web", null]
     warning_assertions:

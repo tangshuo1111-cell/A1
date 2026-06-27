@@ -239,7 +239,7 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
 
 - Issue ID：`KI-METRICS-003`
 - 标题：复杂题 `upgrade_still_partial` — 质量门二轮无补材计划时停在 partial
-- 当前状态：`In progress`（出口态收口 + answer_only 二轮已验证；`ENABLE_COMPLEX_REFINE_V2` **默认仍 OFF**，待 regression 全绿 + 沙箱二轮确认后切主路径）
+- 当前状态：`Fixed`（S1+S3 门禁通过，2026-06-27；`ENABLE_COMPLEX_REFINE_V2` **default ON**，env=`0` 可回滚）
 - 根因（代码）：round-0 质量门 `need_second_round` → 二轮仅补材；纯推理题无 feedback plan → `stop_reason=no_executable_feedback_plan` → 无 round-1 重生成 → partial。
 - **2026-06-26 出口收口（本分支）**：`reconcile_answer_only_turn_facts` + `exit_insufficient_evidence` 单一真源；answer_only round-1 gate pass 后清 `partial_pending`/stale insuf（general-lane、无 KB scope、防刷硬约束）。沙箱 RefineV2 首轮：**北极星2=73.3%（22/30）**，complex partial **8→2**；`complex_14` 等 answer_only 题已 `succeeded`。
   - **永久诊断层**：沙箱 JSONL / `DIAG:` stdout / 周报 HTML「Complex partial 分解」输出 `quality_gate_reason_codes`、`stop_reason`、`metrics_partial_bucket`、`metrics_would_answer_refine`（shadow，flag 关也可见）。
@@ -269,7 +269,7 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
 
 - Issue ID：`KI-METRICS-004`
 - 标题：general-lane 纯推理题被材料门误判 → 走 web 补材 → `web_fetch_empty` → partial
-- 当前状态：`In progress`（narrow + answer_only + 出口收口已落地；剩余 partial 为真 insufficiency/budget，非假 flip）
+- 当前状态：`Fixed`（narrow + answer_only + limitations-only + C2；R2 complex_partial=0；真 insufficiency 仍 honest）
 - 现象：complex partial 桶 `insufficiency_expected` 占主导；`quality_gate_reason_codes` 共现 `limitations_present`/`material_*` + `stop_reason=web_fetch_empty`；`refine_kind=material` 而非 `answer_only`。
 - 根因：Middle 材料不足诚实模板触发材料 reason；general lane 无 KB  scope 时不应强制 web 二轮；narrow 后 `need_more_material` 仍 true 或 `insufficient_evidence` 阻断 answer_only。
 - 修复锚点：`quality_gate.py`（narrow 后重算 need_more_material）、`refine_kind.py`（effective codes + depth-only insuf 例外）、`complex_feedback_impl.py`（answer_only 先于 build_feedback_request；web_fetch_empty 回退 answer_only）。
@@ -536,3 +536,28 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
 - 回归方式：
 - `py scripts/evaluation/run_eval_suite.py --suite v3_complex_agent`
 - 复测（2026-06-16）：`regression_all` 42/42；`complex_insufficient_evidence` 通过
+
+---
+
+## B3 六条 unknown 结案（2026-06-27，S3）
+
+| case | 结案 | 说明 |
+| --- | --- | --- |
+| `general_complex_compare` | 断言 (a) | `partial_pending` 入 allowed；RefineV2 default ON 后 succeeded |
+| `document_ocr_required_honesty` | 断言 (a) | `agno_basic_v2_kb` 入 allowed_primary_paths |
+| `document_total_failure` | 断言 (a) | 同上 |
+| `web_dynamic_or_cookie_honesty` | 断言 (a) | `agno_basic_v2_kb` 入 allowed |
+| `material_pending_commit_flow` | 断言 (a) | turn_1 补 `agno_basic_v2_kb` |
+| `complex_web_kb_compare` | 评测 (a) | insufficiency 模板不再误触 multi-source 假阳性 |
+| `complex_second_round_needed` | 评测 (a) | 同上 |
+
+复测：`regression_all` FAKE **42/42**（`:8000`，default ON）。
+
+---
+
+## S3 后 Backlog（不挡关单）
+
+- 扩沙箱 complex 样本至 40+（统计余量）
+- complex P95 趋势盘（weekly 已有 P95 字段）
+- 沙箱 seed 顺序（4A）：complex 先于 reuse seed — 可选卫生项，R2 已 complex_partial=0 未做
+- 无 staging：以 default ON + pm-04 回滚触发代替灰度
