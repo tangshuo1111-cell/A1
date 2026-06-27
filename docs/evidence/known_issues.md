@@ -259,7 +259,7 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
 - **2026-06-26 RefineV2 真实复跑（flag 关 A/B）**：北极星2 仍 **60.0%**；partial 8 条全为 `insufficiency_expected`，无 `answer_only` 触发（材料桶误判，见 004）。
 - **2026-06-26 004 合入后真实复跑**：`answer_only_refine_scheduled` 已触发；`would_answer_refine_ids` 非空；北极星2 仍 **60%**（18/30）。
 - **2026-06-26 005 补全**：`is_answer_only_refine_bundle` / `build_answer_only_executor_hint`  wired；二轮已能产出深度答（如 complex_14 gate pass）；仍有个别 case `partial_pending` + stale insuf 挡 succeeded。
-- **2026-06-26 005 沙箱（431d0a5 后）**：DIAG complex=25 partial=6（脚本 exit 1；LLM 方差 + 部分 case 超时）；较 004 轮 answer_only 二轮内容明显改善。
+- **2026-06-27 R2（`eed5823`，C1+C2+limitations）**：exit0，METRICS 44/44，DIAG **complex_partial=0**，北极星2 **27/30 = 90.0%**；`complex_03/10/17` succeeded 非 insuf；唯一 partial=`insufficiency_03`（真 insufficiency）。S1 flip 集（04/06/21/24）本轮均绿。
 - **2026-06-26 regression（FAKE :8000）**：**34/42**（V1 7/10、V2 13/16、V2.5 7/8、V3 7/8）；较上轮 33/42 +1；**未达 42/42**。
 - **2026-06-26 清债**：flag 默认回退 OFF（未达 gate 不切主路径，消 (b) 级 flag 债）；补 `prepare_bundle_for_answer_only_refine` 修红测试；52 单测 + 4 守卫全绿。剩余为纯数值未达标（非债务）。
 
@@ -273,7 +273,7 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
 - 现象：complex partial 桶 `insufficiency_expected` 占主导；`quality_gate_reason_codes` 共现 `limitations_present`/`material_*` + `stop_reason=web_fetch_empty`；`refine_kind=material` 而非 `answer_only`。
 - 根因：Middle 材料不足诚实模板触发材料 reason；general lane 无 KB  scope 时不应强制 web 二轮；narrow 后 `need_more_material` 仍 true 或 `insufficient_evidence` 阻断 answer_only。
 - 修复锚点：`quality_gate.py`（narrow 后重算 need_more_material）、`refine_kind.py`（effective codes + depth-only insuf 例外）、`complex_feedback_impl.py`（answer_only 先于 build_feedback_request；web_fetch_empty 回退 answer_only）。
-- **2026-06-26 C1 trace（complex_03）**：reuse seed 弱命中 1 chunk → `retrieved_chunks_count>0` 阻断 general-lane narrow → `material_insufficient` + web 补材 → `web_fetch_empty` → partial。修复：复用既有 `kb_evidence_tier=weak/none` 时不计 material-relevant chunks（commit `5f53cce`），不新造 score 阈值。
+- **2026-06-27 R2（`eed5823`）**：`complex_03` limitations-only → `answer_only`（不再 web）；`complex_10/17` about-KB 路由收窄。DIAG complex_partial=0。
 
 ---
 
