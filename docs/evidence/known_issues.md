@@ -231,8 +231,12 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
   - 该复跑判定为「**样本不足**」（complex 计数 29 < 30 下限，差 1，因 `complex_16` 被判 `is_complex_task=false`），且 **58.6% < 70% 目标** → 暴露**真实产品差距**，主因 `upgrade_still_partial` ×6；
   - 质量门通过率 77.3%、Partial 20.5%、insufficiency 6.8%（后两者达标）。
   - 结论：本 KI 的「占位桩」子项与「证伪命题」均已闭环；**剩余的不是环境问题，而是真实质量项**，派生两个独立 backlog（见下），不再挂在本 KI 名下：
-    - **KI-METRICS-002（样本补齐）**：修 `complex_16` 分类/期望，使 complex 计数 ≥30，北极星2 才能出硬判定（非「样本不足」）。
-    - **KI-METRICS-003（`upgrade_still_partial` 专项）**：复杂题升级 complex 后为何停在 partial（质量门二轮偏严 vs 材料不足），是北极星2 上不去的真实主因。
+    - **KI-METRICS-002（样本补齐）**：修 `complex_16` 分类/期望，使 complex 计数 ≥30，北极星2 才能出硬判定（非「样本不足」）。→ **Fixed**（2026-06-26，30/30）。
+    - **KI-METRICS-003（`upgrade_still_partial` 专项）**：→ **Fixed**（RefineV2 default ON，2026-06-27）。
+- **2026-06-29 v2.2 实测摘要（沙箱 REAL `:8001`，账本 `observation_ledger.jsonl`）**：
+  - O1 热修后 2 轮（yaml 诊断层 N=30）：**86.7%**；M1 REAL 后 **product_metrics 61.4%**（N=57）→ **DoD 未达标**；
+  - O3 v3 complex REAL **8/8**；S1 回滚 FAKE `partial=8` vs ON `partial=0`；
+  - A1 async：`async_02/03/04` 240s 轮询内仍 `pending`/`partial`（KI-METRICS-005）；**不计入北极星2 分母**。
 
 ---
 
@@ -275,6 +279,18 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
 - 根因：Middle 材料不足诚实模板触发材料 reason；general lane 无 KB  scope 时不应强制 web 二轮；narrow 后 `need_more_material` 仍 true 或 `insufficient_evidence` 阻断 answer_only。
 - 修复锚点：`quality_gate.py`（narrow 后重算 need_more_material）、`refine_kind.py`（effective codes + depth-only insuf 例外）、`complex_feedback_impl.py`（answer_only 先于 build_feedback_request；web_fetch_empty 回退 answer_only）。
 - **2026-06-27 R2（`eed5823`）**：`complex_03` limitations-only → `answer_only`（不再 web）；`complex_10/17` about-KB 路由收窄。DIAG complex_partial=0。
+
+---
+
+## KI-METRICS-005
+
+- Issue ID：`KI-METRICS-005`
+- 标题：指标沙箱 async 子集在同步轮询窗内难达终态 `succeeded`
+- 当前状态：`Open`（**观测 backlog**，不挡 RefineV2 / 北极星2 DoD）
+- 现象（A1 摸底，2026-06-29 REAL 沙箱）：`async_02/03/04` 首包常 `task_status=pending`，`async_poll_status=partial`；120s 内 `/tasks/{id}/result` 未必 `ready`。
+- 根因（推断）：动态页后台抓取耗时 > 沙箱默认轮询窗；async 样本**不在 complex 分母**，不影响北极星2 硬判定。
+- **A2 最小缓解（(a)）**：`scripts/run_metrics_sandbox_samples.py` 默认 `SANDBOX_ASYNC_POLL_TIMEOUT_SEC=240`（仅沙箱观测，不改主链出口）。
+- 后续（非本阶段 DoD）：拉长 worker 并发 / 沙箱专用 async 终态 hook，或 staging 独立 async 子集评测；**禁止**为刷 async succeeded 放宽质量门或改北极星分母。
 
 ---
 

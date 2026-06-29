@@ -34,6 +34,9 @@ DEFAULT_CHAT_TIMEOUT_SEC = float(
 COMPLEX_CHAT_TIMEOUT_SEC = float(
     __import__("os").environ.get("SANDBOX_COMPLEX_CHAT_TIMEOUT_SEC", "240")
 )
+ASYNC_POLL_TIMEOUT_SEC = float(
+    __import__("os").environ.get("SANDBOX_ASYNC_POLL_TIMEOUT_SEC", "240")
+)
 
 
 def fetch_task_result(base: str, task_id: str) -> dict:
@@ -303,8 +306,12 @@ def _row_from_response(item: dict, out: dict, *, ms: int) -> dict:
     return enrich_metrics_diagnostic_row(row, extra)
 
 
-def _append_observation_ledger(*, breakdown: dict, api: str) -> None:
-    """Append-only REAL/FAKE sandbox observation log (gitignored _local)."""
+def _append_observation_ledger(*, breakdown: dict, api: str, use_pg_canonical: bool = False) -> None:
+    """Append-only REAL/FAKE sandbox observation log (gitignored _local).
+
+    north_star2 真源与周报一致：use_pg_canonical 时读 turn_product_metrics 聚合（product_metrics）。
+    breakdown 的 complex_partial 仍来自 yaml 样本诊断层。
+    """
     import subprocess as _sp
 
     os_mod = __import__("os")
@@ -326,24 +333,27 @@ def _append_observation_ledger(*, breakdown: dict, api: str) -> None:
         ).strip()
     except (OSError, _sp.CalledProcessError):
         git_rev = "unknown"
-    complex_total = int(breakdown.get("complex_total") or 0)
     complex_partial = int(breakdown.get("complex_partial") or 0)
-    succeeded = sum(
-        1
-        for r in breakdown.get("_rows") or []
-        if r.get("is_complex_task")
-        and str(r.get("task_status") or "").lower() == "succeeded"
-        and not r.get("insufficient_evidence")
-        and r.get("quality_gate_passed") is not False
-    )
-    # breakdown from build_complex_failure_breakdown has no _rows; recompute from partial only
+    complex_total = int(breakdown.get("complex_total") or 0)
     effective_rate = None
-    if complex_total > 0:
-        # use diagnostic rows count from caller via env set just before call — pass rows in breakdown
+    if use_pg_canonical and not fake:
+        from datetime import UTC, datetime, timedelta
+
+        from application.analytics.product_metrics import aggregate_turn_rows
+        from storage.turn_product_metrics_pg import fetch_metrics_between
+
+        cur_end = datetime.now(UTC)
+        cur_start = cur_end - timedelta(days=7)
+        pg_rows = fetch_metrics_between(cur_start, cur_end)
+        agg = aggregate_turn_rows(pg_rows)
+        complex_total = int(agg.get("complex_task_count") or 0)
+        rate_val = agg.get("complex_effective_complete_rate")
+        if complex_total > 0 and rate_val is not None:
+            effective_rate = round(float(rate_val), 4)
+    if effective_rate is None and complex_total > 0:
         eff = breakdown.get("complex_effective_succeeded")
         if eff is not None:
-            succeeded = int(eff)
-        effective_rate = round(succeeded / complex_total, 4)
+            effective_rate = round(int(eff) / complex_total, 4)
     entry = {
         "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "git_rev": git_rev,
@@ -354,6 +364,7 @@ def _append_observation_ledger(*, breakdown: dict, api: str) -> None:
         "complex_total": complex_total,
         "complex_partial": complex_partial,
         "north_star2": effective_rate,
+        "north_star2_source": "product_metrics" if use_pg_canonical and not fake else "yaml_diagnostic",
         "counts_for_dod": (not fake) and refine_mode == "on" and "8001" in api,
     }
     ledger_dir = REPO_ROOT / "_local" / "reports" / "metrics"
@@ -442,7 +453,11 @@ def main() -> int:
                 task_id = str(out.get("task_id") or extra.get("web_task_id") or "").strip()
                 if task_id:
                     try:
-                        polled = poll_async_final_answer(args.api, task_id)
+                        polled = poll_async_final_answer(
+                            args.api,
+                            task_id,
+                            timeout_sec=ASYNC_POLL_TIMEOUT_SEC,
+                        )
                         result = polled.get("result") if isinstance(polled.get("result"), dict) else {}
                         final_answer = str(
                             (result or {}).get("final_answer")
@@ -569,14 +584,18 @@ def main() -> int:
         encoding="utf-8",
     )
 
-    _append_observation_ledger(breakdown=breakdown, api=str(args.api))
-
     if args.report:
         subprocess.run(
             [sys.executable, str(REPO_ROOT / "scripts" / "report_product_metrics.py"), "--days", "7", "--html"],
             check=False,
             env=__import__("os").environ.copy(),
         )
+
+    _append_observation_ledger(
+        breakdown=breakdown,
+        api=str(args.api),
+        use_pg_canonical=bool(args.report),
+    )
 
     failed = sum(1 for r in results if r.get("error"))
     if tag_checks or shadow_mismatches:

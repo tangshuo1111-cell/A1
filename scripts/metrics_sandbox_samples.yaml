@@ -4,9 +4,9 @@
 # 口径：当前为离线代表题，非全量线上请求；样本量未到有效区间时，
 #       周报判定标"样本不足"，只看趋势、不下达标结论（见 backend/config/metric_targets.py）。
 #
-# tag 分布（共 42 条）：
+# tag 分布（共 56 条）：
 #   simple        x6   Fast 快路径直答（不计入北极星分母）
-#   complex       x26  Complex 主链 → 北极星2 分母
+#   complex       x40  Complex 主链 → 北极星2 分母（M1 扩样本，结构约束：与旧集同难度分布）
 #   insufficiency x3   材料/证据不足场景
 #   async         x3   后台排队抓取 + poll 终答
 #   reuse         x4   北极星1：seed 检索 x3 + 全 API「upload→commit→检索」x1（reuse_flow_01）
@@ -113,6 +113,48 @@ samples:
   - id: complex_26
     tag: complex
     message: "请从可观测性、回滚成本和用户信任三个角度，评估 partial 交付与 insufficiency 诚实回退并存时的产品策略，并给出监控指标建议。"
+  - id: complex_27
+    tag: complex
+    message: "请从召回率、延迟和可解释性三个维度，对比'纯向量 RAG'与'混合检索+重排+引用片段'两种 grounding 方案，并给出企业文档问答的推荐组合。"
+  - id: complex_28
+    tag: complex
+    message: "请比较固定窗口、语义段落和结构化字段三种 chunk 策略在长文档入库中的优劣，并说明在中文技术手册场景下应如何选型与迭代。"
+  - id: complex_29
+    tag: complex
+    message: "请从成本、准确率和运维复杂度三个角度，评估'小模型路由+大模型生成'与'全程大模型'两种 LLM 调用策略，并给出按任务复杂度分流的阈值思路。"
+  - id: complex_30
+    tag: complex
+    message: "请综合分析多轮对话里'会话记忆'与'RAG 检索'的职责边界，并比较'只靠 memory'与'memory+RAG 协同'在复杂追问场景下的取舍。"
+  - id: complex_31
+    tag: complex
+    message: "请从可靠性、延迟和可观测性三个维度，对比'工具调用失败即 partial'与'工具失败走诚实回退+降级答案'两种产品策略，并给出监控指标建议。"
+  - id: complex_32
+    tag: complex
+    message: "请比较'用户确认后才 commit 资料'与'自动 prepare 仅解析不入库'两种知识沉淀路径，在合规、复用率和冷启动三个维度上的差异，并给出落地建议。"
+  - id: complex_33
+    tag: complex
+    message: "请从首响时间、终答完整度和用户感知三个角度，评估 streaming 同步输出与 async 后台终答并存的体验设计，并给出一个长网页抓取场景的交互方案。"
+  - id: complex_34
+    tag: complex
+    message: "请从安全、合规和数据留存三个维度，分析网页抓取进入知识库前的风险点，并给出一个'先解析、用户确认后再收录'的治理流程建议。"
+  - id: complex_35
+    tag: complex
+    message: "请比较 OCR、ASR 和网页正文三种材料来源在'多模态证据融合'中的可信度与成本，并说明 insufficiency 场景下应如何诚实表达材料边界。"
+  - id: complex_36
+    tag: complex
+    message: "请从路由稳定性、升级成本和失败归因三个角度，评估 fast→complex→async 三层分流架构，并说明各自最该监控的产品指标。"
+  - id: complex_37
+    tag: complex
+    message: "请综合分析 agent 链中'规则编排'与'LLM 自主循环'在复杂任务交付上的差异，并给出适合 A1 类知识工作流产品的推荐架构。"
+  - id: complex_38
+    tag: complex
+    message: "请从准确率、延迟和索引维护成本三个维度，对比 BM25、向量检索和 Hybrid+重排在'超长 PDF 手册'场景下的演进路线，并给出从 0 到 1 的落地步骤。"
+  - id: complex_39
+    tag: complex
+    message: "请比较'每次 complex 都跑三 Agent 全链'与'质量门触发 answer_only 二轮'两种 Refine 策略在成本与有效完成率上的权衡，并给出观测指标建议。"
+  - id: complex_40
+    tag: complex
+    message: "请从证据充分性、诚实表达和可观测性三个角度，设计一个'材料不足时不强答'的 insufficiency 回答契约，并说明与 partial 交付如何并存而不误导用户。"
 
   # ---------- insufficiency x3 ----------
   - id: insufficiency_02
