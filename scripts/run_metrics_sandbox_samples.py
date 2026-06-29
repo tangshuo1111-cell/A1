@@ -303,6 +303,67 @@ def _row_from_response(item: dict, out: dict, *, ms: int) -> dict:
     return enrich_metrics_diagnostic_row(row, extra)
 
 
+def _append_observation_ledger(*, breakdown: dict, api: str) -> None:
+    """Append-only REAL/FAKE sandbox observation log (gitignored _local)."""
+    import subprocess as _sp
+
+    os_mod = __import__("os")
+    fake = str(os_mod.environ.get("LIGHT_MAQA_FAKE_LLM", "")).strip().lower() in {"1", "true", "yes", "on"}
+    refine_env = str(os_mod.environ.get("ENABLE_COMPLEX_REFINE_V2", "")).strip().lower()
+    if refine_env in {"0", "false", "off", "no"}:
+        refine_mode = "off"
+    elif refine_env in {"1", "true", "on", "yes"}:
+        refine_mode = "on"
+    else:
+        refine_mode = "default"
+    git_rev = ""
+    try:
+        git_rev = _sp.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=str(REPO_ROOT),
+            text=True,
+            stderr=_sp.DEVNULL,
+        ).strip()
+    except (OSError, _sp.CalledProcessError):
+        git_rev = "unknown"
+    complex_total = int(breakdown.get("complex_total") or 0)
+    complex_partial = int(breakdown.get("complex_partial") or 0)
+    succeeded = sum(
+        1
+        for r in breakdown.get("_rows") or []
+        if r.get("is_complex_task")
+        and str(r.get("task_status") or "").lower() == "succeeded"
+        and not r.get("insufficient_evidence")
+        and r.get("quality_gate_passed") is not False
+    )
+    # breakdown from build_complex_failure_breakdown has no _rows; recompute from partial only
+    effective_rate = None
+    if complex_total > 0:
+        # use diagnostic rows count from caller via env set just before call — pass rows in breakdown
+        eff = breakdown.get("complex_effective_succeeded")
+        if eff is not None:
+            succeeded = int(eff)
+        effective_rate = round(succeeded / complex_total, 4)
+    entry = {
+        "ts": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "git_rev": git_rev,
+        "environment": "FAKE" if fake else "REAL",
+        "api": api,
+        "db": "light_maqa_metrics_sandbox@5433",
+        "refine_v2": refine_mode,
+        "complex_total": complex_total,
+        "complex_partial": complex_partial,
+        "north_star2": effective_rate,
+        "counts_for_dod": (not fake) and refine_mode == "on" and "8001" in api,
+    }
+    ledger_dir = REPO_ROOT / "_local" / "reports" / "metrics"
+    ledger_dir.mkdir(parents=True, exist_ok=True)
+    ledger_path = ledger_dir / "observation_ledger.jsonl"
+    with ledger_path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(entry, ensure_ascii=False) + "\n")
+    print(f"LEDGER: {json.dumps(entry, ensure_ascii=False)}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--api", default="http://127.0.0.1:8000")
@@ -489,6 +550,15 @@ def main() -> int:
     )
 
     breakdown = build_complex_failure_breakdown(results)
+    complex_eff = sum(
+        1
+        for r in results
+        if r.get("is_complex_task")
+        and str(r.get("task_status") or "").lower() == "succeeded"
+        and not r.get("insufficient_evidence")
+        and r.get("quality_gate_passed") is not False
+    )
+    breakdown["complex_effective_succeeded"] = complex_eff
     for line in render_diagnostic_summary_lines(breakdown):
         print(f"DIAG: {line}")
     diag_dir = REPO_ROOT / "_local" / "reports" / "metrics"
@@ -498,6 +568,8 @@ def main() -> int:
         json.dumps({"breakdown": breakdown, "rows": results}, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
+
+    _append_observation_ledger(breakdown=breakdown, api=str(args.api))
 
     if args.report:
         subprocess.run(

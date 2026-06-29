@@ -20,7 +20,10 @@
   跑完顺带 `compose down` 掉沙箱 PG（默认保留，便于复跑对照）。
 
 .PARAMETER RefineV2
-  开启 ENABLE_COMPLEX_REFINE_V2（003 answer_only 验收；默认关）。
+  强制 ENABLE_COMPLEX_REFINE_V2=1（answer_only 验收）。
+
+.PARAMETER RollbackProbe
+  强制 ENABLE_COMPLEX_REFINE_V2=0（回滚演练；覆盖 feature_flags default ON）。
 
 .PARAMETER ExitShadow
   开启 ENABLE_TURN_EXIT_GATE_SHADOW，样本跑完后审计 exit_shadow.diff_fields。
@@ -29,12 +32,14 @@
   用法（项目根）:
     .\scripts\run_metrics_sandbox.ps1            # 真实 LLM 跑一轮并出周报
     .\scripts\run_metrics_sandbox.ps1 -FakeLLM   # 不打真实外部，仅验证管线
-    .\scripts\run_metrics_sandbox.ps1 -RefineV2  # 003 行为修复验收
-    .\scripts\run_metrics_sandbox.ps1 -Down      # 跑完销毁沙箱 PG
+    .\scripts\run_metrics_sandbox.ps1 -RefineV2       # 003 行为 ON
+    .\scripts\run_metrics_sandbox.ps1 -RollbackProbe  # 回滚演练 OFF
+    .\scripts\run_metrics_sandbox.ps1 -Down           # 跑完销毁沙箱 PG
 #>
 param(
     [switch]$FakeLLM,
     [switch]$RefineV2,
+    [switch]$RollbackProbe,
     [switch]$ExitShadow,
     [switch]$Down
 )
@@ -77,12 +82,21 @@ $env:DATABASE_URL = $sandboxDb
 $env:EMBEDDING_ENABLED = "0"
 $env:TASK_TIMEOUT_SEC = "240"
 $env:LIGHT_MAQA_FAKE_LLM = if ($FakeLLM) { "1" } else { "0" }
-if ($RefineV2) { $env:ENABLE_COMPLEX_REFINE_V2 = "1" } else { Remove-Item Env:ENABLE_COMPLEX_REFINE_V2 -ErrorAction SilentlyContinue }
+if ($RollbackProbe) {
+    $refineFlag = "0"
+    $env:ENABLE_COMPLEX_REFINE_V2 = "0"
+} elseif ($RefineV2) {
+    $refineFlag = "1"
+    $env:ENABLE_COMPLEX_REFINE_V2 = "1"
+} else {
+    $refineFlag = "default"
+    Remove-Item Env:ENABLE_COMPLEX_REFINE_V2 -ErrorAction SilentlyContinue
+}
 if ($ExitShadow) { $env:ENABLE_TURN_EXIT_GATE_SHADOW = "1" } else { Remove-Item Env:ENABLE_TURN_EXIT_GATE_SHADOW -ErrorAction SilentlyContinue }
 
-Write-Host "[sandbox] 3/5 后台拉起 :8001 后端（FAKE_LLM=$($env:LIGHT_MAQA_FAKE_LLM), REFINE_V2=$($env:ENABLE_COMPLEX_REFINE_V2), EXIT_SHADOW=$($env:ENABLE_TURN_EXIT_GATE_SHADOW)）..." -ForegroundColor Cyan
+$refineLabel = if ($RollbackProbe) { "0(rollback)" } elseif ($RefineV2) { "1" } else { "default" }
+Write-Host "[sandbox] 3/5 后台拉起 :8001 后端（FAKE_LLM=$($env:LIGHT_MAQA_FAKE_LLM), REFINE_V2=$refineLabel, EXIT_SHADOW=$($env:ENABLE_TURN_EXIT_GATE_SHADOW)）..." -ForegroundColor Cyan
 $beScript = Join-Path $PSScriptRoot "start_metrics_sandbox_backend.ps1"
-$refineFlag = if ($RefineV2) { "1" } else { "0" }
 $shadowFlag = if ($ExitShadow) { "1" } else { "0" }
 $be = Start-Process -FilePath "pwsh" `
     -ArgumentList @(

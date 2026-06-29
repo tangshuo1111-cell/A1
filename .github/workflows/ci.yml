@@ -134,6 +134,19 @@ jobs:
           python scripts/export_openapi.py /tmp/openapi-ci.json
           python scripts/check_openapi_parity.py docs/current/openapi.json /tmp/openapi-ci.json
 
+      - name: V1 route regression gate (FAKE LLM, anti-regression)
+        env:
+          LIGHT_MAQA_FAKE_LLM: "1"
+          PYTHONPATH: backend
+          DATABASE_URL: postgresql://light_maqa:light_maqa_dev@localhost:5432/light_maqa
+        run: |
+          python -m uvicorn api.main:app --host 127.0.0.1 --port 8000 &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8000/health && break
+            sleep 2
+          done
+          python scripts/evaluation/run_eval_suite.py --suite v1_route_exit_state
+
       - name: Upload coverage.xml
         uses: actions/upload-artifact@v4
         with:

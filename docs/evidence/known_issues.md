@@ -204,7 +204,8 @@ real_external 证据：`runtime_data/eval_sandbox/reports/eval_real_external_smo
 - 来源版本：指标沙箱北极星2 观测
 - 来源 case：`complex_*` 子集（`_local/reports/metrics/weekly_2026-06-22.json`）
 - 问题类型：`observability environment limitation`（非产品诚实性缺陷）
-- 当前状态：`Open`（环境口径问题，非主链 bug；2026-06-25 已修复其中"占位桩过短被门挡死"的可操作根因，详见下方处理策略）
+- 当前状态：`Open`（**环境告警**：FAKE≠REAL 产品质量；真值 = 沙箱 REAL `:8001` + `observation_ledger.jsonl`）
+- 子项「占位桩过短挡门」已修；**勿用 FAKE weekly 当北极星结论**
 - 现象：
 - FAKE 回答形如「测试回答：{原题}」，缺少对比结构/决策标记 → `quality_gate_block`
 - 北极星2 `complex_effective_complete_rate` 在 FAKE 沙箱上极低（如 4%），**不可外推为产品质量**

@@ -18,6 +18,8 @@ $env:LIGHT_MAQA_FAKE_LLM = $FakeLLM
 $env:PYTHONIOENCODING = "utf-8"
 if ($RefineV2 -eq "1") {
     $env:ENABLE_COMPLEX_REFINE_V2 = "1"
+} elseif ($RefineV2 -eq "0") {
+    $env:ENABLE_COMPLEX_REFINE_V2 = "0"
 } else {
     Remove-Item Env:ENABLE_COMPLEX_REFINE_V2 -ErrorAction SilentlyContinue
 }
