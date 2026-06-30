@@ -14,8 +14,8 @@ from application.chat.delivery_gate_flow import (
 from application.chat.executors.complex.complex_deadline import FeedbackGatherContext
 from application.chat.executors.complex.complex_feedback_impl import run_feedback_round_execution
 from application.chat.history_buffer import ChatTurnDeps
-from application.chat.shared_material_prep import run_shared_material_prep
 from application.chat.refine_kind import is_answer_only_refine_bundle
+from application.chat.shared_material_prep import run_shared_material_prep
 from config.feature_flags import shared_retrieval_active
 from domain.session_types import SessionHistorySnapshot
 

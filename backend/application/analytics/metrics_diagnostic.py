@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from application.chat.refine_kind import build_complex_failure_breakdown, enrich_metrics_diagnostic_row
+from application.chat.refine_kind import (
+    build_complex_failure_breakdown,
+    enrich_metrics_diagnostic_row,
+)
 
 __all__ = [
     "build_complex_failure_breakdown",

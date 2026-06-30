@@ -21,8 +21,8 @@ from application.chat.pending_kind import PendingKind
 from application.chat.pipeline.complex_session_writeback import writeback_complex_session
 from application.chat.pipeline.fast_stage import build_merge_turn_obs, finalize_turn_cache
 from application.chat.pipeline.pipeline_state import TurnPipelineState
-from application.chat.turn_exit_gate import apply_turn_exit_to_chat_turn
 from application.chat.refine_kind import reconcile_answer_only_turn_facts
+from application.chat.turn_exit_gate import apply_turn_exit_to_chat_turn
 from application.chat.turn_facts import (
     build_complex_turn_facts,
     lift_background_task_exit,

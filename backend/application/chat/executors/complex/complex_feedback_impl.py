@@ -21,17 +21,17 @@ from application.chat.executors.complex.complex_feedback_paths import (
     reject_tool_failure,
     schedule_answer_only_refine,
 )
-from application.chat.refine_kind import (
-    complex_refine_v2_active,
-    narrow_general_reasoning_gate_reasons,
-    resolve_refine_kind,
-)
 from application.chat.executors.complex.complex_feedback_synthesize import (
     synthesize_multisource_feedback_request,
     synthesize_web_feedback_request,
 )
 from application.chat.executors.complex.complex_feedback_trace import trace_feedback_round
 from application.chat.pending_kind import PendingKind
+from application.chat.refine_kind import (
+    complex_refine_v2_active,
+    narrow_general_reasoning_gate_reasons,
+    resolve_refine_kind,
+)
 from config.feature_flags import three_agent_autonomy_active
 from services.capabilities.web import web_orchestration_service as agno_web_service
 

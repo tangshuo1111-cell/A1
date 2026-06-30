@@ -14,8 +14,8 @@ from application.chat.chat_contracts import (
 )
 from application.chat.domain.events import TurnEvent, quality_escalated_event
 from application.chat.domain.reason_codes import QUALITY_REQUIRES_COMPLEX
-from application.chat.refine_kind import resolve_refine_kind, would_answer_only_refine_apply
 from application.chat.quality_gate import evaluate_quality_gate
+from application.chat.refine_kind import resolve_refine_kind, would_answer_only_refine_apply
 from application.chat.shared_material_prep import shared_prep_trace_extra
 from application.chat.trace_writer import (
     apply_ingress_complex_extra,
