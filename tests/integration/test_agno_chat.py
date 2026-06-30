@@ -91,6 +91,9 @@ def test_openapi_lists_chat_agno_route() -> None:
 
 def test_agno_chat_second_turn_includes_prior_context(monkeypatch: pytest.MonkeyPatch) -> None:
     """简单连续追问：第二轮应带上第一轮摘录（由 service 拼 context_block）。"""
+    from config import feature_flags
+
+    monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_COMPLEX_REFINE_V2", False)
     calls: list[tuple[str, str | None, str | None, str | None]] = []
 
     def fake_basic(

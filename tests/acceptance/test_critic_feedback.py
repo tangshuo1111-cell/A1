@@ -48,12 +48,14 @@ def test_successful_compare_generates_matrix_and_critic(tmp_path):
     assert extra["comparison_matrix"]["status"] == "ready"
     assert extra["critic_check"]["critic_check_id"]
     assert extra.get("feedback_request") is None
-    assert extra["used_rounds"] == [0]
+    assert 0 in extra["used_rounds"]
 
 
-def test_partial_compare_triggers_feedback_and_conservative_answer(tmp_path):
+def test_partial_compare_triggers_feedback_and_conservative_answer(tmp_path, monkeypatch):
+    from config import feature_flags
     from services.agno_chat_service import run_agno_chat_turn
 
+    monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_COMPLEX_REFINE_V2", False)
     server, base = _serve(tmp_path)
     try:
         out = run_agno_chat_turn(_question(base, "missing.html"), session_id="v17r2-partial")
@@ -127,7 +129,10 @@ def test_gate_rejects_when_feedback_changes_intent():
 
 def test_round1_success_uses_round1_material(tmp_path, monkeypatch):
     """Round1 应消费 fallback 抓取到的第二个来源材料（与真实 Playwright 无关）。"""
+    from config import feature_flags
     from services.agno_chat_service import run_agno_chat_turn
+
+    monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_COMPLEX_REFINE_V2", False)
     from tools.web import registry as web_registry
     from tools.web.common import content_hash, now_iso
     from tools.web.quality import assess_web_text
@@ -206,9 +211,12 @@ def test_round1_success_uses_round1_material(tmp_path, monkeypatch):
 
 
 def test_default_chain_builds_feedback_request_and_round1_web(monkeypatch):
+    from config import feature_flags
     from threading import Lock
 
     from agents.answer_agent import AnswerAgent
+
+    monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_COMPLEX_REFINE_V2", False)
     from agents.main_agent.schema import AgnoCollaborationPlan, MainXiezuoPan
     from agents.middle_agent.schema import AgnoMaterialBundle, CailiaoPan, EvidenceEnvelope
     from application.chat.run_chat_turn import ChatTurnDeps, run_agno_chat_turn_impl

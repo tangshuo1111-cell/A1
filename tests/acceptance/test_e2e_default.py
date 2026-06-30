@@ -431,11 +431,14 @@ class TestU_FinalProtocolContract:
             r = client.get("/tasks/does-not-exist")
         assert r.status_code == 404
 
-    def test_u3_feedback_fields_exposed_for_default_chain_when_triggered(self) -> None:
+    def test_u3_feedback_fields_exposed_for_default_chain_when_triggered(self, monkeypatch) -> None:
         from threading import Lock
         from types import SimpleNamespace
 
         from agents.answer_agent import AnswerAgent
+        from config import feature_flags
+
+        monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_COMPLEX_REFINE_V2", False)
         from agents.main_agent.schema import AgnoCollaborationPlan, MainXiezuoPan
         from agents.middle_agent.schema import AgnoMaterialBundle, CailiaoPan, EvidenceEnvelope
         from application.chat.run_chat_turn import ChatTurnDeps, run_agno_chat_turn_impl

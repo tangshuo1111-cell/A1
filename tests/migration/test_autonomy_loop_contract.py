@@ -67,6 +67,9 @@ def _bundle() -> AgnoMaterialBundle:
 
 
 def test_complex_chain_exposes_autonomy_loop_fields(monkeypatch) -> None:
+    from config import feature_flags
+
+    monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_COMPLEX_REFINE_V2", False)
     monkeypatch.setattr(
         "services.capabilities.web.web_orchestration_service.fetch_web_evidence_block",
         lambda *_a, **_k: "[Web检索] 项目代号是 Atlas",

@@ -34,8 +34,11 @@ def _question(base: str, second: str = "missing.html") -> str:
     )
 
 
-def test_default_chain_runs_feedback_gate_and_round_delta(tmp_path):
+def test_default_chain_runs_feedback_gate_and_round_delta(tmp_path, monkeypatch):
+    from config import feature_flags
     from services.agno_chat_service import run_agno_chat_turn
+
+    monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_COMPLEX_REFINE_V2", False)
 
     server, base = _serve(tmp_path)
     try:

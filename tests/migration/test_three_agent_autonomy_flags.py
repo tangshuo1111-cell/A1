@@ -108,6 +108,7 @@ def test_autonomy_flag_off_skips_feedback_loop(monkeypatch: pytest.MonkeyPatch) 
 
 def test_autonomy_flag_on_runs_feedback_loop(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_THREE_AGENT_AUTONOMY", True)
+    monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_COMPLEX_REFINE_V2", False)
     monkeypatch.setattr(
         "services.capabilities.web.web_orchestration_service.fetch_web_evidence_block",
         lambda *_a, **_k: "[Web检索] 项目代号是 Atlas",

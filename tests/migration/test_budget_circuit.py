@@ -94,6 +94,9 @@ def test_llm_budget_exhausted_stops_autonomy_loop() -> None:
 
 
 def test_tool_budget_exhausted_blocks_round1_fetch(monkeypatch) -> None:
+    from config import feature_flags
+
+    monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_COMPLEX_REFINE_V2", False)
     called = {"web": 0}
 
     def _never(*_a, **_k):
