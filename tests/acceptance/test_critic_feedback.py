@@ -211,10 +211,10 @@ def test_round1_success_uses_round1_material(tmp_path, monkeypatch):
 
 
 def test_default_chain_builds_feedback_request_and_round1_web(monkeypatch):
-    from config import feature_flags
     from threading import Lock
 
     from agents.answer_agent import AnswerAgent
+    from config import feature_flags
 
     monkeypatch.setitem(feature_flags.FEATURE_FLAGS, "ENABLE_COMPLEX_REFINE_V2", False)
     from agents.main_agent.schema import AgnoCollaborationPlan, MainXiezuoPan
