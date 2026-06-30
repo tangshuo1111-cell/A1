@@ -123,7 +123,7 @@ jobs:
       - name: pip-audit requirements.lock (新 CVE 阻断；已评估 ID 见 security_audit_record.md)
         run: |
           python -m pip install pip-audit
-          python -m pip_audit -r requirements.lock
+          python -m pip_audit -r requirements.lock --ignore-vuln CVE-2025-3000
 
       - name: Pytest with coverage
         run: |

@@ -15,8 +15,8 @@
 ## 2. 如何复跑（与 CI 一致）
 
 ```powershell
-# 后端（仓库根）
-py -3.12 -m pip_audit -r requirements.lock
+# 后端（仓库根，与 CI 一致）
+py -3.12 -m pip_audit -r requirements.lock --ignore-vuln CVE-2025-3000
 
 # 前端（与 CI 一致，须官方 registry）
 cd frontend
@@ -28,6 +28,7 @@ npm audit --audit-level=high --registry=https://registry.npmjs.org
 | 评估日期 | 来源 | CVE / GHSA | 包@版本 | 严重度 | 是否影响主链 | 结论 | 依据 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 2026-06-24 | pip-audit | 无（No known vulnerabilities found） | `requirements.lock` 全量 | — | — | 已清 | `py -3.12 -m pip_audit -r requirements.lock` 全量解析，0 CVE |
+| 2026-06-30 | pip-audit | CVE-2025-3000 | `torch@2.11.0` | — | 否（sentence-transformers 传递依赖，无可用 fix） | 暂缓（上游未修） | CI `--ignore-vuln CVE-2025-3000`；其余 6 包已升级至 fix 版本（aiohttp/cryptography/pydantic-settings/python-multipart/starlette/yt-dlp） |
 | 2026-06-30 | npm audit | 无 high/critical（官方 registry） | `frontend/package-lock.json` | — | — | 已清 | 升级 `next`/`eslint-config-next` 至 15.5.19、`vitest` ≥3.2.6 后 `npm audit --audit-level=high --registry=https://registry.npmjs.org` 通过；2 个 moderate（postcss 传递依赖）低于阻断阈值 |
 
 > 结论取值：`已升级` / `暂缓（上游未修）` / `不适用（未触达代码路径）` / `观察`。  
