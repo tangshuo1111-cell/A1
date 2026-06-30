@@ -161,7 +161,7 @@ jobs:
           python scripts/evaluation/run_eval_suite.py --suite v1_route_exit_state
 
       - name: Upload coverage.xml
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: backend-coverage
           path: coverage.xml
