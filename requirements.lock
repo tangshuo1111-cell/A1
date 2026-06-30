@@ -336,8 +336,6 @@ python-multipart==0.0.32
     #   mcp
 pytz==2026.2
     # via dateparser
-pywin32==312
-    # via mcp
 pyyaml==6.0.3
     # via
     #   agno
