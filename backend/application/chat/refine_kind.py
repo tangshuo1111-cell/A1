@@ -88,9 +88,7 @@ def _material_relevant_chunks(
     if retrieved_chunks_count <= 0:
         return False
     tier_l = str(kb_evidence_tier or "").strip().lower()
-    if tier_l in {"weak", "none"}:
-        return False
-    return True
+    return tier_l not in {"weak", "none"}
 
 
 def _effective_answer_only_codes(
@@ -308,9 +306,7 @@ def _limitations_only_general_refine(
         kb_evidence_tier=kb_evidence_tier,
     ):
         return False
-    if need_more_material and _limitations_are_material_scope_only(list(limitations or ())) is False:
-        return False
-    return True
+    return not (need_more_material and _limitations_are_material_scope_only(list(limitations or ())) is False)
 
 
 def resolve_refine_kind(

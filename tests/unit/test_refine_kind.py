@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import pytest
 
+from application.chat.chat_contracts import QualityGateResult, TurnExitEnvelope
+from application.chat.pending_kind import PendingKind
 from application.chat.refine_kind import (
     answer_only_refine_reason_codes,
     build_answer_only_executor_hint,
@@ -18,8 +20,6 @@ from application.chat.refine_kind import (
     resolve_refine_kind,
     would_answer_only_refine_apply,
 )
-from application.chat.chat_contracts import QualityGateResult, TurnExitEnvelope
-from application.chat.pending_kind import PendingKind
 from application.chat.turn_facts import TurnFacts
 from config.feature_flags import FEATURE_FLAGS
 

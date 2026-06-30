@@ -8,7 +8,10 @@ from application.chat.chat_contracts import (
     MaterialGateFacts,
     QualityGateResult,
 )
-from application.chat.refine_kind import complex_refine_v2_active, narrow_general_reasoning_gate_reasons
+from application.chat.refine_kind import (
+    complex_refine_v2_active,
+    narrow_general_reasoning_gate_reasons,
+)
 
 _COMPARISON_CODES = frozenset({"comparison", "pro_con", "cross_material"})
 _DEEP_COMPLEX_CODES = frozenset({"decision_tradeoff", "multi_dimension", "solution_design", "multi_analysis", "cross_material", "pro_con"})
@@ -101,7 +104,7 @@ def evaluate_quality_gate(
     if any(marker in text for marker in _KB_EMPTY_TEMPLATE_MARKERS):
         reasons.append("evidence_not_used")
 
-    material_need_more = _apply_material_gate_facts(
+    _apply_material_gate_facts(
         reasons,
         executor_profile=executor_profile,
         round_index=round_index,
