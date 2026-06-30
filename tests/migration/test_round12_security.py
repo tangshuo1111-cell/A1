@@ -87,11 +87,14 @@ def test_proxy_route_uses_allowlist() -> None:
     assert "copyAllowedProxyRequestHeaders" in text
 
 
-def test_ci_audit_steps_are_informational() -> None:
+def test_ci_audit_steps_are_semi_blocking() -> None:
+    """pip/npm audit 半阻断：官方 registry + 无 continue-on-error（台账见 security_audit_record.md）。"""
     ci = (PROJECT_ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
     assert "pip-audit" in ci
-    assert "continue-on-error: true" in ci
+    assert "pip_audit -r requirements.lock" in ci
     assert "npm audit" in ci
+    assert "registry.npmjs.org" in ci
+    assert "continue-on-error: true" not in ci
 
 
 def test_video_cookies_admin_gated_and_metadata_only_logs() -> None:
