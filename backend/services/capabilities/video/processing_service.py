@@ -132,9 +132,9 @@ def result_to_capability_pair(
     probe_ms = int(meta.get("video_probe_elapsed_ms") or probe_elapsed_ms or 0)
     duration_raw = meta.get("duration_sec", meta.get("duration"))
     duration_sec: float | None = None
-    if isinstance(duration_raw, (int, float)):
-        duration_sec = float(duration_raw)
-    elif isinstance(duration_raw, str) and duration_raw.strip():
+    if isinstance(duration_raw, (int, float)) or (
+        isinstance(duration_raw, str) and duration_raw.strip()
+    ):
         duration_sec = float(duration_raw)
 
     subtitle_available: bool | None = None

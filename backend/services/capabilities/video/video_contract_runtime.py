@@ -1,9 +1,9 @@
 """Runtime helpers for video CapabilityFact contract (S4b)."""
 from __future__ import annotations
 
-from typing import Any, Literal, cast
+from typing import Any, cast
 
-from services.capabilities.contracts import CapabilityAdvice, SuggestedMode, CapabilityFact
+from services.capabilities.contracts import CapabilityAdvice, CapabilityFact, SuggestedMode
 
 
 def attach_capability_contract_metadata(
