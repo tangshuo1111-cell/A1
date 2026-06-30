@@ -30,7 +30,7 @@
     "lines": 67
   },
   "backend/application/chat/executors/complex_executor_delivery_feedback.py": {
-    "lines": 131
+    "lines": 141
   },
   "backend/application/chat/executors/complex_executor_exit_extra.py": {
     "lines": 105
@@ -135,7 +135,7 @@
     "lines": 38
   },
   "backend/application/chat/pipeline/complex_finalize_stage.py": {
-    "lines": 141
+    "lines": 147
   },
   "backend/application/chat/pipeline/pipeline_state.py": {
     "lines": 54
@@ -150,10 +150,10 @@
     "lines": 103
   },
   "backend/application/chat/executors/complex/complex_feedback_impl.py": {
-    "lines": 176
+    "lines": 245
   },
   "backend/application/chat/executors/complex/complex_feedback_paths.py": {
-    "lines": 118
+    "lines": 163
   },
   "backend/application/chat/executors/complex/complex_feedback_trace.py": {
     "lines": 32
