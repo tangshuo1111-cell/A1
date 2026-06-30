@@ -38,7 +38,7 @@ def run_multisource_refresh(
             clock=budget_clock,
         )
     ).bundle
-    if is_dataclass(refreshed):
+    if is_dataclass(refreshed) and not isinstance(refreshed, type):
         refreshed = replace(
             refreshed,
             feedback_request=getattr(bundle, "feedback_request", None),
@@ -81,7 +81,7 @@ def maybe_refresh_from_shared_prep(
             clock=budget_clock,
         )
     ).bundle
-    if is_dataclass(refreshed):
+    if is_dataclass(refreshed) and not isinstance(refreshed, type):
         refreshed = replace(
             refreshed,
             feedback_request=getattr(bundle, "feedback_request", None),

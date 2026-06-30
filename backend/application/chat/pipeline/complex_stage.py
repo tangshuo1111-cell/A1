@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 from application.chat.pipeline.complex_answer_stage import run_complex_answer_stage
 from application.chat.pipeline.complex_collect_stage import run_complex_collect_stage
 from application.chat.pipeline.complex_finalize_stage import run_complex_finalize_stage
@@ -9,8 +11,18 @@ from application.chat.pipeline.complex_plan_stage import run_complex_plan_stage
 from application.chat.pipeline.pipeline_state import TurnPipelineState
 from schemas import ChatTurnResult
 
+logger = logging.getLogger("light_maqa")
+
 
 def run_complex_stage(state: TurnPipelineState) -> ChatTurnResult:
+    logger.info(
+        "turn_stage_complex",
+        extra={
+            "lane": state.ingress.lane,
+            "mode": state.ingress.mode,
+            "effective_mode": state.effective_mode,
+        },
+    )
     plan, main_dec = run_complex_plan_stage(state)
     plan, bundle = run_complex_collect_stage(state, plan)
     (

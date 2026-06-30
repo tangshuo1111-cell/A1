@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import time
-from typing import Any
+from typing import Any, cast
 
 from rag.schema import RetrievedChunk
-from services.capabilities.contracts import CapabilityAdvice, CapabilityFact
+from services.capabilities.contracts import CapabilityAdvice, CapabilityFact, QualityLevel
 
 from . import grounding_service, rerank_service, retrieve_service
 
@@ -121,7 +121,7 @@ def probe_kb_capability(
     fact = CapabilityFact(
         lane="kb",
         probe_elapsed_ms=elapsed_ms,
-        quality_level=quality_level,  # type: ignore[arg-type]
+        quality_level=cast(QualityLevel, quality_level),
         metadata={
             "hits": hits,
             "top_score": top_score,

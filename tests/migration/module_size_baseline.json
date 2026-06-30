@@ -111,19 +111,19 @@
     "lines": 117
   },
   "backend/application/chat/pipeline/turn_pipeline.py": {
-    "lines": 31
+    "lines": 45
   },
   "backend/application/chat/pipeline/session_stage.py": {
     "lines": 81
   },
   "backend/application/chat/pipeline/ingress_stage.py": {
-    "lines": 102
+    "lines": 115
   },
   "backend/application/chat/pipeline/fast_stage.py": {
-    "lines": 163
+    "lines": 178
   },
   "backend/application/chat/pipeline/complex_stage.py": {
-    "lines": 40
+    "lines": 56
   },
   "backend/application/chat/pipeline/complex_plan_stage.py": {
     "lines": 35

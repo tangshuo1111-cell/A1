@@ -14,12 +14,12 @@ from __future__ import annotations
 import logging
 import re
 import time
-from typing import Any, Final
+from typing import Any, Final, cast
 from urllib.parse import urlparse
 
 import httpx
 
-from services.capabilities.contracts import CapabilityAdvice, CapabilityFact
+from services.capabilities.contracts import CapabilityAdvice, CapabilityFact, QualityLevel
 from services.capabilities.web.static_body_extract import minimal_html_to_plain_text
 from storage import knowledge_store
 from tools.search.web_search import format_evidence_line, run_web_search
@@ -168,7 +168,7 @@ def probe_web_capability(
         probe_elapsed_ms=_elapsed_ms(),
         dynamic_required=dynamic_required,
         cookie_required=cookie_required,
-        quality_level=quality_level,  # type: ignore[arg-type]
+        quality_level=cast(QualityLevel, quality_level),
         error_code=error_code,
         metadata={
             "url": clean_url,
@@ -277,12 +277,12 @@ def fetch_web_evidence_block(query: str, *, max_results: int = 3) -> str:
         return ""
     if code != "ok" or not recs:
         return ""
-    lines: list[str] = []
+    evidence_lines: list[str] = []
     for r in recs[:max_results]:
         line = format_evidence_line(r)
         if line.strip():
-            lines.append(line.strip())
-    return "\n\n".join(lines)
+            evidence_lines.append(line.strip())
+    return "\n\n".join(evidence_lines)
 
 
 def fetch_web_fast_material(message: str, *, max_results: int = 2) -> str:

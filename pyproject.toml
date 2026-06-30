@@ -107,4 +107,4 @@ strict_optional = true
 warn_unused_ignores = true
 warn_redundant_casts = true
 ignore_missing_imports = true
-files = ["backend/core", "backend/config", "backend/storage"]
+files = ["backend/core", "backend/config", "backend/storage", "backend/application", "backend/agents", "backend/services", "backend/tools", "backend/rag"]

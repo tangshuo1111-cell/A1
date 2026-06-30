@@ -139,7 +139,7 @@ def _execute_v17_tool_plan(
     )
     used_context = []
     for brief in all_briefs[:4]:
-        span = next(iter(brief.get("evidence_spans") or []), {})
+        span: dict[str, Any] = next(iter(brief.get("evidence_spans") or []), {})
         if span.get("text_excerpt"):
             used_context.append(str(span.get("text_excerpt"))[:200])
     bundle = AgnoMaterialBundle(

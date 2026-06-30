@@ -577,7 +577,7 @@ flowchart TD
 | 聊天主链 | `backend/application/chat/run_chat_turn.py` |
 | API 路由 | `backend/api/main.py` |
 | OpenAPI 快照 | `docs/current/openapi.json`；刷新：`PYTHONPATH=backend python scripts/export_openapi.py docs/current/openapi.json` |
-| CI | `.github/workflows/ci.yml`（pytest 覆盖率 **`--cov-fail-under=60`**；nightly KB benchmark 见 `nightly_benchmark.yml`） |
+| CI | `.github/workflows/ci.yml`（pytest 覆盖率：主链 `application+agents` **≥75%**、全 `backend` **≥60%**；nightly KB benchmark 见 `nightly_benchmark.yml`） |
 | 真实验收 | `.github/workflows/real_external.yml`（手动触发） |
 
 ## 启动方式

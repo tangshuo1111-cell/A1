@@ -79,7 +79,7 @@ def schedule_answer_only_refine(
             "refine_kind": "answer_only",
         },
     )
-    if is_dataclass(bundle):
+    if is_dataclass(bundle) and not isinstance(bundle, type):
         trace = dict(getattr(bundle, "negotiation_trace", {}) or {})
         trace.pop("complex_pending_kind", None)
         trace.pop("v17_partial_status", None)

@@ -77,7 +77,7 @@ def _run_http_tools(task: CollectionTask) -> tuple[list[str], list[str], bool, l
 def _rag_dedupe_key(h: object) -> tuple[object, ...]:
     """h 现在是 RetrievedChunk；兼容保留 rowid 逻辑退场后用 chunk_id 去重。"""
     if hasattr(h, "chunk_id"):
-        return ("chunk_id", h.chunk_id)  # type: ignore[union-attr]
+        return ("chunk_id", h.chunk_id)
     if isinstance(h, dict):
         rid = h.get("rowid")
         if rid is not None:
@@ -126,7 +126,7 @@ def _run_rag(
             if key in seen_keys:
                 continue
             seen_keys.add(key)
-            text = (h.text if hasattr(h, "text") else (h.get("text") or "")).strip()  # type: ignore[union-attr]
+            text = (h.text if hasattr(h, "text") else (h.get("text") or "")).strip()
             if not text:
                 continue
             chunks.append(text)

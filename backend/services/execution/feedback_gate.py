@@ -20,7 +20,7 @@ def evaluate_feedback_request(
     fallback_steps = list(fallback_steps or [])
     tools_allowed = list(tools_allowed or [])
     budget_policy = dict(budget_policy or {})
-    gate_result = {
+    gate_result: dict[str, Any] = {
         "feedback_gate_result": f"fbgate_{uuid.uuid4().hex[:10]}",
         "allowed": False,
         "reason": "",

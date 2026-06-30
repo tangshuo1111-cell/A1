@@ -41,7 +41,7 @@ def _tokenize(text: str) -> set[str]:
 
 
 def _claim_link(brief: dict[str, Any], claim: str) -> dict[str, Any]:
-    span = next(iter(brief.get("evidence_spans") or []), {})
+    span: dict[str, Any] = next(iter(brief.get("evidence_spans") or []), {})
     return {
         "source_brief_id": brief.get("source_brief_id", ""),
         "source_id": brief.get("source_id", ""),

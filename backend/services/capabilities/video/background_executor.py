@@ -37,9 +37,9 @@ def _record_video_failure_diagnostics(
         metadata={
             "video_failure_diagnostics": {
                 "stage_timings": stage_timings,
-                "asr_provider_chain": list((fetched_extra or {}).get("asr_provider_chain") or []),
-                "asr_provider_failures": list((fetched_extra or {}).get("asr_provider_failures") or []),
-                "asr_provider_attempts": list((fetched_extra or {}).get("asr_provider_attempts") or []),
+                "asr_provider_chain": list(chain) if isinstance(chain := (fetched_extra or {}).get("asr_provider_chain"), list) else [],
+                "asr_provider_failures": list(failures) if isinstance(failures := (fetched_extra or {}).get("asr_provider_failures"), list) else [],
+                "asr_provider_attempts": list(attempts) if isinstance(attempts := (fetched_extra or {}).get("asr_provider_attempts"), list) else [],
             }
         },
     )

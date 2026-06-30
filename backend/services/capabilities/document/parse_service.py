@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
-from services.capabilities.contracts import CapabilityAdvice, CapabilityFact
+from services.capabilities.contracts import CapabilityAdvice, CapabilityFact, QualityLevel
 from tools.document.errors import SCANNED_PDF_REQUIRES_OCR
 from tools.document.tool_result import DocumentToolResult
 
@@ -158,7 +158,7 @@ def probe_document_capability(
         probe_elapsed_ms=elapsed_ms,
         page_count=page_count,
         ocr_required=ocr_required,
-        quality_level=quality_level,  # type: ignore[arg-type]
+        quality_level=cast(QualityLevel, quality_level),
         metadata={
             "parser_name": parser_name,
             "extract_quality": quality_level,

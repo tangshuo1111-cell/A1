@@ -1,9 +1,9 @@
 """Runtime helpers for video CapabilityFact contract (S4b)."""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal, cast
 
-from services.capabilities.contracts import CapabilityAdvice, CapabilityFact
+from services.capabilities.contracts import CapabilityAdvice, SuggestedMode, CapabilityFact
 
 
 def attach_capability_contract_metadata(
@@ -29,7 +29,7 @@ def advice_from_tool_result(result: Any) -> CapabilityAdvice | None:
     if not suggested:
         return None
     return CapabilityAdvice(
-        suggested_mode=suggested,  # type: ignore[arg-type]
+        suggested_mode=cast(SuggestedMode, suggested),
         reason=str(meta.get("capability_reason") or ""),
         next_action_hint=str(meta.get("capability_next_action_hint") or ""),
     )

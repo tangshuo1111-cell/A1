@@ -21,7 +21,8 @@
 CI 默认门禁（与 GitHub Actions 后端 job 对齐）：
 
 ```powershell
-python -m pytest -q tests/smoke tests/backend tests/integration tests/unit tests/acceptance tests/migration tests/baselines -m "not real_external" --cov=backend --cov-fail-under=60 --cov-report=xml
+python -m pytest -q tests/smoke tests/backend tests/integration tests/unit tests/acceptance tests/migration tests/baselines -m "not real_external" --cov=backend --cov-report=xml
+# CI 门槛：主链 application+agents ≥75%，全 backend ≥60%（见 .github/workflows/ci.yml）
 ```
 
 仅 smoke：

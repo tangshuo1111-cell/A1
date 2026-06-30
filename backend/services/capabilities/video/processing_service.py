@@ -15,7 +15,7 @@ import math
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
-from typing import Any
+from typing import Any, cast
 
 from config.settings import settings
 from services.capabilities.contracts import CapabilityAdvice, CapabilityFact, QualityLevel
@@ -115,7 +115,7 @@ def _quality_level_from_result(result: VideoProcessingResult) -> QualityLevel:
     meta = dict(result.metadata or {})
     raw = str(meta.get("quality_level") or (result.quality or {}).get("quality_level") or "usable")
     if raw in {"good", "usable", "poor", "empty"}:
-        return raw  # type: ignore[return-value]
+        return cast(QualityLevel, raw)
     if result.status == "success" and (result.text or "").strip():
         return "good" if len((result.text or "").strip()) >= 40 else "usable"
     if result.status == "failed":
@@ -131,7 +131,11 @@ def result_to_capability_pair(
     meta = dict(result.metadata or {})
     probe_ms = int(meta.get("video_probe_elapsed_ms") or probe_elapsed_ms or 0)
     duration_raw = meta.get("duration_sec", meta.get("duration"))
-    duration_sec = float(duration_raw) if duration_raw not in (None, "") else None
+    duration_sec: float | None = None
+    if isinstance(duration_raw, (int, float)):
+        duration_sec = float(duration_raw)
+    elif isinstance(duration_raw, str) and duration_raw.strip():
+        duration_sec = float(duration_raw)
 
     subtitle_available: bool | None = None
     if result.status == "success":

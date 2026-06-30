@@ -97,7 +97,7 @@ def finalize_turn_exit(facts: TurnFacts) -> TurnExitEnvelope:
         status = "pending"
     elif facts.pending_kind != PendingKind.NONE:
         winner = _RULE_PENDING_KIND
-        status = task_status_for_pending_kind(facts.pending_kind)  # type: ignore[assignment]
+        status = task_status_for_pending_kind(facts.pending_kind)
     elif facts.hard_deadline_limited and facts.bundle_pending_item_present:
         winner = _RULE_DEADLINE_PENDING
         status = "pending"
@@ -110,7 +110,7 @@ def finalize_turn_exit(facts: TurnFacts) -> TurnExitEnvelope:
             hard_deadline_limited=facts.hard_deadline_limited,
             bundle_pending_item_present=facts.bundle_pending_item_present,
         )
-        status = resolved  # type: ignore[assignment]
+        status = resolved
         legacy = normalize_task_status(facts.legacy_task_status)
         if legacy and legacy in {"blocked"} and status == "succeeded":
             status = legacy

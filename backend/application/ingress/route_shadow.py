@@ -6,7 +6,7 @@ Does not mint parallel routing control; attaches fields for eval / metrics only.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 from application.chat.complexity_policy import evaluate_complex_candidate
 from config.feature_flags import is_enabled
@@ -26,12 +26,15 @@ def shadow_mode_for_message(
     complex_signal = evaluate_complex_candidate(message)
     codes = complex_reason_codes or tuple(complex_signal.reason_codes)
     candidate = complex_signal.complex_candidate or bool(codes)
-    return select_mode(
-        lane=lane,
-        signals=signals,
-        message=message,
-        complex_candidate=candidate,
-        complex_reason_codes=codes,
+    return cast(
+        tuple[ModeName, float],
+        select_mode(
+            lane=lane,
+            signals=signals,
+            message=message,
+            complex_candidate=candidate,
+            complex_reason_codes=codes,
+        ),
     )
 
 

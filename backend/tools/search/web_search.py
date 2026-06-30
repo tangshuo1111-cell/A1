@@ -87,7 +87,7 @@ def run_web_search(
     for a in soup.select("a.result__a")[:max_results]:
         href = a.get("href") or ""
         title = a.get_text(strip=True) or "(无标题)"
-        url = _unwrap_ddg_url(href)
+        url = _unwrap_ddg_url(str(href))
         sn = a.find_parent("div", class_="result__body")
         snippet = ""
         if sn:

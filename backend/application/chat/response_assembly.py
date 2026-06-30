@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from application.chat.exit_signals import (
@@ -362,8 +363,10 @@ def build_extra(
     )
     from application.chat.turn_response_builder import merge_agent_extra_into_turn_extra
 
-    collab_fn = getattr(deps.answer_agent, "collab_extra", None) or getattr(
-        deps.answer_agent, "xiezuo_extra", lambda *_a, **_k: {}
+    collab_fn: Callable[..., dict[str, Any]] = (
+        getattr(deps.answer_agent, "collab_extra", None)
+        or getattr(deps.answer_agent, "xiezuo_extra", None)
+        or (lambda *_a, **_k: {})
     )
     extra = merge_agent_extra_into_turn_extra(extra, collab_fn(plan, bundle))
     _rc = _apply_v12_extra(

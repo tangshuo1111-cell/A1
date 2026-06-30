@@ -149,8 +149,8 @@ def run_basic_qa(
     text, _hp = _answer_agent_inst.huida(
         user_message,
         context_block=context_block,
-        plan=collaboration_plan,  # type: ignore[arg-type]
-        bundle=material_bundle,  # type: ignore[arg-type]
+        plan=collaboration_plan,
+        bundle=material_bundle,
         clock=clock,
     )
     return text

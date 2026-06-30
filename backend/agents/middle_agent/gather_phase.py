@@ -8,6 +8,9 @@ V8 前文锚点 → KB 检索聚块 → Web 取证 → `pan_zhuyao_panjue` / `pa
 保留原有实例方法委托语义。
 """
 
+# Mixin methods live on MiddleAgentRuntime; attr-defined is a mypy model limit here.
+# mypy: disable-error-code=attr-defined
+
 from __future__ import annotations
 
 from dataclasses import dataclass

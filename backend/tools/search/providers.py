@@ -94,11 +94,12 @@ def _parse_generic_json_payload(data: Any) -> list[dict[str, Any]]:
     if isinstance(data, list):
         items = data
     elif isinstance(data, dict):
-        items = data.get("results") or data.get("items") or data.get("hits")
-        if items is None:
+        raw_items = data.get("results") or data.get("items") or data.get("hits")
+        if raw_items is None:
             return []
-        if not isinstance(items, list):
+        if not isinstance(raw_items, list):
             return []
+        items = raw_items
     else:
         return []
     out: list[dict[str, Any]] = []

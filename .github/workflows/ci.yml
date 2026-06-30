@@ -109,21 +109,34 @@ jobs:
           python scripts/check_eval_observability_fields.py
           python scripts/check_safe_rule_surface.py
 
-      - name: Mypy (core/config/storage)
+      - name: Cache mypy
+        uses: actions/cache@v4
+        with:
+          path: .mypy_cache
+          key: mypy-${{ runner.os }}-py312-${{ hashFiles('pyproject.toml', 'requirements.lock') }}
+          restore-keys: |
+            mypy-${{ runner.os }}-py312-
+
+      - name: Mypy (core/config/storage/application/agents/services/tools/rag)
         run: python -m mypy
 
-      - name: pip-audit requirements.lock (informational — 不阻断合并；CVE 需人工评估后升级依赖)
-        continue-on-error: true
+      - name: pip-audit requirements.lock (新 CVE 阻断；已评估 ID 见 security_audit_record.md)
         run: |
           python -m pip install pip-audit
-          python -m pip_audit -r requirements.lock || echo "pip-audit: vulnerabilities listed above (informational)"
+          python -m pip_audit -r requirements.lock
 
-      - name: Pytest with coverage (--cov-fail-under=60)
+      - name: Pytest with coverage
         run: |
           python -m pytest tests/smoke/ tests/integration/ tests/backend/ tests/unit/ tests/acceptance/ tests/migration/ tests/baselines/ tests/evaluation/ tests/benchmarks/ \
             -q -m "not real_external" \
-            --cov=backend --cov-fail-under=60 \
+            --cov=backend \
             --cov-report=xml --cov-report=term-missing:skip-covered
+
+      - name: Coverage gate — main chain (application + agents)
+        run: coverage report --include="backend/application/*,backend/agents/*" --fail-under=75
+
+      - name: Coverage gate — whole backend (regression floor)
+        run: coverage report --fail-under=60
 
       - name: OpenAPI snapshot matches committed docs/current/openapi.json
         env:
@@ -177,6 +190,5 @@ jobs:
           npx playwright install chromium
           npm run test:e2e
 
-      - name: npm audit (--audit-level=high, informational — 不 npm audit fix)
-        continue-on-error: true
-        run: npm audit --audit-level=high
+      - name: npm audit (--audit-level=high，新高危阻断；官方 registry)
+        run: npm audit --audit-level=high --registry=https://registry.npmjs.org

@@ -38,7 +38,7 @@ from .schema import (
 try:
     from llm import router as _llm_router
 except ImportError:
-    _llm_router = None  # type: ignore[misc,assignment]
+    _llm_router = None
 
 
 # ---------------------------------------------------------------------------

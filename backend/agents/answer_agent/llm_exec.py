@@ -165,9 +165,9 @@ def run_basic_qa(
     if web:
         web_prefix = f"【网页补充】\n{web}\n\n"
     head = kb_prefix + web_prefix
-    strat = ""
-    if (executor_hint or "").strip():
-        strat = f"【作答策略】\n{executor_hint.strip()}\n\n"
+    hint = (executor_hint or "").strip()
+    if hint:
+        strat = f"【作答策略】\n{hint}\n\n"
     output_rule = ""
     if kb or web:
         output_rule = (

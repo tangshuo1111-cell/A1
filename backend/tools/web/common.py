@@ -50,7 +50,7 @@ class _LimitedRedirect(urllib.request.HTTPRedirectHandler):
     def __init__(self) -> None:
         self.redirect_count = 0
 
-    def redirect_request(self, req, fp, code, msg, headers, newurl):  # type: ignore[no-untyped-def]
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
         self.redirect_count += 1
         if self.redirect_count > MAX_REDIRECTS:
             raise urllib.error.HTTPError(newurl, 310, "too many redirects", headers, fp)
@@ -94,7 +94,7 @@ def extract_title(html: str) -> str:
 
 def extract_with_trafilatura(html: str, url: str) -> str:
     try:
-        import trafilatura  # type: ignore
+        import trafilatura
     except (ImportError, ModuleNotFoundError) as e:
         raise RuntimeError(f"trafilatura unavailable: {type(e).__name__}") from e
     extracted = trafilatura.extract(

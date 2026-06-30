@@ -6,7 +6,7 @@ import logging
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Literal, cast
 
 from tools.web import errors
 
@@ -140,7 +140,11 @@ def _real_playwright_run(
                 )
             page = browser.new_page()
             try:
-                resp = page.goto(clean_url, wait_until=wait_until, timeout=timeout_ms)
+                resp = page.goto(
+                    clean_url,
+                    wait_until=cast(Literal["commit", "domcontentloaded", "load", "networkidle"], wait_until),
+                    timeout=timeout_ms,
+                )
             except PlaywrightTimeoutError:
                 browser.close()
                 return DynamicPageOutcome(

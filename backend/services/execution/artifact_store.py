@@ -100,7 +100,8 @@ def resolve_artifact_reuse(ref: str | None, *, root: Path | None = None) -> dict
     """Return artifact.reused + artifact.miss_reason per §5.5.1."""
     if not (ref or "").strip():
         return {"artifact.reused": False, "artifact.miss_reason": None}
-    parsed = _parse_ref(ref)
+    ref_key = (ref or "").strip()
+    parsed = _parse_ref(ref_key)
     if parsed is None:
         return {"artifact.reused": False, "artifact.miss_reason": "not_found"}
     digest, _kind = parsed
@@ -117,7 +118,7 @@ def resolve_artifact_reuse(ref: str | None, *, root: Path | None = None) -> dict
                 break
         if expires_at and time.time() > expires_at:
             return {"artifact.reused": False, "artifact.miss_reason": "expired"}
-    if get(ref, root=root) is not None:
+    if get(ref_key, root=root) is not None:
         return {"artifact.reused": True, "artifact.miss_reason": None}
     if not path.is_file() and not sidecar.is_file():
         return {"artifact.reused": False, "artifact.miss_reason": "not_found"}

@@ -28,8 +28,6 @@ class WebToolResult(DocumentToolResult):
     cookie_used: bool = False
 
     def __post_init__(self) -> None:
-        if self.metadata is None:
-            self.metadata = {}
         self.metadata.update(
             {
                 "url": self.url,

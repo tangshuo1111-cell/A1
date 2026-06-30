@@ -74,7 +74,7 @@ def attach_feedback_gate_result(
     feedback_request: dict[str, Any],
     feedback_gate_result: dict[str, Any],
 ) -> Any:
-    if is_dataclass(bundle):
+    if is_dataclass(bundle) and not isinstance(bundle, type):
         return replace(bundle, feedback_request=feedback_request, feedback_gate_result=feedback_gate_result)
     bundle.feedback_request = feedback_request
     bundle.feedback_gate_result = feedback_gate_result

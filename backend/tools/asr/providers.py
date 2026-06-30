@@ -386,7 +386,7 @@ def run_dashscope_asr(
         )
     t0 = time.perf_counter()
     try:
-        import dashscope  # type: ignore[import-untyped]
+        import dashscope
     except ImportError:
         return AsrProviderOutcome(
             ok=False,
@@ -583,7 +583,7 @@ def run_fixture_asr(file_path: Path) -> AsrProviderOutcome:
 def run_local_faster_whisper(file_path: Path, *, model_size: str) -> AsrProviderOutcome:
     t0 = time.perf_counter()
     try:
-        from faster_whisper import WhisperModel  # type: ignore[import-untyped]
+        from faster_whisper import WhisperModel
     except ImportError:
         return AsrProviderOutcome(
             ok=False,
@@ -655,7 +655,7 @@ def run_local_faster_whisper(file_path: Path, *, model_size: str) -> AsrProvider
 def run_local_whisper(file_path: Path, *, model_name: str) -> AsrProviderOutcome:
     t0 = time.perf_counter()
     try:
-        import whisper  # type: ignore[import-untyped]
+        import whisper
     except ImportError:
         return AsrProviderOutcome(
             ok=False,

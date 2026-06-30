@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import time
 from typing import Any
 
@@ -19,6 +20,8 @@ from application.chat.turn_cache import current_turn_cache, reset_turn_cache
 from config.feature_flags import fast_lane_active, ingress_router_active
 from observability import enrich_turn_extra
 from schemas import ChatTurnResult
+
+logger = logging.getLogger("light_maqa")
 
 
 def build_merge_turn_obs(state: TurnPipelineState):
@@ -49,6 +52,14 @@ def finalize_turn_cache(state: TurnPipelineState) -> None:
 
 
 def run_fast_stage(state: TurnPipelineState) -> ChatTurnResult | None:
+    logger.info(
+        "turn_stage_fast",
+        extra={
+            "lane": state.ingress.lane,
+            "mode": state.ingress.mode,
+            "effective_mode": state.effective_mode,
+        },
+    )
     merge_turn_obs = build_merge_turn_obs(state)
 
     def _finalize_turn_cache() -> None:

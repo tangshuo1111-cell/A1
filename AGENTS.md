@@ -19,6 +19,29 @@ POST /chat/agno
 → turn_exit_gate
 ```
 
+### 主链流程图（turn 级）
+
+```mermaid
+flowchart TD
+    API["POST /chat/agno"] --> Facade["agno_chat_service"]
+    Facade --> Turn["run_chat_turn"]
+    Turn --> Orch["turn_orchestrator"]
+    Orch --> Ingress["ingress"]
+    Ingress --> Approval["approval_gate"]
+    Approval --> Arbitrator["decision_arbitrator"]
+    Arbitrator --> Material["shared_material_prep"]
+    Material --> Route{"executor 路由"}
+    Route -->|fast| Fast["FastExecutor"]
+    Route -->|complex| Complex["ComplexExecutor"]
+    Route -->|async| Async["AsyncExecutor"]
+    Complex --> Main["MainAgent"]
+    Main --> Middle["MiddleAgent"]
+    Middle --> Answer["AnswerAgent"]
+    Fast --> Exit["turn_exit_gate"]
+    Complex --> Exit
+    Async --> Exit
+```
+
 ### MainAgent（复杂链协作起点）
 
 - 职责：在 `complex` 主链里负责协作方向、任务规划和复杂任务处理起点

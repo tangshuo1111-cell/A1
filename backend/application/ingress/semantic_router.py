@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from typing import Any
+from typing import Any, cast
 
 from agents.main_agent import MainAgent
 from application.chat.budget_clock import BudgetClock
@@ -12,7 +12,7 @@ from application.chat.complexity_policy import (
 from config.feature_flags import is_enabled
 from config.router_policy import ROUTER_POLICY
 
-from .lane_decision_schema import LaneDecision
+from .lane_decision_schema import LaneDecision, LaneName, ModeName, RouterSourceName
 from .lane_selector import select_lane
 from .main_plan_hints import MainPlanHints
 from .mode_selector import select_mode
@@ -157,9 +157,9 @@ def route_chat_request(
     decision = LaneDecision(
         request_id=str(request_id or ""),
         session_id=str(session_id or ""),
-        lane=lane,
-        mode=mode,
-        router_source=router_source,
+        lane=cast(LaneName, lane),
+        mode=cast(ModeName, mode),
+        router_source=cast(RouterSourceName, router_source),
         router_confidence=round(confidence, 4),
         router_fallback=fallback,
         router_decision_ms=max(0, int((time.perf_counter() - started) * 1000)),

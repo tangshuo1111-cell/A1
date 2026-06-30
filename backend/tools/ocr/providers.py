@@ -385,8 +385,8 @@ def run_tencent_ocr(
 def run_local_tesseract(file_path: Path) -> OcrProviderOutcome:
     t0 = time.perf_counter()
     try:
-        import pytesseract  # type: ignore[import-untyped]
-        from PIL import Image  # type: ignore[import-untyped]
+        import pytesseract
+        from PIL import Image
     except ImportError:
         return OcrProviderOutcome(
             ok=False,

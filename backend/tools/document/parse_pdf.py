@@ -289,7 +289,7 @@ def _parse_pdf(
 
     if is_scanned:
         trace.append("v16:parse_pdf:detected_scanned_pdf")
-        metadata = {
+        scanned_metadata = {
             "source_type": "pdf",
             "filename": file_name,
             "page_count": page_count,
@@ -307,7 +307,7 @@ def _parse_pdf(
             error_code=SCANNED_PDF_REQUIRES_OCR,
             failure_reason="检测到扫描版 PDF（每页文本密度极低），无法直接提取文本",
             next_action_hint="需要 OCR 才能提取内容，请使用 ocr_document 工具处理",
-            metadata=metadata,
+            metadata=scanned_metadata,
             quality={"quality_level": "failed", "text_length": 0, "valid_text_ratio": 0.0,
                      "is_scanned": True},
             trace=trace,

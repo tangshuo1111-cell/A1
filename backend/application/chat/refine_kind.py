@@ -531,7 +531,7 @@ def prepare_bundle_for_answer_only_refine(
     }
     events = list(getattr(bundle, "autonomy_events", None) or [])
     events.append(event)
-    if is_dataclass(bundle):
+    if is_dataclass(bundle) and not isinstance(bundle, type):
         return replace(
             bundle,
             autonomy_events=events,

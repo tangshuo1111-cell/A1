@@ -15,7 +15,7 @@ def writeback_complex_session(state: Any, bundle: Any, answer_text: str) -> None
             and getattr(bundle.pending_item, "source_type", "") in ("local_video", "web_video")
         )
         if bundle.v11_pending_video_text is not None and not video_pending:
-            state.deps.session_pending_video[state.key] = bundle.v11_pending_video_text  # type: ignore[assignment]
+            state.deps.session_pending_video[state.key] = bundle.v11_pending_video_text
         elif bundle.v11_saved_to_kb:
             state.deps.session_pending_video.pop(state.key, None)
         if bundle.v11_saved_to_kb and bundle.v11_saved_source_id:

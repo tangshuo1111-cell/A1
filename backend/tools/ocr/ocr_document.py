@@ -44,7 +44,7 @@ def _pdf_page_count(path: Path) -> int | None:
     if path.suffix.lower() != ".pdf":
         return None
     try:
-        import fitz  # type: ignore[import-untyped]
+        import fitz
     except ImportError:
         return None
     try:

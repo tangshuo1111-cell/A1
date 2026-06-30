@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import application.chat.shared_material_prep as shared_material_prep
 import application.ingress as ingress_mod
 from application.chat.decision_arbitrator import resolve_session_pending_kind
@@ -18,6 +20,8 @@ from application.chat.turn_cache import current_turn_cache, reset_turn_cache
 from application.chat.turn_state_machine import TurnStateBundle, apply_event
 from config.feature_flags import shared_retrieval_active
 from schemas import ChatTurnResult
+
+logger = logging.getLogger("light_maqa")
 
 
 def run_ingress_stage(state: TurnPipelineState) -> ChatTurnResult | None:
@@ -99,4 +103,12 @@ def run_ingress_stage(state: TurnPipelineState) -> ChatTurnResult | None:
             complex_candidate=bool(getattr(state.ingress, "complex_candidate", False)),
             clock=state.budget_clock,
         )
+    logger.info(
+        "turn_stage_ingress",
+        extra={
+            "lane": state.ingress.lane,
+            "mode": state.ingress.mode,
+            "effective_mode": state.effective_mode,
+        },
+    )
     return None

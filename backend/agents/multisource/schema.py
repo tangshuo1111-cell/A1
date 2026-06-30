@@ -99,7 +99,7 @@ def build_analysis_job(message: str, sources: list[str]) -> dict[str, Any]:
         )
     allowed_tools = sorted(
         {
-            step.get("tool_name", "")
+            str(step.get("tool_name", ""))
             for step in steps + fallback_steps
             if step.get("tool_name")
         }
