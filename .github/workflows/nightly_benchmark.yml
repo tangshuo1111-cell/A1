@@ -37,7 +37,7 @@ jobs:
       PLAYWRIGHT_BROWSERS_PATH: "0"
       DATABASE_URL: postgresql://light_maqa:light_maqa_dev@localhost:5432/light_maqa
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v5
         with:
@@ -96,7 +96,7 @@ jobs:
       PLAYWRIGHT_BROWSERS_PATH: "0"
       DATABASE_URL: postgresql://light_maqa:light_maqa_dev@localhost:5432/light_maqa
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v5
         with:
