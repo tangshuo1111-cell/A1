@@ -185,6 +185,92 @@ test("async task flow polls and appends background answer", async ({ page }) => 
   await expect(page.getByText("后台任务最终答案")).toBeVisible();
 });
 
+test("background task clears from top status area after a follow-up turn", async ({ page }) => {
+  let statusPolls = 0;
+  let chatCalls = 0;
+
+  await page.route("**/api-proxy/health", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({ ok: true, status: "ok" }),
+    });
+  });
+  await page.route("**/api-proxy/chat/agno", async (route) => {
+    chatCalls += 1;
+    if (chatCalls === 1) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ok: true,
+          session_id: "async-session-2",
+          answer: "已提交后台任务",
+          task_id: "task-e2e-2",
+          task_status: "pending",
+          interaction_mode_zh: "后台任务",
+          extra: { pending_kind: "processing_pending" },
+        }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        session_id: "async-session-2",
+        answer: "第二轮普通回答",
+        task_status: "succeeded",
+        interaction_mode_zh: "快速回答",
+        extra: { lane: "general" },
+      }),
+    });
+  });
+  await page.route("**/api-proxy/tasks/task-e2e-2", async (route) => {
+    statusPolls += 1;
+    const status = statusPolls >= 2 ? "succeeded" : "running";
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        task_id: "task-e2e-2",
+        status,
+        raw_status: status,
+        stage: status === "succeeded" ? "answer_draft" : "segment_asr",
+        progress: status === "succeeded" ? 1.0 : 0.45,
+      }),
+    });
+  });
+  await page.route("**/api-proxy/tasks/task-e2e-2/result", async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        ok: true,
+        task_id: "task-e2e-2",
+        status: "succeeded",
+        raw_status: "succeeded",
+        ready: true,
+        duration_ms: 2100,
+        result: { answer: "任务完成后补回的答案" },
+      }),
+    });
+  });
+
+  await page.goto("/");
+  await page.getByLabel("Message input").fill("先发后台任务");
+  await page.getByLabel("Send").click();
+  await expect(page.getByText(/task_id: task-e2e-2/)).toBeVisible();
+
+  await page.getByLabel("Message input").fill("再问一句");
+  await page.getByLabel("Send").click();
+  await expect(page.getByText("第二轮普通回答")).toBeVisible();
+  await expect(page.getByText(/task_id: task-e2e-2/)).toHaveCount(0);
+  await expect(page.getByText("任务完成后补回的答案")).toBeVisible();
+});
+
 test("long video confirmation gate and session restore work end-to-end", async ({ page }) => {
   const seenSessionIds: Array<string | null | undefined> = [];
 

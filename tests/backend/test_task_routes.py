@@ -95,6 +95,56 @@ def test_task_result_route_returns_turn_answer(monkeypatch):
     assert body["result"]["summary"]["text_source"] == "asr"
 
 
+def test_task_result_route_does_not_leak_fake_stub_or_pending_placeholder(monkeypatch):
+    now = datetime.now(UTC).isoformat()
+
+    monkeypatch.setattr(
+        "tasks.orchestration.task_query_service.task_job_store.get_job",
+        lambda task_id: {
+            "task_id": task_id,
+            "status": "succeeded",
+            "task_type": "video_asr",
+            "source_type": "web_video",
+            "stage": "succeeded",
+            "progress": 1.0,
+            "session_id": "sess-2b",
+            "request_id": "req-2b",
+            "created_at": now,
+            "updated_at": now,
+            "started_at": now,
+            "finished_at": now,
+            "duration_ms": 1200.0,
+            "error_code": "",
+            "failure_reason": "",
+            "next_action_hint": "",
+            "result_pending_id": "",
+            "result_source_id": "source-2b",
+            "result_summary": {"status": "success"},
+        },
+    )
+    monkeypatch.setattr(
+        "tasks.orchestration.task_query_service.conversation_store.get_turn_by_task_id",
+        lambda task_id: {
+            "task_id": task_id,
+            "answer": "【测试回答·FAKE桩】本回答由 FAKE LLM 桩生成，仅用于验证主链连通。",
+            "answer_type": "structured_sections",
+            "task_status": "succeeded",
+            "user_visible_status": "后台完成",
+            "has_insufficient_info_notice": "0",
+        },
+    )
+
+    with TestClient(app) as client:
+        r = client.get("/tasks/task-fake/result")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["ok"] is True
+    assert body["status"] == "succeeded"
+    assert body["ready"] is True
+    assert body["result"]["answer"] is None
+    assert body["result"]["final_answer"] is None
+
+
 def test_task_result_route_marks_expired(monkeypatch):
     finished_at = (datetime.now(UTC) - timedelta(days=8)).isoformat()
 

@@ -4,13 +4,13 @@ import {
   isMaterialPending,
   isPartialPending,
   readPendingKind,
-  resolveBackgroundTaskId,
 } from "@/lib/chatTaskFields";
 import type { AsyncTaskPollState } from "@/hooks/useAsyncTaskPoll";
 import {
   humanizePendingKind,
   humanizeTaskStatus,
 } from "@/lib/contextMeta/statusCopy";
+import { humanizeTaskFailure } from "@/lib/taskFailureCopy";
 import type { ChatResponseBody } from "@/lib/types";
 
 interface ChatAsyncStatusProps {
@@ -28,56 +28,77 @@ function formatElapsedMs(ms: number | null | undefined): string | null {
 export function ChatAsyncStatus({ lastTurn, poll, onAction }: ChatAsyncStatusProps) {
   if (!lastTurn) return null;
 
-  const taskId = resolveBackgroundTaskId(lastTurn);
   const pendingKind = readPendingKind(lastTurn);
   const material = isMaterialPending(lastTurn);
   const partial = isPartialPending(lastTurn);
-  const showTask =
-    taskId &&
-    (poll.polling ||
-      poll.taskStatus ||
-      String(lastTurn.task_status ?? "").toLowerCase() === "pending");
+  const tasks = poll.tasks;
 
-  if (!showTask && !pendingKind && !material && !partial) return null;
+  const isTaskPendingKind =
+    pendingKind === "processing_pending" || pendingKind === "fast_pending";
+  const showPendingKindCard = Boolean(pendingKind) && (!isTaskPendingKind || tasks.length > 0);
+
+  if (tasks.length === 0 && !showPendingKindCard && !material && !partial) return null;
 
   return (
     <div className="mx-auto w-full max-w-3xl space-y-2 px-4 pb-2 md:px-6">
-      {(showTask || taskId) && (
-        <div
-          className="rounded-lg border border-sky-900/20 bg-sky-950/10 px-3 py-2 text-[12px] text-ink-secondary dark:border-sky-700/30 dark:bg-sky-950/40"
-          role="status"
-          aria-live="polite"
-        >
-          <p className="font-medium text-ink-primary">后台任务</p>
-          <p className="mt-1 font-mono text-[11px] text-ink-tertiary">
-            task_id: {taskId}
-          </p>
-          <p className="mt-0.5">
-            状态：{" "}
-            {poll.taskStatus
-              ? humanizeTaskStatus(
-                  poll.taskStatus.status || poll.taskStatus.raw_status,
-                )
-              : humanizeTaskStatus(lastTurn.task_status)}
-            {poll.polling ? "（轮询中…）" : null}
-          </p>
-          {formatElapsedMs(poll.backgroundElapsedMs) ? (
-            <p className="mt-0.5 text-ink-tertiary">
-              后台完成耗时：{formatElapsedMs(poll.backgroundElapsedMs)}
+      {tasks.map((task) => {
+        const statusLabel = task.taskStatus
+          ? humanizeTaskStatus(task.taskStatus.status || task.taskStatus.raw_status)
+          : humanizeTaskStatus(task.sourceTurn.task_status);
+        const progress =
+          typeof task.taskStatus?.progress === "number"
+            ? Math.max(0, Math.min(100, Math.round(task.taskStatus.progress * 100)))
+            : null;
+        const stage = String(task.taskStatus?.stage ?? "").trim();
+        const taskFailure =
+          task.pollError ||
+          (task.taskResult?.error && typeof task.taskResult.error.message === "string"
+            ? task.taskResult.error.message
+            : "") ||
+          String(task.taskStatus?.failure_reason ?? "").trim();
+        const failureCopy = humanizeTaskFailure(taskFailure);
+        return (
+          <div
+            key={task.taskId}
+            className="rounded-lg border border-sky-900/20 bg-sky-950/10 px-3 py-2 text-[12px] text-ink-secondary dark:border-sky-700/30 dark:bg-sky-950/40"
+            role="status"
+            aria-live="polite"
+          >
+            <p className="font-medium text-ink-primary">后台任务</p>
+            <p className="mt-1 font-mono text-[11px] text-ink-tertiary">
+              task_id: {task.taskId}
             </p>
-          ) : null}
-          {poll.taskResult?.ready && poll.taskResult.result ? (
-            <p className="mt-1 text-ink-secondary">
-              最终结果已写入下方对话（或见任务结果接口）。
+            <p className="mt-0.5">
+              状态： {statusLabel}
+              {task.polling ? "（轮询中…）" : null}
             </p>
-          ) : null}
-          {poll.pollError ? (
-            <p className="mt-1 text-amber-800 dark:text-amber-300">{poll.pollError}</p>
-          ) : null}
-        </div>
-      )}
+            {stage ? <p className="mt-0.5 text-ink-tertiary">阶段：{stage}</p> : null}
+            {progress != null ? (
+              <p className="mt-0.5 text-ink-tertiary">进度：{progress}%</p>
+            ) : null}
+            {formatElapsedMs(task.backgroundElapsedMs) ? (
+              <p className="mt-0.5 text-ink-tertiary">
+                后台完成耗时：{formatElapsedMs(task.backgroundElapsedMs)}
+              </p>
+            ) : null}
+            {task.taskResult?.ready && task.taskResult.result ? (
+              <p className="mt-1 text-ink-secondary">
+                最终结果已写入下方对话（或见任务结果接口）。
+              </p>
+            ) : null}
+            {failureCopy ? (
+              <div className="mt-1 space-y-1">
+                <p className="text-amber-800 dark:text-amber-300">{failureCopy.summary}</p>
+                {failureCopy.detail !== failureCopy.summary ? (
+                  <p className="text-[11px] text-ink-tertiary">{failureCopy.detail}</p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
 
-      {pendingKind ? (
+      {showPendingKindCard ? (
         <div className="rounded-lg border border-line-subtle bg-surface-elevated/50 px-3 py-2 text-[12px] text-ink-secondary">
           <p className="font-medium text-ink-primary">
             {humanizePendingKind(pendingKind) ?? pendingKind}

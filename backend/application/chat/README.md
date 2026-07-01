@@ -41,7 +41,9 @@ delivery_gate → completed / upgrade_profile / need_second_round
 
 ## Field owners
 
-顶层 HTTP 字段只在 `turn_response_builder.py` 写入（见 `field_owners.py`）。兼容镜像字段由 `turn_response_builder.merge_compat_fields()` 处理。
+顶层 HTTP 字段只在 `turn_response_builder.py` 写入（见 `field_owners.py`）。
+前置阶段允许写入 `extra.*` 候选信号用于路由 / trace / 兼容拼装，但这些值不是最终公开事实；最终对外 `task_status / primary_path / mode / pending_kind / executor_profile / router_lane` 统一由 `turn_exit_gate -> turn_response_builder` 覆盖。
+兼容镜像字段由 `turn_response_builder.merge_compat_fields()` 处理。
 
 ## 材料生命周期
 

@@ -81,6 +81,37 @@ function assistantErrorMessage(err: unknown): string {
   return "发生未知错误，请稍后再试。";
 }
 
+function shouldTrackTaskTurn(turn: ChatResponseBody | null): boolean {
+  if (!turn) return false;
+  const taskId = typeof turn.task_id === "string" ? turn.task_id.trim() : "";
+  if (!taskId) return false;
+  const status = String(turn.task_status ?? "").trim().toLowerCase();
+  if (status === "pending" || status === "running" || status === "queued") {
+    return true;
+  }
+  const ex =
+    turn.extra && typeof turn.extra === "object" ? (turn.extra as Record<string, unknown>) : null;
+  const pendingKind = typeof ex?.pending_kind === "string" ? ex.pending_kind.trim() : "";
+  return pendingKind === "processing_pending" || pendingKind === "fast_pending";
+}
+
+function normalizeTaskId(turn: ChatResponseBody | null | undefined): string {
+  return typeof turn?.task_id === "string" ? turn.task_id.trim() : "";
+}
+
+function normalizeTaskStatus(status: string | null | undefined): string {
+  return String(status ?? "").trim().toLowerCase();
+}
+
+function clearPendingKind(extra: ChatResponseBody["extra"]): Record<string, unknown> | null {
+  if (!extra || typeof extra !== "object") return null;
+  const next = { ...(extra as Record<string, unknown>) };
+  if ("pending_kind" in next) {
+    next.pending_kind = "none";
+  }
+  return next;
+}
+
 export interface LongVideoGate {
   messageText: string;
   durationSec: number;
@@ -103,6 +134,7 @@ export interface ChatSessionState {
   isGenerating: boolean;
   generatingSince: number | null;
   lastTurn: ChatResponseBody | null;
+  activeTaskTurns: ChatResponseBody[];
   pipelineNotice: string | null;
   longVideoGate: LongVideoGate | null;
   setLongVideoGate: (v: LongVideoGate | null) => void;
@@ -111,6 +143,15 @@ export interface ChatSessionState {
   appendAssistantMessage: (
     content: string,
     meta?: Pick<ChatMessage, "chainLabel" | "elapsedMs">,
+  ) => void;
+  settleBackgroundTask: (
+    payload: {
+      taskId: string;
+      status: string;
+      answer?: string | null;
+      errorMessage?: string;
+      backgroundElapsedMs?: number;
+    },
   ) => void;
 }
 
@@ -126,6 +167,7 @@ export function useChatSession(opts: {
   const [input, setInput] = useState("");
   const [sessionId, setSessionId] = useState<string | null>(() => readStoredSessionId());
   const [lastTurn, setLastTurn] = useState<ChatResponseBody | null>(null);
+  const [activeTaskTurns, setActiveTaskTurns] = useState<ChatResponseBody[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatingSince, setGeneratingSince] = useState<number | null>(null);
   const [pipelineNotice, setPipelineNotice] = useState<string | null>(null);
@@ -148,6 +190,40 @@ export function useChatSession(opts: {
           elapsedMs: meta?.elapsedMs,
         },
       ]);
+    },
+    [],
+  );
+
+  const settleBackgroundTask = useCallback(
+    (payload: {
+      taskId: string;
+      status: string;
+      answer?: string | null;
+      errorMessage?: string;
+      backgroundElapsedMs?: number;
+    }) => {
+      const taskId = payload.taskId.trim();
+      if (!taskId) return;
+
+      setActiveTaskTurns((prev) =>
+        prev.filter((turn) => normalizeTaskId(turn) !== taskId),
+      );
+
+      setLastTurn((prev) => {
+        if (normalizeTaskId(prev) !== taskId) {
+          return prev;
+        }
+        const nextStatus = normalizeTaskStatus(payload.status) || prev?.task_status || null;
+        return prev
+          ? {
+              ...prev,
+              task_status: nextStatus,
+              answer: payload.answer?.trim() || prev.answer || null,
+              workflow_elapsed_ms: payload.backgroundElapsedMs ?? prev.workflow_elapsed_ms ?? null,
+              extra: clearPendingKind(prev.extra),
+            }
+          : prev;
+      });
     },
     [],
   );
@@ -204,6 +280,13 @@ export function useChatSession(opts: {
           confirm_long_web_video_asr: !!sendOpts?.confirmLongWebVideoAsr,
         });
         setLastTurn(res);
+        if (shouldTrackTaskTurn(res)) {
+          setActiveTaskTurns((prev) => {
+            const taskId = normalizeTaskId(res);
+            const next = prev.filter((item) => normalizeTaskId(item) !== taskId);
+            return [res, ...next];
+          });
+        }
         if (res.session_id) {
           setSessionId(res.session_id);
           writeStoredSessionId(res.session_id);
@@ -280,11 +363,13 @@ export function useChatSession(opts: {
     isGenerating,
     generatingSince,
     lastTurn,
+    activeTaskTurns,
     pipelineNotice,
     longVideoGate,
     setLongVideoGate,
     sendText,
     send,
     appendAssistantMessage,
+    settleBackgroundTask,
   };
 }

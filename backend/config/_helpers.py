@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import os
+import re
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
@@ -43,6 +44,35 @@ except ImportError:
 
 def _root() -> Path:
     return _project_root
+
+
+_ENV_LINE_RE = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$")
+
+
+def _candidate_env_file_value(name: str) -> str | None:
+    """Read the first matching env file value without changing process env."""
+    key = str(name or "").strip()
+    if not key:
+        return None
+    for path in _candidate_env_files():
+        if not path.exists():
+            continue
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            continue
+        for line in lines:
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            match = _ENV_LINE_RE.match(line)
+            if not match or match.group(1) != key:
+                continue
+            raw = match.group(2).strip()
+            if raw.startswith(("\"", "'")) and raw.endswith(("\"", "'")) and len(raw) >= 2:
+                raw = raw[1:-1]
+            return raw.strip() or None
+    return None
 
 
 # ---------------------------------------------------------------------------

@@ -38,7 +38,7 @@ export function ChatMessageList({
     }
     const timer = window.setInterval(() => {
       setNowMs(Date.now());
-    }, 100);
+    }, 250);
     return () => window.clearInterval(timer);
   }, [isGenerating, generatingSince]);
 

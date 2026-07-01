@@ -1,4 +1,4 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/api", () => ({
@@ -25,7 +25,7 @@ function makeOpts() {
 }
 
 beforeEach(() => {
-  vi.clearAllMocks();
+  vi.resetAllMocks();
   sessionStorage.clear();
 });
 
@@ -74,7 +74,7 @@ describe("useChatSession — session 持久化", () => {
 
   it("请求失败时 messages 里出现错误提示", async () => {
     const { ApiRequestError } = await import("@/lib/client");
-    mockPost.mockRejectedValueOnce(new ApiRequestError(500, "Internal Server Error", {}));
+    mockPost.mockRejectedValueOnce(new ApiRequestError("Internal Server Error", 500, {}));
 
     const { result } = renderHook(() => useChatSession(makeOpts()));
 
@@ -90,5 +90,71 @@ describe("useChatSession — session 持久化", () => {
     const last = msgs[msgs.length - 1];
     expect(last.role).toBe("assistant");
     expect(last.content).toBeTruthy();
+  });
+
+  it("后台任务响应会写入 activeTaskTurns，后续普通回答不会中断进行中的后台任务追踪", async () => {
+    mockPost
+      .mockResolvedValueOnce({
+        ok: true,
+        session_id: "sess-task",
+        answer: "已提交后台任务",
+        task_id: "task-001",
+        task_status: "pending",
+        extra: { pending_kind: "processing_pending" },
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        session_id: "sess-task",
+        answer: "第二轮普通回答",
+        task_status: "succeeded",
+      });
+
+    const { result } = renderHook(() => useChatSession(makeOpts()));
+
+    await act(async () => {
+      result.current.setInput("先发后台任务");
+    });
+    await act(async () => {
+      await result.current.send();
+    });
+
+    await waitFor(() => expect(result.current.activeTaskTurns).toHaveLength(1));
+    expect(result.current.activeTaskTurns[0]?.task_id).toBe("task-001");
+  });
+
+  it("后台任务完成后会从 activeTaskTurns 退场并清理 lastTurn pending 状态", async () => {
+    mockPost.mockResolvedValueOnce({
+      ok: true,
+      session_id: "sess-task",
+      answer: "已提交后台任务",
+      task_id: "task-001",
+      task_status: "pending",
+      extra: { pending_kind: "processing_pending" },
+    });
+
+    const { result } = renderHook(() => useChatSession(makeOpts()));
+
+    await act(async () => {
+      result.current.setInput("先发后台任务");
+    });
+    await act(async () => {
+      await result.current.send();
+    });
+
+    expect(result.current.lastTurn?.task_status).toBe("pending");
+
+    await act(async () => {
+      result.current.settleBackgroundTask({
+        taskId: "task-001",
+        status: "failed",
+        errorMessage: "下载失败",
+      });
+    });
+
+    await waitFor(() => expect(result.current.activeTaskTurns).toHaveLength(0));
+    expect(result.current.lastTurn?.task_status).toBe("failed");
+    expect(
+      (result.current.lastTurn?.extra as Record<string, unknown> | null)?.pending_kind,
+    ).toBe("none");
   });
 });

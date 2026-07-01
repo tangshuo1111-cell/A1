@@ -17,6 +17,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from python_runtime import resolve_python_bin
 from utf8_console import configure_utf8_stdio
 
 configure_utf8_stdio()
@@ -27,8 +28,9 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 def run_backend(*, workers: int) -> subprocess.Popen:
     env = os.environ.copy()
     env["PYTHONPATH"] = str(PROJECT_ROOT / "backend")
+    python_bin = resolve_python_bin()
     cmd: list[str] = [
-        sys.executable,
+        str(python_bin),
         "-m",
         "uvicorn",
         "api.main:app",

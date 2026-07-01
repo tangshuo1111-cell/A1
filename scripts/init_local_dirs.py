@@ -13,6 +13,8 @@ def main() -> int:
     subdirs = ("data", "cache", "logs", "temp", "uploads", "outputs", "reports")
     for name in subdirs:
         (local_root / name).mkdir(parents=True, exist_ok=True)
+    for cache_name in ("pytest-runner", "ruff"):
+        (local_root / "cache" / cache_name).mkdir(parents=True, exist_ok=True)
     print(f"initialized _local directories under {local_root}")
     return 0
 

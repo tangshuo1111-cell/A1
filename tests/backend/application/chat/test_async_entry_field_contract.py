@@ -40,6 +40,9 @@ def _assert_async_contract(result: dict, *, lane: str, task_id: str) -> None:
     assert result["primary_path"] == f"{lane}_async"
     assert extra["lane"] == lane
     assert extra["mode"] == "async"
+    assert extra["runtime_mode"] in {"fake_llm", "real_llm"}
+    assert isinstance(extra["fake_llm_enabled"], bool)
+    assert isinstance(extra["fake_llm_source_conflict"], bool)
     assert extra["pending_kind"] == PendingKind.PROCESSING_PENDING.value
     assert extra["partial_answer_text"] == result["answer"]
     assert "video_task_id" not in extra

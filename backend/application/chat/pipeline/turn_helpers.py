@@ -27,6 +27,11 @@ from application.chat.turn_facts import (
     lift_session_approval_hold,
     turn_facts_from_chat_result,
 )
+from application.chat.turn_response_builder import (
+    apply_answer_fields,
+    apply_pipeline_fields,
+    apply_task_fields,
+)
 from application.chat.turn_state_machine import TurnStateBundle, apply_event
 from config.feature_flags import is_enabled
 from domain.session_types import (
@@ -123,9 +128,9 @@ def with_turn_exit_gate(
     approval_lifted = facts is not facts_before_lift
     if approval_lifted and approval_hold is not None:
         out["answer"] = build_approval_hold_followup_answer(approval_hold)
-        out["answer_type"] = "approval_blocked"
-        out["pipeline_ok"] = False
-        out["task_id"] = None
+        apply_answer_fields(out, answer_type="approval_blocked")
+        apply_pipeline_fields(out, pipeline_ok=False)
+        apply_task_fields(out, task_id=None)
     has_active_approval_hold = (
         isinstance(approval_hold, SessionApprovalHold) and approval_hold.blocked
     )
@@ -144,9 +149,9 @@ def with_turn_exit_gate(
         )
         if facts is not facts_before_empty:
             out["answer"] = build_empty_context_followup_answer()
-            out["answer_type"] = "approval_blocked"
-            out["pipeline_ok"] = False
-            out["task_id"] = None
+            apply_answer_fields(out, answer_type="approval_blocked")
+            apply_pipeline_fields(out, pipeline_ok=False)
+            apply_task_fields(out, task_id=None)
     out["extra"] = extra
     return apply_turn_exit_to_chat_turn(
         out,

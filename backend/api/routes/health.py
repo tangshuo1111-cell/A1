@@ -51,6 +51,15 @@ def health() -> dict:
             overall = "degraded"
 
     checks["embedding"] = {"mode": emb_hint}
+    checks["runtime_mode"] = {
+        "app_env": settings.app_env,
+        "fake_llm_enabled": bool(settings.fake_llm_enabled),
+        "fake_llm_env_file_value": settings.fake_llm_env_file_value(),
+        "fake_llm_process_env_value": settings.fake_llm_process_env_value(),
+        "fake_llm_source_conflict": settings.fake_llm_source_conflict(),
+        "store_backend": settings.store_backend,
+        "video_task_queue_backend": str(settings.v16_video_task_queue_backend or "memory"),
+    }
 
     latency_ms = round((time.perf_counter() - t0) * 1000, 2)
     return {

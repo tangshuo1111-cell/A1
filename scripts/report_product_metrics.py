@@ -2,8 +2,7 @@
 从 PG turn_product_metrics 生成周报 JSON（可选 HTML）。
 
 ```powershell
-$env:PYTHONPATH = "backend"
-py -3.12 scripts/report_product_metrics.py --days 7 --html
+python scripts/report_product_metrics.py --days 7 --html
 ```
 
 产物：`_local/reports/metrics/weekly_<end-date>.json`、`.html`

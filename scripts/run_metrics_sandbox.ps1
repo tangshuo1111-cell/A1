@@ -123,7 +123,22 @@ try {
     if (-not $beReady) { throw ":8001 后端未在超时内就绪" }
 
     Write-Host "[sandbox] 4/5 跑样本 + 生成周报..." -ForegroundColor Cyan
-    py -3.12 $sampleScript --api $sandboxApi --truncate-metrics --report
+    $preferredPython = Join-Path "D:\软件\Python312" "python.exe"
+    $pythonBin = $env:LIGHT_MAQA_PYTHON
+    if (-not $pythonBin) {
+        if (Test-Path $preferredPython) {
+            $pythonBin = $preferredPython
+        } else {
+            $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
+            if ($pythonCmd) {
+                $pythonBin = $pythonCmd.Source
+            }
+        }
+    }
+    if (-not $pythonBin) {
+        throw "未找到可用 Python 运行时。请设置 LIGHT_MAQA_PYTHON，或安装 Python 3.11+。"
+    }
+    & $pythonBin $sampleScript --api $sandboxApi --truncate-metrics --report
     $runExit = $LASTEXITCODE
 }
 finally {

@@ -30,4 +30,19 @@ if ($ExitShadow -eq "1") {
 }
 
 Set-Location $Root
-py -3.12 -m uvicorn api.main:app --host 127.0.0.1 --port $Port
+$preferredPython = Join-Path "D:\软件\Python312" "python.exe"
+$pythonBin = $env:LIGHT_MAQA_PYTHON
+if (-not $pythonBin) {
+    if (Test-Path $preferredPython) {
+        $pythonBin = $preferredPython
+    } else {
+        $pythonCmd = Get-Command python -ErrorAction SilentlyContinue
+        if ($pythonCmd) {
+            $pythonBin = $pythonCmd.Source
+        }
+    }
+}
+if (-not $pythonBin) {
+    throw "未找到可用 Python 运行时。请设置 LIGHT_MAQA_PYTHON，或安装 Python 3.11+。"
+}
+& $pythonBin -m uvicorn api.main:app --host 127.0.0.1 --port $Port

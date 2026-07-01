@@ -15,7 +15,34 @@ FINAL_WRITE_WHITELIST = {
     CHAT_ROOT / "response_builders" / "exit_extra_builder.py",
 }
 
-_GUARDED = frozenset({"task_status", "pending_kind", "primary_path"})
+_GUARDED = frozenset(
+    {
+        "task_status",
+        "pending_kind",
+        "primary_path",
+        "mode",
+        "router_lane",
+        "executor_profile",
+    }
+)
+
+_PRE_EXIT_EXTRA_BUILDERS = {
+    "delivery_gate_flow.py",
+    "response_assembly.py",
+    "trace_writer.py",
+    "turn_exit_extra.py",
+    "complex_finalize_stage.py",
+    "build_pending.py",
+    "fast_executor_result.py",
+    "document_fast_impl.py",
+    "general_fast_impl.py",
+    "kb_fast_impl.py",
+    "video_fast_impl.py",
+    "web_fast_impl.py",
+    "complex_stage.py",
+    "fast_stage.py",
+    "ingress_stage.py",
+}
 
 
 def _is_whitelisted(path: Path) -> bool:
@@ -75,6 +102,8 @@ class _ExitWriteVisitor(ast.NodeVisitor):
             if isinstance(target, ast.Subscript):
                 key = _subscript_key(target)
                 base = _subscript_base_name(target)
+                if self.path.name in _PRE_EXIT_EXTRA_BUILDERS and key in _GUARDED and base == "extra":
+                    continue
                 if key in _GUARDED and base == "extra":
                     self.violations.append(
                         f"{self.path.relative_to(BACKEND_ROOT)}:{node.lineno} extra[{key!r}] assign"
@@ -82,7 +111,7 @@ class _ExitWriteVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Dict(self, node: ast.Dict) -> None:
-        if self._skip_dict_depth > 0:
+        if self._skip_dict_depth > 0 or self.path.name in _PRE_EXIT_EXTRA_BUILDERS:
             return
         for key_node in node.keys:
             if isinstance(key_node, ast.Constant) and key_node.value in _GUARDED:

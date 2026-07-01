@@ -7,8 +7,7 @@
 运行（仓库根）：
 
 ```powershell
-$env:PYTHONPATH = "backend"
-py -3.12 scripts/reindex_embeddings.py
+python scripts/reindex_embeddings.py
 ```
 
 规模建议：

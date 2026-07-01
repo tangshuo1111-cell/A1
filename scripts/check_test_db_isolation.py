@@ -25,10 +25,16 @@ ROOT = Path(__file__).resolve().parent.parent
 
 # Paths scanned for hardcoded production DB references.
 GUARDED_GLOBS = (
+    "tests/acceptance/**/*.py",
+    "tests/integration/**/*.py",
     "tests/smoke/**/*.py",
     "tests/evaluation/**/*.py",
     "tests/evaluation/**/*.yaml",
+    "scripts/smoke*.ps1",
+    "scripts/smoke*.py",
+    "scripts/start_*sandbox*.ps1",
     "scripts/evaluation/**/*.py",
+    "scripts/diagnostics/**/*.py",
     "scripts/run_metrics_sandbox*.py",
     "scripts/run_metrics_sandbox*.ps1",
     "scripts/metrics_sandbox_samples.yaml",

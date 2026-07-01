@@ -23,9 +23,15 @@ BACKEND_ROOT = PROJECT_ROOT / "backend"
 if str(BACKEND_ROOT) not in sys.path:
     sys.path.insert(0, str(BACKEND_ROOT))
 
+PYTEST_TEMP_ROOT = PROJECT_ROOT / "_local" / "temp" / "pytest"
+PYTEST_TEMP_ROOT.mkdir(parents=True, exist_ok=True)
+
 # 必须在 import config.settings 之前写入（pg_fixtures 会触发 settings 单例）。
 sys.dont_write_bytecode = True
 os.environ.setdefault("PYTHONDONTWRITEBYTECODE", "1")
+os.environ["TMP"] = str(PYTEST_TEMP_ROOT)
+os.environ["TEMP"] = str(PYTEST_TEMP_ROOT)
+os.environ["TMPDIR"] = str(PYTEST_TEMP_ROOT)
 # 不在此处 default 真实业务库 URL；@pytest.mark.pg 用例由 CI/workflow 或
 # PYTEST_DATABASE_URL / DATABASE_URL 注入。默认走 fake_pg（见 _fake_pg_unless_marked）。
 os.environ.setdefault("RAG_HYBRID", "0")

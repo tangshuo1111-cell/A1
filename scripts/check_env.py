@@ -4,6 +4,7 @@ import os
 import sys
 from pathlib import Path
 
+from python_runtime import collect_runtime_report
 from utf8_console import configure_utf8_stdio
 
 configure_utf8_stdio()
@@ -49,6 +50,13 @@ def main() -> int:
             print(f"  LOADED  {path}")
     else:
         print("ENV files: none found (copy .env.example -> .env)")
+
+    runtime_report = collect_runtime_report()
+    print(f"selected_python={runtime_report['selected_python']}")
+    if runtime_report["warnings"]:
+        print("Python runtime warnings:")
+        for item in runtime_report["warnings"]:
+            print(f"  - {item}")
 
     keys = [
         "OPENAI_API_KEY",

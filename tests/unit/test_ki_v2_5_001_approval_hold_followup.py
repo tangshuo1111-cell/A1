@@ -35,6 +35,7 @@ def _enable_approval_gate(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def test_task_status_inquiry_detects_followup_phrase() -> None:
     assert looks_like_task_status_inquiry("现在处理完成了吗？") is True
+    assert looks_like_task_status_inquiry("我的答案呢？") is True
     assert looks_like_task_status_inquiry("你好") is False
 
 

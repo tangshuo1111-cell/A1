@@ -20,6 +20,10 @@ def test_health():
         body = r.json()
         assert body.get("status") in ("ok", "degraded")
         assert "checks" in body
+        runtime_mode = body["checks"].get("runtime_mode") or {}
+        assert "fake_llm_enabled" in runtime_mode
+        assert "fake_llm_source_conflict" in runtime_mode
+        assert "video_task_queue_backend" in runtime_mode
 
 
 def test_chat_agno_default_route():

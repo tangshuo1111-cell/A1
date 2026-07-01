@@ -18,6 +18,7 @@ import { useAsyncTaskPoll, type AsyncTaskCompletePayload } from "@/hooks/useAsyn
 import { useChatSession } from "@/hooks/useChatSession";
 import { ChatAsyncStatus } from "@/components/chat/ChatAsyncStatus";
 import { TurnStatusSummary } from "@/components/chat/TurnStatusSummary";
+import { humanizeTaskFailure } from "@/lib/taskFailureCopy";
 
 const ENV_FORCE_DEBUG_RAIL = process.env.NEXT_PUBLIC_SHOW_DEBUG_PANEL === "1";
 
@@ -40,12 +41,14 @@ export function ChatExperience() {
     isGenerating,
     generatingSince,
     lastTurn,
+    activeTaskTurns,
     pipelineNotice,
     longVideoGate,
     setLongVideoGate,
     sendText,
     send,
     appendAssistantMessage,
+    settleBackgroundTask,
   } = useChatSession({
     connection,
     setConnection,
@@ -55,6 +58,7 @@ export function ChatExperience() {
 
   const handleAsyncTaskComplete = useCallback(
     (payload: AsyncTaskCompletePayload) => {
+      settleBackgroundTask(payload);
       if (payload.answer) {
         appendAssistantMessage(payload.answer, {
           chainLabel: "后台任务完成",
@@ -63,15 +67,19 @@ export function ChatExperience() {
         return;
       }
       if (payload.errorMessage) {
-        appendAssistantMessage(`后台任务未完成：${payload.errorMessage}`, {
+        const failureCopy = humanizeTaskFailure(payload.errorMessage);
+        appendAssistantMessage(
+          `后台任务未完成：${failureCopy?.summary ?? payload.errorMessage}`,
+          {
           chainLabel: "后台任务",
-        });
+          },
+        );
       }
     },
-    [appendAssistantMessage],
+    [appendAssistantMessage, settleBackgroundTask],
   );
 
-  const asyncTaskPoll = useAsyncTaskPoll(lastTurn, handleAsyncTaskComplete);
+  const asyncTaskPoll = useAsyncTaskPoll(activeTaskTurns, handleAsyncTaskComplete);
 
   const [debugRailOpen, setDebugRailOpen] = useState(true);
   const showDebugRail = ENV_FORCE_DEBUG_RAIL || debugRailOpen;

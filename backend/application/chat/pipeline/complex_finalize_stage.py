@@ -28,6 +28,7 @@ from application.chat.turn_facts import (
     lift_background_task_exit,
     quality_gate_from_extra,
 )
+from application.chat.turn_response_builder import apply_task_fields
 from schemas import ChatTurnResult
 
 
@@ -124,9 +125,7 @@ def run_complex_finalize_stage(
         bundle=bundle,
         use_knowledge=state.use_knowledge,
     )
-    facts, extra, background_task_id = lift_background_task_exit(
-        facts=facts, extra=extra, bundle=bundle,
-    )
+    facts, extra, background_task_id = lift_background_task_exit(facts=facts, extra=extra, bundle=bundle)
     turn_result = _build_complex_turn_result(
         answer_text=answer_text,
         session_id=state.session_id,
@@ -135,7 +134,7 @@ def run_complex_finalize_stage(
         elapsed_ms=elapsed_ms,
     )
     if background_task_id:
-        turn_result["task_id"] = background_task_id
+        apply_task_fields(turn_result, task_id=background_task_id)
     return apply_turn_exit_to_chat_turn(
         turn_result,
         facts=facts,

@@ -28,7 +28,7 @@ def main() -> None:
         print(
             "openapi drift: docs/current/openapi.json 与当前路由不一致。\n"
             "请在 项目代码 根目录运行：\n"
-            "  PYTHONPATH=backend LIGHT_MAQA_FAKE_LLM=1 python scripts/export_openapi.py docs/current/openapi.json",
+            "  LIGHT_MAQA_FAKE_LLM=1 python scripts/export_openapi.py docs/current/openapi.json",
             file=sys.stderr,
         )
         sys.exit(1)

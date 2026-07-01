@@ -38,8 +38,9 @@ describe("useAsyncTaskPoll", () => {
     });
 
     const onComplete = vi.fn();
+    const trackedTurns = [makeTurn()];
     const { result } = renderHook(() =>
-      useAsyncTaskPoll(makeTurn(), onComplete),
+      useAsyncTaskPoll(trackedTurns, onComplete),
     );
 
     await waitFor(() => expect(onComplete).toHaveBeenCalledTimes(1), { timeout: 15000 });
@@ -49,6 +50,7 @@ describe("useAsyncTaskPoll", () => {
     expect(payload.status).toBe("succeeded");
     expect(payload.taskId).toBe("task-001");
     expect(result.current.polling).toBe(false);
+    expect(result.current.tasks[0]?.taskId).toBe("task-001");
   });
 
   it("轮询到 failed 后调用 onTaskComplete 并传入 errorMessage", async () => {
@@ -60,7 +62,8 @@ describe("useAsyncTaskPoll", () => {
     });
 
     const onComplete = vi.fn();
-    renderHook(() => useAsyncTaskPoll(makeTurn(), onComplete));
+    const trackedTurns = [makeTurn()];
+    renderHook(() => useAsyncTaskPoll(trackedTurns, onComplete));
 
     await waitFor(() => expect(onComplete).toHaveBeenCalledTimes(1), { timeout: 8000 });
 
@@ -71,8 +74,32 @@ describe("useAsyncTaskPoll", () => {
 
   it("lastTurn 无 task_id 时不轮询", () => {
     const onComplete = vi.fn();
-    renderHook(() => useAsyncTaskPoll({ ok: true } as ChatResponseBody, onComplete));
+    renderHook(() => useAsyncTaskPoll([{ ok: true } as ChatResponseBody], onComplete));
     expect(mockStatus).not.toHaveBeenCalled();
     expect(onComplete).not.toHaveBeenCalled();
+  });
+
+  it("任务状态写回后不会同步重复触发轮询", async () => {
+    let releaseStatus: ((value: { status: string }) => void) | null = null;
+    mockStatus.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          releaseStatus = resolve;
+        }),
+    );
+    mockResult.mockResolvedValueOnce({
+      ready: true,
+      result: { answer: "收尾答案" },
+    });
+
+    const onComplete = vi.fn();
+    const trackedTurns = [makeTurn()];
+    renderHook(() => useAsyncTaskPoll(trackedTurns, onComplete));
+
+    await waitFor(() => expect(mockStatus).toHaveBeenCalledTimes(1));
+    expect(releaseStatus).not.toBeNull();
+    releaseStatus?.({ status: "succeeded" });
+    await waitFor(() => expect(onComplete).toHaveBeenCalledTimes(1));
+    expect(mockStatus).toHaveBeenCalledTimes(1);
   });
 });

@@ -29,6 +29,27 @@ PROMOTED_FIELD_PATTERNS: dict[str, tuple[str, ...]] = {
         r'"background_task_id"\s*:',
         r"resolve_background_task_id",
     ),
+    "runtime_mode": (
+        r'"runtime_mode"\s*:',
+        r"'runtime_mode'\s*:",
+        r'runtime_mode"\s*=',
+        r'\["runtime_mode"\]\s*=',
+        r"\['runtime_mode'\]\s*=",
+    ),
+    "fake_llm_enabled": (
+        r'"fake_llm_enabled"\s*:',
+        r"'fake_llm_enabled'\s*:",
+        r'fake_llm_enabled"\s*=',
+        r'\["fake_llm_enabled"\]\s*=',
+        r"\['fake_llm_enabled'\]\s*=",
+    ),
+    "fake_llm_source_conflict": (
+        r'"fake_llm_source_conflict"\s*:',
+        r"'fake_llm_source_conflict'\s*:",
+        r'fake_llm_source_conflict"\s*=',
+        r'\["fake_llm_source_conflict"\]\s*=',
+        r"\['fake_llm_source_conflict'\]\s*=",
+    ),
 }
 
 

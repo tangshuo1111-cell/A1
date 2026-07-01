@@ -20,9 +20,12 @@ ROOT = Path(__file__).resolve().parent.parent
 
 # Final writers for canonical top-level response keys.
 TOP_LEVEL_OWNERS: dict[str, str] = {
+    "task_id": "turn_response_builder.py",
     "task_status": "turn_response_builder.py",
     "primary_path": "turn_response_builder.py",
     "workflow_elapsed_ms": "turn_response_builder.py",
+    "answer_type": "turn_response_builder.py",
+    "pipeline_ok": "turn_response_builder.py",
 }
 
 # Modules allowed to *construct* pre-exit turn dicts (must use build_chat_turn_result).
@@ -36,9 +39,33 @@ PRE_EXIT_BUILDERS = {
     "async_executor.py",
 }
 
+PRE_EXIT_EXTRA_BUILDERS = {
+    "complex_finalize_stage.py",
+    "delivery_gate_flow.py",
+    "response_assembly.py",
+    "trace_writer.py",
+    "turn_exit_extra.py",
+}
+
 OWNER_HELPER_BASENAMES = {
     "field_writer.py",
     "exit_extra_builder.py",
+}
+
+CANONICAL_RESPONSE_BASES = {
+    "out",
+    "result",
+    "extra",
+    "old_for_shadow",
+    "extra_snap",
+    "old_for_shadow_extra",
+}
+
+EXTRA_OWNERS: dict[str, str] = {
+    "pending_kind": "turn_response_builder.py",
+    "mode": "turn_response_builder.py",
+    "router_lane": "turn_response_builder.py",
+    "executor_profile": "turn_response_builder.py",
 }
 
 GRANDFATHER_PATH_FRAGMENTS = (
@@ -79,12 +106,18 @@ def _scan_file(path: Path) -> list[str]:
         def _check(self, target: ast.AST, lineno: int) -> None:
             if not isinstance(target, ast.Subscript):
                 return
-            if isinstance(target.value, ast.Name) and target.value.id == "old_for_shadow":
+            if isinstance(target.value, ast.Name):
+                base_name = target.value.id
+            else:
+                base_name = None
+            if base_name is None or base_name not in CANONICAL_RESPONSE_BASES:
+                return
+            if base_name == "old_for_shadow":
                 return
             key = _subscript_key(target)
             if key is None:
                 return
-            owner = TOP_LEVEL_OWNERS.get(key)
+            owner = TOP_LEVEL_OWNERS.get(key) or EXTRA_OWNERS.get(key)
             if owner is None:
                 return
             if basename == owner:
@@ -95,6 +128,12 @@ def _scan_file(path: Path) -> list[str]:
                 return
             # Pre-exit dict assembly is only legal via build_chat_turn_result.
             if key == "workflow_elapsed_ms" and basename in PRE_EXIT_BUILDERS:
+                return
+            if key == "task_id" and basename in PRE_EXIT_BUILDERS:
+                return
+            if key == "answer_type" and basename in PRE_EXIT_BUILDERS:
+                return
+            if key in EXTRA_OWNERS and basename in PRE_EXIT_EXTRA_BUILDERS:
                 return
             hits.append(f"{path.relative_to(ROOT)}:{lineno}: write to {key!r} outside {owner}")
 

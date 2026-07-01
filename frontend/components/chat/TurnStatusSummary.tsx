@@ -58,6 +58,37 @@ export function TurnStatusSummary({ lastTurn, health }: TurnStatusSummaryProps) 
     lines.push(embLabel);
   }
 
+  const runtimeMode =
+    health?.checks &&
+    typeof health.checks.runtime_mode === "object" &&
+    health.checks.runtime_mode !== null
+      ? (health.checks.runtime_mode as {
+          fake_llm_enabled?: boolean;
+          fake_llm_source_conflict?: boolean;
+        })
+      : null;
+  const turnRuntimeMode =
+    typeof lastTurn.extra === "object" && lastTurn.extra !== null
+      ? (lastTurn.extra as {
+          runtime_mode?: unknown;
+          fake_llm_enabled?: unknown;
+          fake_llm_source_conflict?: unknown;
+        })
+      : null;
+  const fakeEnabled =
+    runtimeMode?.fake_llm_enabled === true ||
+    turnRuntimeMode?.runtime_mode === "fake_llm" ||
+    turnRuntimeMode?.fake_llm_enabled === true;
+  const fakeConflict =
+    runtimeMode?.fake_llm_source_conflict === true ||
+    turnRuntimeMode?.fake_llm_source_conflict === true;
+  if (fakeEnabled) {
+    lines.push("当前运行模式：FAKE LLM（仅验管线连通）");
+  }
+  if (fakeConflict) {
+    lines.push("注意：进程环境与 .env 的 FAKE 配置冲突，当前以后端实际生效值为准");
+  }
+
   if (!lines.length) return null;
 
   return (

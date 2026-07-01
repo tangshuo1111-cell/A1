@@ -95,6 +95,41 @@ def normalize_public_task_status(task_row: dict[str, Any]) -> str:
     return raw_status
 
 
+_TASK_RESULT_PLACEHOLDER_MARKERS = (
+    "【测试回答·fake桩】",
+    "本回答由 fake llm 桩生成",
+    "后台任务处理中",
+    "请轮询 /tasks/",
+)
+
+
+def _normalize_text(value: Any) -> str:
+    return str(value or "").strip()
+
+
+def _looks_like_placeholder_answer(text: str) -> bool:
+    normalized = _normalize_text(text).lower()
+    if not normalized:
+        return False
+    if any(marker in normalized for marker in _TASK_RESULT_PLACEHOLDER_MARKERS):
+        return True
+    return False
+
+
+def _select_public_result_answer(
+    *,
+    result_summary: dict[str, Any],
+    turn: dict[str, Any] | None,
+) -> str | None:
+    final_answer = _normalize_text((result_summary or {}).get("final_answer"))
+    if final_answer:
+        return final_answer
+    turn_answer = _normalize_text((turn or {}).get("answer"))
+    if not turn_answer or _looks_like_placeholder_answer(turn_answer):
+        return None
+    return turn_answer
+
+
 def _normalize_task_row(task_row: dict[str, Any]) -> dict[str, Any]:
     public_status = normalize_public_task_status(task_row)
     exp = _expires_at(task_row)
@@ -178,11 +213,13 @@ def get_task_result_payload(task_id: str) -> dict[str, Any] | None:
     payload["error"] = None
 
     if payload["status"] in {PUBLIC_STATUS_SUCCEEDED, PUBLIC_STATUS_PARTIAL}:
-        final_answer = (result_summary or {}).get("final_answer")
-        turn_answer = (turn or {}).get("answer")
+        public_answer = _select_public_result_answer(
+            result_summary=result_summary,
+            turn=turn,
+        )
         payload["result"] = {
-            "answer": final_answer or turn_answer,
-            "final_answer": final_answer or turn_answer,
+            "answer": public_answer,
+            "final_answer": public_answer,
             "transcript_text": (result_summary or {}).get("transcript_text"),
             "answer_type": (turn or {}).get("answer_type"),
             "task_status": (turn or {}).get("task_status"),

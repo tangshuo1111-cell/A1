@@ -25,6 +25,7 @@ def test_turn_response_builder_apply_functions() -> None:
         "apply_decision_fields",
         "apply_answer_fields",
         "apply_task_fields",
+        "apply_pipeline_fields",
         "apply_material_fields",
         "apply_exit_envelope",
         "build_exit_extra_from_envelope",

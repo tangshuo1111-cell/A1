@@ -71,7 +71,8 @@ testpaths = ["tests/baselines", "tests/migration", "tests/unit", "tests/backend"
 pythonpath = ["backend"]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
-cache_dir = "_local/cache/pytest"
+addopts = "--basetemp=_local/temp/pytest-runner"
+cache_dir = "_local/cache/pytest-runner"
 filterwarnings = ["ignore::DeprecationWarning"]
 markers = [
   "real_external: tests that call real external services (excluded from CI default)",

@@ -2,9 +2,8 @@
 隔离沙箱：跑固定样本 + 可选双库 COUNT 对照 + 触发周报生成。
 
 用法（仓库根）:
-  $env:PYTHONPATH = "backend"
   $env:DATABASE_URL = "postgresql://light_maqa:light_maqa_dev@127.0.0.1:5433/light_maqa_metrics_sandbox"
-  py -3.12 scripts/run_metrics_sandbox_samples.py --api http://127.0.0.1:8001 --report
+  python scripts/run_metrics_sandbox_samples.py --api http://127.0.0.1:8001 --report
 """
 
 from __future__ import annotations

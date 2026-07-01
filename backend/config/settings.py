@@ -15,7 +15,7 @@ import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from ._helpers import _env_bool, _env_int, _env_opt_str, _env_str, _root
+from ._helpers import _candidate_env_file_value, _env_bool, _env_int, _env_opt_str, _env_str, _root
 from .ai_model import AiModelSettings
 from .search_and_storage import SearchAndStorageSettings
 from .tools_and_media import ToolsAndMediaSettings
@@ -24,6 +24,12 @@ from .tools_and_media import ToolsAndMediaSettings
 def bundled_fallback_video_cookies_path() -> Path:
     """仓库内随代码提供的样例 cookies。"""
     return _root() / "data" / "cookies" / "video_cookies.txt"
+
+
+def _bool_from_text(value: str | None) -> bool | None:
+    if value is None:
+        return None
+    return str(value).strip().lower() not in ("0", "false", "no", "off", "")
 
 
 @dataclass
@@ -178,6 +184,20 @@ class Settings(AiModelSettings, SearchAndStorageSettings, ToolsAndMediaSettings)
 
         return ("none", "")
 
+    def fake_llm_env_file_value(self) -> bool | None:
+        return _bool_from_text(_candidate_env_file_value("LIGHT_MAQA_FAKE_LLM"))
+
+    def fake_llm_process_env_value(self) -> bool | None:
+        import os
+
+        raw = os.environ.get("LIGHT_MAQA_FAKE_LLM")
+        return _bool_from_text(raw)
+
+    def fake_llm_source_conflict(self) -> bool:
+        file_value = self.fake_llm_env_file_value()
+        process_value = self.fake_llm_process_env_value()
+        return file_value is not None and process_value is not None and file_value != process_value
+
 
 settings = Settings()
 
@@ -218,6 +238,13 @@ def log_runtime_bootstrap() -> None:
         settings.api_host, settings.api_port,
         settings.retrieval_mode, settings.embedding_enabled,
     )
+    if settings.fake_llm_source_conflict():
+        log.warning(
+            "fake_llm source conflict: process_env=%s env_file=%s effective=%s",
+            settings.fake_llm_process_env_value(),
+            settings.fake_llm_env_file_value(),
+            settings.fake_llm_enabled,
+        )
     if settings.embedding_enabled:
         _log_embedding_index_state(log)
     if settings.llm_effective_for_router:

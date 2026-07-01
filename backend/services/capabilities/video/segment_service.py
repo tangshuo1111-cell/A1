@@ -201,14 +201,6 @@ def split_audio_for_parallel_asr(
     target_segment_sec: int | None = None,
     max_segment_sec: int | None = None,
 ) -> SegmentSplitResult:
-    ffmpeg = shutil.which("ffmpeg")
-    if not ffmpeg:
-        return _single_segment(
-            audio_path,
-            duration=_ffprobe_duration(audio_path),
-            mode="single_segment_fallback",
-            fallback_reason="ffmpeg_unavailable",
-        )
     target = int(target_segment_sec or getattr(settings, "v16_video_target_segment_sec", 120) or 120)
     max_seg = int(max_segment_sec or getattr(settings, "v16_video_max_segment_sec", 300) or 300)
     seg_sec = max(60, min(target, max_seg))
